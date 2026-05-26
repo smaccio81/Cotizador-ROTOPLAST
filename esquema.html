@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esquema de Instalación — Simple Clima</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--v:#2563EB;--n:#0D1B2E;--go:#1A2840;--am:#F5C400;--r:#e74c3c;--br:#ddd;--gc:#F0F4FF;--f:'Montserrat',sans-serif;}
+body{font-family:var(--f);background:var(--gc);color:var(--n);height:100vh;display:flex;flex-direction:column;font-size:13px;overflow:hidden;}
+.hdr{background:var(--n);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--v);flex-shrink:0;}
+.hdr-title{color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.hdr-title span{color:var(--v);}
+.hdr-title small{color:#555;font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px;}
+.hdr-btns{display:flex;gap:6px;}
+.layout{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:240px;background:#fff;border-right:1px solid var(--br);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.sb-sec{border-bottom:1px solid #f0f0f0;padding:11px 12px;}
+.sb-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:9px;}
+.dim-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+.dim-fld label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:3px;}
+.dim-fld input{width:100%;border:1.5px solid var(--br);border-radius:4px;padding:5px 7px;font-family:var(--f);font-size:12px;font-weight:700;}
+.dim-fld input:focus{outline:none;border-color:var(--v);}
+.norte-note{font-size:9px;color:#bbb;text-align:center;margin-top:5px;font-style:italic;}
+.eq-card{border:1.5px solid var(--br);border-radius:6px;padding:8px 9px;margin-bottom:7px;background:#fafafa;}
+.eq-card.placed{border-color:var(--v);background:#EFF6FF;}
+.eq-card.placing{border-color:var(--am);background:#fffcee;}
+.eq-head{display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;}
+.eq-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;margin-top:2px;}
+.eq-name{font-size:10px;font-weight:700;color:var(--n);line-height:1.3;}
+.eq-cat{font-size:9px;color:#aaa;font-weight:600;}
+.wall-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:5px;}
+.wbtn{background:#f0f0f0;border:1.5px solid #e0e0e0;border-radius:4px;padding:4px 2px;font-size:12px;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--f);}
+.wbtn:hover{border-color:var(--v);background:#EFF6FF;}
+.wbtn.on{background:var(--v);border-color:var(--v);color:#fff;}
+.wbtn-c{background:#f5f5f5;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:7px;color:#ccc;font-weight:700;border:1px dashed #ddd;}
+.wbtn-sp{visibility:hidden;}
+.facing-row{display:flex;gap:3px;margin-bottom:5px;}
+.fbtn{flex:1;font-family:var(--f);font-size:9px;font-weight:700;padding:4px;border:1.5px solid #e0e0e0;border-radius:4px;background:#f0f0f0;cursor:pointer;text-align:center;}
+.fbtn.on{background:#0d9488;border-color:#0d9488;color:#fff;}
+.place-btn{width:100%;font-family:var(--f);font-size:9px;font-weight:700;text-transform:uppercase;padding:5px;border:1.5px dashed #bbb;border-radius:4px;background:#fff;cursor:pointer;color:#888;margin-bottom:5px;}
+.place-btn:hover{border-color:var(--v);color:var(--v);}
+.place-btn.on{border-color:var(--am);color:var(--n);background:#fffcee;border-style:solid;}
+.eq-status{font-size:9px;color:#bbb;font-weight:600;}
+.eq-status.ok{color:#16a34a;}
+.del-btn{float:right;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
+/* Add panel */
+.add-row{display:flex;flex-direction:column;gap:6px;}
+.add-row select,.add-row input{width:100%;border:1.5px solid var(--br);border-radius:4px;padding:5px 8px;font-family:var(--f);font-size:11px;font-weight:600;}
+.add-row select:focus,.add-row input:focus{outline:none;border-color:var(--v);}
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;}
+.leg{display:flex;align-items:center;gap:4px;font-size:9px;color:#777;}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+/* Canvas */
+.canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.toolbar{background:var(--go);padding:6px 10px;display:flex;gap:4px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+.tbtn{font-family:var(--f);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:5px 10px;border:1.5px solid #444;border-radius:4px;background:none;color:#777;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.tbtn:hover{border-color:#888;color:#ccc;}
+.tbtn.active{background:var(--v);border-color:var(--v);color:#fff;}
+.tbtn.am{background:var(--am);border-color:var(--am);color:var(--n);}
+.tbtn.danger:hover{border-color:var(--r);color:var(--r);}
+.tsep{width:1px;height:18px;background:#3a4a5a;margin:0 2px;flex-shrink:0;}
+.hint-bar{background:#111820;padding:3px 12px;font-size:10px;color:#556;flex-shrink:0;min-height:22px;}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:#b8c0ce;overflow:hidden;padding:12px;}
+#mainCanvas{background:#fff;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.25);}
+.footer{background:var(--n);padding:8px 16px;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;border-top:3px solid var(--v);}
+.btn{font-family:var(--f);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+.btn-v{background:var(--v);color:#fff;}.btn-v:hover{background:#1D4ED8;}
+.btn-o{background:transparent;color:#ccc;border:1.5px solid #555;}.btn-o:hover{border-color:#999;color:#fff;}
+.btn-am{background:var(--am);color:var(--n);}.btn-am:hover{background:#e0b000;}
+.btn-sm{font-size:10px;padding:5px 9px;}
+.view-tabs{display:flex;gap:0;}
+.view-tab{font-family:var(--f);font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 12px;border:1.5px solid #444;background:none;color:#777;cursor:pointer;}
+.view-tab:first-child{border-radius:4px 0 0 4px;}
+.view-tab:last-child{border-radius:0 4px 4px 0;border-left:none;}
+.view-tab.active{background:var(--am);border-color:var(--am);color:var(--n);}
+/* BG upload */
+.bg-lbl{border:2px dashed #ddd;border-radius:6px;padding:8px;text-align:center;cursor:pointer;display:block;margin-bottom:6px;}
+.bg-lbl:hover{border-color:var(--v);}
+.bg-lbl p{font-size:9px;color:#aaa;margin-top:3px;}
+.op-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.op-row label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;white-space:nowrap;}
+.op-row input[type=range]{flex:1;accent-color:var(--v);}
+.op-row span{font-size:10px;font-weight:700;color:var(--n);width:28px;text-align:right;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">🏗️ <span>Simple Clima</span> — Esquema de Instalación<small id="amb_nombre"></small></div>
+  <div class="hdr-btns">
+    <button class="btn btn-o btn-sm" onclick="downloadPNG()">⬇ PNG</button>
+    <button class="btn btn-am btn-sm" id="btn_send" style="display:none" onclick="sendToCotizador()">✔ Usar en cotizador</button>
+  </div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+
+  <div class="sb-sec">
+    <div class="sb-title">📐 Local</div>
+    <div class="dim-row">
+      <div class="dim-fld"><label>Largo m</label><input type="number" id="inp_largo" value="10" step="0.5" min="1" oninput="calcRoom()"></div>
+      <div class="dim-fld"><label>Ancho m</label><input type="number" id="inp_ancho" value="6"  step="0.5" min="1" oninput="calcRoom()"></div>
+      <div class="dim-fld"><label>Alto m</label> <input type="number" id="inp_alto"  value="3"  step="0.1" min="1" oninput="calcRoom()"></div>
+    </div>
+    <div class="norte-note">↑ NORTE = pared superior</div>
+  </div>
+
+  <div class="sb-sec" style="flex:1;overflow-y:auto;">
+    <div class="sb-title">❄️ Equipos colocados</div>
+    <div id="eq_list"></div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-title">➕ Agregar equipo</div>
+    <div class="add-row">
+      <select id="add_cat" onchange="populateAddModel()">
+        <option value="pw">Pared</option>
+        <option value="tc">Techo</option>
+        <option value="si_siroco">Sirocco conducto</option>
+        <option value="si_central">Central</option>
+        <option value="ext_exa">Extractor EXA</option>
+        <option value="ext_si">Extractor Sirocco</option>
+        <option value="po">Portátil</option>
+      </select>
+      <select id="add_model"></select>
+      <div style="display:flex;gap:6px;">
+        <input type="number" id="add_qty" value="1" min="1" max="20" style="width:60px;">
+        <button class="btn btn-v" style="flex:1;justify-content:center;font-size:10px;padding:6px;" onclick="addEquip()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-title">🖼️ Plano de fondo</div>
+    <label class="bg-lbl" id="bg_lbl">
+      <input type="file" id="bg_file" accept="image/*,.pdf" onchange="loadBg(event)" style="display:none">
+      <div style="font-size:20px;">📄</div>
+      <p>PDF o imagen del plano</p>
+    </label>
+    <div id="bg_ctrl" style="display:none">
+      <div class="op-row"><label>Opacidad</label><input type="range" id="bg_op" min="10" max="80" value="30" oninput="updateBgOp()"><span id="bg_op_val">30%</span></div>
+      <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;" onclick="clearBg()">✕ Quitar</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend_box"></div>
+
+</aside>
+
+<div class="canvas-area">
+  <div class="toolbar">
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab_plan" onclick="setView('plan')">📐 Planta</button>
+      <button class="view-tab" id="tab_lat"  onclick="setView('lateral')">📏 Lateral</button>
+    </div>
+    <div class="tsep"></div>
+    <button class="tbtn active" id="tool_select" onclick="setTool('select')">↖ Mover</button>
+    <button class="tbtn" id="tool_arrow"  onclick="setTool('arrow')">→ Flecha</button>
+    <button class="tbtn" id="tool_text"   onclick="setTool('text')">T Texto</button>
+    <div class="tsep"></div>
+    <button class="tbtn" onclick="doUndo()">↩ Deshacer</button>
+    <button class="tbtn am"    onclick="autoPlace()">↺ Auto-colocar</button>
+    <button class="tbtn danger" onclick="clearAll()">🗑 Limpiar</button>
+    <div class="tsep"></div>
+    <button class="tbtn" id="btn_del" style="display:none;color:#e74c3c;" onclick="deleteSelected()">✕ Eliminar</button>
+  </div>
+  <div class="hint-bar" id="hint_bar">Equipos colocados automáticamente. Arrastrá para mover. Usá los botones de pared para reasignar.</div>
+  <div class="canvas-wrap" id="canvas_wrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+</div>
+</div>
+
+<div class="footer">
+  <button class="btn btn-o" onclick="downloadPNG()">⬇ Descargar PNG</button>
+  <button class="btn btn-am" id="btn_send2" style="display:none" onclick="sendToCotizador()">✔ Usar en cotizador</button>
+</div>
+
+<script>
+if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ══ CATALOG DATA ══════════════════════════════════════════════════════════════
+const CATS_META = {
+  pw:        {label:'Pared',          col:'#1d4ed8', fill:'#dbeafe'},
+  tc:        {label:'Techo',          col:'#1e3a8a', fill:'#eff6ff'},
+  si_siroco: {label:'Sirocco',        col:'#6d28d9', fill:'#ede9fe'},
+  si_central:{label:'Central',        col:'#5b21b6', fill:'#f5f3ff'},
+  ext_exa:   {label:'Ext. EXA',       col:'#b45309', fill:'#fef3c7'},
+  ext_si:    {label:'Ext. Sirocco',   col:'#c2410c', fill:'#ffedd5'},
+  po:        {label:'Portátil',       col:'#0f766e', fill:'#ccfbf1'},
+};
+
+const CAT_DATA = {
+  pw:[
+    {id:'roto190',  n:'ROTO 190',bodyW:2.40,bodyH:1.23,apStr:'1600x1600',fa:50,q:93000},
+    {id:'roto180',  n:'ROTO 180',bodyW:2.40,bodyH:1.23,apStr:'2010x2010',fa:50,q:91000},
+    {id:'roto170t', n:'ROTO 170',bodyW:1.98,bodyH:1.23,apStr:'1570x1570',fa:45,q:70000},
+    {id:'roto140t', n:'ROTO 140',bodyW:1.78,bodyH:1.23,apStr:'1390x1390',fa:30,q:45000},
+    {id:'roto95',   n:'ROTO 95', bodyW:2.40,bodyH:1.23,apStr:'1010x2010',fa:30,q:50000},
+    {id:'roto80',   n:'ROTO 80', bodyW:1.30,bodyH:0.90,apStr:'1020x1020',fa:25,q:23000},
+    {id:'roto60',   n:'ROTO 60', bodyW:0.80,bodyH:1.11,apStr:'650x650',  fa:20,q:13000},
+  ],
+  tc:[
+    {id:'roto150techo',    n:'ROTO 150 Techo',bodyW:1.80,bodyH:1.80,apStr:'O1300',fa:0,q:73000},
+    {id:'roto110techo220', n:'ROTO 110 Techo',bodyW:1.62,bodyH:1.62,apStr:'O1100',fa:0,q:45000},
+    {id:'roto90techo',     n:'ROTO 90 Techo', bodyW:1.10,bodyH:1.10,apStr:'O680', fa:0,q:26000},
+  ],
+  si_siroco:[
+    {id:'roto155_125',    n:'ROTO 155 12.5cv',bodyW:1.88,bodyH:1.81,apStr:'760x760',fa:0,q:60000},
+    {id:'roto155_75_380', n:'ROTO 155 7.5cv', bodyW:1.88,bodyH:1.81,apStr:'760x760',fa:0,q:60000},
+    {id:'roto155_75_220', n:'ROTO 155 7.5cv M/F',bodyW:1.88,bodyH:1.81,apStr:'760x760',fa:0,q:60000},
+    {id:'roto115',        n:'ROTO 115 Sirocco',bodyW:1.60,bodyH:1.64,apStr:'570x570',fa:0,q:36000},
+    {id:'roto85_220',     n:'ROTO 85 Sirocco', bodyW:1.10,bodyH:1.15,apStr:'440x470',fa:0,q:22000},
+  ],
+  si_central:[
+    {id:'central200_100',n:'Central 300 (100cv)',bodyW:3.30,bodyH:3.30,apStr:'1140x1140',fa:0,q:300000},
+    {id:'central200_40', n:'Central 200 (40cv)', bodyW:3.30,bodyH:3.30,apStr:'1140x1140',fa:0,q:180000},
+  ],
+  ext_exa:[
+    {id:'exa160_touch',n:'EXA 160 Touch',bodyW:1.56,bodyH:0.42,apStr:'1570x1570',fa:0,q:55000},
+    {id:'exa140_touch',n:'EXA 140 Touch',bodyW:1.38,bodyH:0.42,apStr:'1390x1390',fa:0,q:45000},
+    {id:'exa100_touch',n:'EXA 100 Touch',bodyW:1.20,bodyH:0.42,apStr:'1210x1210',fa:0,q:34000},
+    {id:'exa80_touch', n:'EXA 80 Touch', bodyW:1.00,bodyH:0.42,apStr:'1010x1010',fa:0,q:25000},
+    {id:'exa160_std',  n:'EXA 160 Std',  bodyW:1.56,bodyH:0.42,apStr:'1570x1570',fa:0,q:55000},
+    {id:'exa140_std',  n:'EXA 140 Std',  bodyW:1.38,bodyH:0.42,apStr:'1390x1390',fa:0,q:45000},
+    {id:'exa100_std',  n:'EXA 100 Std',  bodyW:1.20,bodyH:0.42,apStr:'1210x1210',fa:0,q:34000},
+    {id:'exa80_std',   n:'EXA 80 Std',   bodyW:1.00,bodyH:0.42,apStr:'1010x1010',fa:0,q:25000},
+  ],
+  ext_si:[
+    {id:'ext_siroco560',n:'Ext. Sirocco 560',bodyW:0.90,bodyH:0.93,apStr:'O560',fa:0,q:12000},
+    {id:'ext_siroco390',n:'Ext. Sirocco 390',bodyW:0.66,bodyH:0.73,apStr:'O366',fa:0,q:5000},
+  ],
+  po:[
+    {id:'roto55',n:'ROTO 55',bodyW:1.12,bodyH:0.68,fa:23,q:30000},
+    {id:'roto59',n:'ROTO 59',bodyW:0.80,bodyH:0.50,fa:23,q:26000},
+    {id:'roto58',n:'ROTO 58',bodyW:0.86,bodyH:0.53,fa:23,q:26000},
+    {id:'roto52',n:'ROTO 52',bodyW:0.68,bodyH:0.43,fa:18,q:16000},
+    {id:'roto47',n:'ROTO 47',bodyW:0.87,bodyH:0.53,fa:15,q:12000},
+    {id:'roto46',n:'ROTO 46',bodyW:0.68,bodyH:0.42,fa:15,q:7000},
+    {id:'roto42',n:'ROTO 42',bodyW:0.54,bodyH:0.43,fa:7, q:4000},
+    {id:'roto38',n:'ROTO 38',bodyW:0.54,bodyH:0.43,fa:7, q:4000},
+  ],
+};
+
+// ══ STATE ═════════════════════════════════════════════════════════════════════
+const CV = document.getElementById('mainCanvas');
+const CX = CV.getContext('2d');
+
+let VIEW = 'plan';
+const ROOM = {x:0,y:0,w:0,h:0, wm:10,hm:6,alto:3};
+let SC = 50; // pixels per meter
+let UNITS=[], ELEMS=[], HISTORY=[];
+let SELECTED=null, TOOL='select', DRAG=null, ADRAW=null, PLACE_ID=null, BG=null;
+let UID=1;
+const gid=()=>'u'+(UID++);
+
+// Wall categories (use wall buttons), free categories (use click-to-place)
+const WALL_CATS = ['pw','ext_exa','si_siroco','si_central'];
+const FREE_CATS = ['tc','po','ext_si'];
+
+// ══ UTILS ═════════════════════════════════════════════════════════════════════
+function parseAp(s){
+  if(!s) return {w:0,h:0,r:0,circ:false};
+  const o=s.match(/O(\d+)/);
+  if(o) return {w:0,h:0,r:parseInt(o[1])/2/1000,circ:true};
+  const r=s.match(/(\d+)x(\d+)/);
+  if(r) return {w:parseInt(r[1])/1000,h:parseInt(r[2])/1000,r:0,circ:false};
+  return {w:0.5,h:0.5,r:0,circ:false};
+}
+
+function lookupCat(id,cat){
+  return (CAT_DATA[cat]||[]).find(e=>e.id===id)||null;
+}
+
+function buildUnit(eid,cat,name){
+  const e=lookupCat(eid,cat)||(CAT_DATA[cat]||[])[0]||{};
+  const ap=parseAp(e.apStr||'');
+  return {
+    uid:gid(), eid:eid||'', name:name||e.n||'Equipo', cat,
+    bodyW:e.bodyW||1.0, bodyH:e.bodyH||0.5,
+    apW:ap.w, apH:ap.h, apR:ap.r, apCirc:ap.circ,
+    fa:e.fa||15, q:e.q||1000,
+    wall:null, px:0, py:0, placed:false, facing:'top',
+  };
+}
+
+function wallDir(w){return {top:{dx:0,dy:1},bottom:{dx:0,dy:-1},left:{dx:1,dy:0},right:{dx:-1,dy:0}}[w]||{dx:0,dy:1};}
+function wallOut(w){const d=wallDir(w);return{dx:-d.dx,dy:-d.dy};}
+
+function isExternal(u){return ['si_siroco','si_central'].includes(u.cat);}
+function isInFlow(u){return !['ext_exa','ext_si'].includes(u.cat);}
+
+// ══ CANVAS RESIZE ═════════════════════════════════════════════════════════════
+function resizeCanvas(){
+  const wrap=document.getElementById('canvas_wrap');
+  CV.width =Math.max(400,wrap.clientWidth -24);
+  CV.height=Math.max(280,wrap.clientHeight-24);
+  calcRoom();
+}
+window.addEventListener('resize',()=>{resizeCanvas();});
+
+// ══ ROOM & SCALE ══════════════════════════════════════════════════════════════
+function calcRoom(){
+  ROOM.wm=parseFloat(document.getElementById('inp_largo').value)||10;
+  ROOM.hm=parseFloat(document.getElementById('inp_ancho').value)||6;
+  ROOM.alto=parseFloat(document.getElementById('inp_alto').value)||3;
+  const hasSiL=UNITS.some(u=>isExternal(u)&&u.wall==='left');
+  const hasSiR=UNITS.some(u=>isExternal(u)&&u.wall==='right');
+  const hasSiT=UNITS.some(u=>isExternal(u)&&u.wall==='top');
+  const hasSiB=UNITS.some(u=>isExternal(u)&&u.wall==='bottom');
+  const ml=hasSiL?180:75, mr=hasSiR?180:55, mt=hasSiT?180:75, mb=hasSiB?180:55;
+  const maxW=CV.width-ml-mr, maxH=CV.height-mt-mb;
+  SC=Math.min(maxW/ROOM.wm, maxH/ROOM.hm);
+  ROOM.w=ROOM.wm*SC; ROOM.h=ROOM.hm*SC;
+  ROOM.x=ml+(maxW-ROOM.w)/2;
+  ROOM.y=mt+(maxH-ROOM.h)/2;
+  repositionAll();
+  draw();
+}
+
+function repositionAll(){['top','bottom','left','right'].forEach(w=>repositionWall(w));}
+
+function repositionWall(wall){
+  const wu=UNITS.filter(u=>u.wall===wall&&WALL_CATS.includes(u.cat));
+  wu.forEach((u,i)=>{
+    const t=(i+1)/(wu.length+1);
+    switch(wall){
+      case 'top':    u.px=ROOM.x+ROOM.w*t; u.py=ROOM.y;         break;
+      case 'bottom': u.px=ROOM.x+ROOM.w*t; u.py=ROOM.y+ROOM.h;  break;
+      case 'left':   u.px=ROOM.x;           u.py=ROOM.y+ROOM.h*t;break;
+      case 'right':  u.px=ROOM.x+ROOM.w;    u.py=ROOM.y+ROOM.h*t;break;
+    }
+    u.placed=true;
+  });
+}
+
+// ══ AUTO-PLACE ════════════════════════════════════════════════════════════════
+function autoPlace(){
+  saveHistory();
+  UNITS.forEach(u=>{u.wall=null;u.placed=false;});
+  const byC={};
+  Object.keys(CATS_META).forEach(c=>byC[c]=[]);
+  UNITS.forEach(u=>(byC[u.cat]||[]).push(u));
+
+  // pw → top wall first, overflow to right/bottom/left
+  const wCyc=['top','right','bottom','left'];
+  byC.pw.forEach((u,i)=>{u.wall=wCyc[Math.min(Math.floor(i/3),3)];});
+  // ext_exa → bottom wall
+  byC.ext_exa.forEach(u=>{u.wall='bottom';});
+  // si_siroco → top wall (outside)
+  byC.si_siroco.forEach(u=>{u.wall='top';});
+  // si_central → left wall (outside)
+  byC.si_central.forEach(u=>{u.wall='left';});
+  // ext_si → duct to right wall (free placement, but track wall for duct direction)
+  byC.ext_si.forEach(u=>{u.wall='right';});
+
+  // Recalculate scale with external units now assigned to walls → repositionAll inside
+  calcRoom();
+
+  // Position FREE_CATS with the now-correct ROOM dimensions & SC
+  // tc → grid inside room (ceiling)
+  const tc=byC.tc;
+  if(tc.length){
+    const cols=Math.ceil(Math.sqrt(tc.length));
+    const rows=Math.ceil(tc.length/cols);
+    tc.forEach((u,i)=>{
+      u.px=ROOM.x+ROOM.w*(i%cols+1)/(cols+1);
+      u.py=ROOM.y+ROOM.h*(Math.floor(i/cols)+1)/(rows+1);
+      u.placed=true;
+    });
+  }
+  // po → spread along lower-center area
+  byC.po.forEach((u,i)=>{
+    const t=(i+1)/(byC.po.length+1);
+    u.px=ROOM.x+ROOM.w*t; u.py=ROOM.y+ROOM.h*0.65; u.placed=true; u.facing='top';
+  });
+  // ext_si → inside room, near right wall
+  byC.ext_si.forEach((u,i)=>{
+    const t=(i+1)/(byC.ext_si.length+1);
+    u.px=ROOM.x+ROOM.w*0.88; u.py=ROOM.y+ROOM.h*t; u.placed=true;
+  });
+
+  renderSidebar();
+  renderLegend();
+  draw();
+}
+
+// ══ PLAN VIEW DRAWING ════════════════════════════════════════════════════════
+function draw(){
+  CX.clearRect(0,0,CV.width,CV.height);
+  if(VIEW==='plan') drawPlan();
+  else              drawLateral();
+}
+
+function drawPlan(){
+  if(BG){CX.save();CX.globalAlpha=BG.op;CX.drawImage(BG.img,ROOM.x,ROOM.y,ROOM.w,ROOM.h);CX.globalAlpha=1;CX.restore();}
+  drawRoomPlan();
+  // Draw external units first (behind walls)
+  UNITS.filter(u=>u.placed&&isExternal(u)).forEach(drawUnitPlan);
+  // Draw wall/interior units on top
+  UNITS.filter(u=>u.placed&&!isExternal(u)).forEach(drawUnitPlan);
+  ELEMS.forEach(el=>{if(el.type==='arrow')drawArrowEl(el);else drawTextEl(el);});
+  if(ADRAW) drawArrow(ADRAW.x1,ADRAW.y1,ADRAW.x2,ADRAW.y2,'#aaa',1.5,true);
+  drawBalance();
+  drawCompass();
+  drawScaleBar();
+}
+
+function drawRoomPlan(){
+  const {x,y,w,h,wm,hm}=ROOM;
+  CX.fillStyle=BG?'rgba(240,248,255,0.45)':'#f4f8ff';
+  CX.fillRect(x,y,w,h);
+  CX.strokeStyle='#1a2030'; CX.lineWidth=3;
+  CX.strokeRect(x,y,w,h);
+  // Dimensions
+  CX.fillStyle='#333'; CX.font=`bold ${Math.max(11,Math.round(SC*0.22))}px Montserrat,sans-serif`;
+  CX.textAlign='center'; CX.textBaseline='alphabetic';
+  CX.fillText(wm+' m',x+w/2,y-32);
+  CX.save(); CX.translate(x-40,y+h/2); CX.rotate(-Math.PI/2); CX.fillText(hm+' m',0,0); CX.restore();
+  CX.fillStyle='#aaa'; CX.font='bold 9px Montserrat,sans-serif';
+  CX.fillText('NORTE',x+w/2,y-16);
+  CX.fillText('SUR',x+w/2,y+h+18);
+  CX.save(); CX.translate(x-16,y+h/2); CX.rotate(-Math.PI/2); CX.fillText('OESTE',0,0); CX.restore();
+  CX.save(); CX.translate(x+w+16,y+h/2); CX.rotate(Math.PI/2); CX.fillText('ESTE',0,0); CX.restore();
+}
+
+function drawUnitPlan(u){
+  const sel=u.uid===SELECTED;
+  CX.save();
+  if(sel){CX.shadowColor='#F5C400';CX.shadowBlur=14;}
+  switch(u.cat){
+    case 'pw':         drawPW_plan(u,sel);    break;
+    case 'tc':         drawTC_plan(u,sel);    break;
+    case 'si_siroco':  drawSirocco_plan(u,sel);break;
+    case 'si_central': drawCentral_plan(u,sel);break;
+    case 'ext_exa':    drawExtExa_plan(u,sel);break;
+    case 'ext_si':     drawExtSi_plan(u,sel); break;
+    case 'po':         drawPO_plan(u,sel);    break;
+  }
+  CX.restore();
+}
+
+// ─── PW (pared) ───────────────────────────────────────────────────────────────
+function drawPW_plan(u,sel){
+  const {px,py,wall}=u;
+  const m=CATS_META.pw;
+  const bW=u.bodyW*SC, bH=u.bodyH*SC;
+  const aW=(u.apW>0?u.apW:u.apR*2)*SC;
+  const BAR=Math.max(10,Math.min(20,bH*0.15));
+  const d=wallDir(wall), o=wallOut(wall);
+
+  // Body rect (outside)
+  const br=bodyRect(px,py,bW,bH,wall);
+  CX.fillStyle=sel?'#bfdbfe':m.fill;
+  CX.strokeStyle=m.col; CX.lineWidth=1.5;
+  rrect(br.x,br.y,br.w,br.h,3); CX.fill(); CX.stroke();
+
+  // Apertura bar on wall
+  const ar=apBar(px,py,aW,BAR,wall);
+  CX.fillStyle=m.col;
+  rrect(ar.x,ar.y,ar.w,ar.h,2); CX.fill();
+
+  // Airflow arrow (inward, blue)
+  const faLen=Math.min(u.fa*SC, Math.min(ROOM.w,ROOM.h)*0.52);
+  drawArrow(px+d.dx*BAR/2,py+d.dy*BAR/2, px+d.dx*(BAR/2+faLen),py+d.dy*(BAR/2+faLen),'#93c5fd',2,false);
+
+  // Label on body
+  drawBodyLabel(br,wall,u.name,m.col,bW);
+}
+
+// ─── TC (techo) ───────────────────────────────────────────────────────────────
+function drawTC_plan(u,sel){
+  const {px,py}=u;
+  const m=CATS_META.tc;
+  const bW=u.bodyW*SC, bH=u.bodyH*SC;
+  const hw=bW/2, hh=bH/2;
+
+  // Outer square (body)
+  CX.fillStyle=sel?'#bfdbfe':m.fill;
+  CX.strokeStyle=m.col; CX.lineWidth=2;
+  rrect(px-hw,py-hh,bW,bH,4); CX.fill(); CX.stroke();
+
+  // Inner apertura
+  if(u.apCirc){
+    const r=Math.min(u.apR*SC, Math.min(hw,hh)*0.9);
+    CX.fillStyle=m.col+'55'; CX.strokeStyle=m.col; CX.lineWidth=2;
+    CX.beginPath(); CX.arc(px,py,r,0,Math.PI*2); CX.fill(); CX.stroke();
+    // Short directional arrows
+    [[0,-1],[0,1],[1,0],[-1,0]].forEach(([dx,dy])=>{
+      const s1=r*0.55, s2=r*1.35;
+      drawArrow(px+dx*s1,py+dy*s1,px+dx*s2,py+dy*s2,'#6ea8fe',1.2,false);
+    });
+  } else {
+    const aw=u.apW*SC, ah=u.apH*SC;
+    CX.fillStyle=m.col+'44'; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+    rrect(px-aw/2,py-ah/2,aw,ah,3); CX.fill(); CX.stroke();
+  }
+
+  // Label
+  CX.fillStyle=m.col; CX.font=`bold ${Math.max(7,Math.min(10,Math.round(bW/8)))}px Montserrat,sans-serif`;
+  CX.textAlign='center'; CX.textBaseline='middle';
+  const _tcR=u.apCirc?u.apR*SC:Math.max(u.apW,u.apH)*SC/2;
+  CX.fillText(u.name.replace('Techo','').trim(),px,py-Math.max(_tcR,bH/2)-6);
+}
+
+// ─── SIROCCO (exterior, lateral duct) ────────────────────────────────────────
+function drawSirocco_plan(u,sel){
+  const {px,py,wall}=u;
+  const m=CATS_META.si_siroco;
+  const bW=u.bodyW*SC, bH=u.bodyH*SC;
+  const GAP=Math.max(30,SC*0.5);
+  const o=wallOut(wall), d=wallDir(wall);
+
+  // Body outside
+  const br=externalBody(px,py,bW,bH,wall,GAP);
+  CX.fillStyle=sel?'#c4b5fd':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+  rrect(br.x,br.y,br.w,br.h,4); CX.fill(); CX.stroke();
+  // "Sirocco" label on body
+  CX.fillStyle=m.col; CX.font='bold 8px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='middle';
+  CX.fillText(u.name.split(' ').slice(0,2).join(' '),br.x+br.w/2,br.y+br.h/2);
+
+  // Dashed duct line from body center to wall
+  const bc={x:br.x+br.w/2,y:br.y+br.h/2};
+  CX.strokeStyle=m.col; CX.lineWidth=2; CX.setLineDash([6,4]);
+  CX.beginPath(); CX.moveTo(bc.x,bc.y); CX.lineTo(px,py); CX.stroke();
+  CX.setLineDash([]);
+
+  // Apertura on wall
+  const aW=(u.apW>0?u.apW:u.apR*2)*SC;
+  const BAR=Math.max(10,14);
+  const ar=apBar(px,py,aW,BAR,wall);
+  CX.fillStyle=m.col; rrect(ar.x,ar.y,ar.w,ar.h,2); CX.fill();
+
+  // Airflow arrow (inward, blue)
+  const faLen=Math.min(ROOM.w,ROOM.h)*0.35;
+  drawArrow(px+d.dx*BAR/2,py+d.dy*BAR/2, px+d.dx*(BAR/2+faLen),py+d.dy*(BAR/2+faLen),'#93c5fd',2,false);
+}
+
+// ─── CENTRAL (exterior, vertical duct) ────────────────────────────────────────
+function drawCentral_plan(u,sel){
+  const {px,py,wall}=u;
+  const m=CATS_META.si_central;
+  const bW=u.bodyW*SC, bH=u.bodyH*SC;
+  const GAP=Math.max(40,SC*0.6);
+  const d=wallDir(wall);
+
+  const br=externalBody(px,py,bW,bH,wall,GAP);
+  CX.fillStyle=sel?'#c4b5fd':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+  rrect(br.x,br.y,br.w,br.h,5); CX.fill(); CX.stroke();
+  CX.fillStyle=m.col; CX.font='bold 8px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='middle';
+  const lbl=u.name.replace('Central Evaporativa','Central').split(' ').slice(0,2).join(' ');
+  CX.fillText(lbl,br.x+br.w/2,br.y+br.h/2-6);
+  CX.fillText(u.name.includes('100cv')?'300':'200',br.x+br.w/2,br.y+br.h/2+6);
+
+  const bc={x:br.x+br.w/2,y:br.y+br.h/2};
+  CX.strokeStyle=m.col; CX.lineWidth=3; CX.setLineDash([8,4]);
+  CX.beginPath(); CX.moveTo(bc.x,bc.y); CX.lineTo(px,py); CX.stroke();
+  CX.setLineDash([]);
+
+  const aW=u.apW*SC;
+  const ar=apBar(px,py,aW,14,wall);
+  CX.fillStyle=m.col; rrect(ar.x,ar.y,ar.w,ar.h,2); CX.fill();
+
+  const faLen=Math.min(ROOM.w,ROOM.h)*0.4;
+  drawArrow(px+d.dx*8,py+d.dy*8,px+d.dx*(8+faLen),py+d.dy*(8+faLen),'#93c5fd',2.5,false);
+}
+
+// ─── EXT EXA (extractor de pared) ────────────────────────────────────────────
+function drawExtExa_plan(u,sel){
+  const {px,py,wall}=u;
+  const m=CATS_META.ext_exa;
+  const aW=(u.apW>0?u.apW:1)*SC;
+  const BAR=Math.max(12,aW*0.08);
+  const o=wallOut(wall), d=wallDir(wall);
+
+  // Square apertura on wall
+  const sq=apBar(px,py,aW,BAR,wall);
+  // Show square (EXA extractors are square)
+  CX.fillStyle=sel?'#fde68a':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+  // For side walls, the bar becomes a tall stripe - show as actual square
+  if(wall==='top'||wall==='bottom'){
+    rrect(px-aW/2,py-BAR/2,aW,BAR,2);
+  } else {
+    rrect(px-BAR/2,py-aW/2,BAR,aW,2);
+  }
+  CX.fill(); CX.stroke();
+
+  // Body hint (thin rect outside wall)
+  const br=bodyRect(px,py,aW,Math.max(6,SC*0.12),wall);
+  CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1;
+  CX.setLineDash([4,3]);
+  rrect(br.x,br.y,br.w,br.h,2); CX.stroke();
+  CX.setLineDash([]);
+
+  // Label
+  CX.fillStyle=m.col; CX.font='bold 8px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='middle';
+  const ll=br.x+br.w/2, lt=br.y+br.h/2;
+  const lbl=u.name.replace('Extractor ','').replace(' Touch','').replace(' Std','');
+  if(wall==='left'||wall==='right'){CX.save();CX.translate(ll,lt);CX.rotate(-Math.PI/2);CX.fillText(lbl,0,0);CX.restore();}
+  else CX.fillText(lbl,ll,lt);
+
+  // Red arrow outward
+  const faLen=Math.min(SC*2,60);
+  drawArrow(px+o.dx*BAR/2,py+o.dy*BAR/2, px+o.dx*(BAR/2+faLen),py+o.dy*(BAR/2+faLen),'#f87171',2,false);
+}
+
+// ─── EXT SIROCCO (interior, extrae por conducto) ─────────────────────────────
+function drawExtSi_plan(u,sel){
+  const {px,py,wall}=u;
+  const m=CATS_META.ext_si;
+  const r=Math.max(18,(u.apCirc?u.apR:Math.max(u.apW,u.apH)/2)*SC*0.7);
+
+  // Snail body (circle with spiral hint)
+  CX.fillStyle=sel?'#fed7aa':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+  CX.beginPath(); CX.arc(px,py,r,0,Math.PI*2); CX.fill(); CX.stroke();
+  // Inner circle
+  CX.strokeStyle=m.col+'88'; CX.lineWidth=1.5;
+  CX.beginPath(); CX.arc(px,py,r*0.5,0,Math.PI*2); CX.stroke();
+  // Spiral arc
+  CX.strokeStyle=m.col; CX.lineWidth=1.5;
+  CX.beginPath(); CX.arc(px,py,r*0.72,Math.PI*0.2,Math.PI*1.8); CX.stroke();
+
+  // Duct line to nearest wall
+  if(wall){
+    const o=wallOut(wall);
+    let wx,wy;
+    if(wall==='top')   {wx=px;wy=ROOM.y;}
+    if(wall==='bottom'){wx=px;wy=ROOM.y+ROOM.h;}
+    if(wall==='left')  {wx=ROOM.x;wy=py;}
+    if(wall==='right') {wx=ROOM.x+ROOM.w;wy=py;}
+    CX.strokeStyle=m.col; CX.lineWidth=2; CX.setLineDash([5,4]);
+    CX.beginPath(); CX.moveTo(px,py); CX.lineTo(wx,wy); CX.stroke();
+    CX.setLineDash([]);
+    drawArrow(wx,wy,wx+o.dx*30,wy+o.dy*30,'#f87171',2,false);
+  }
+
+  CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='middle';
+  CX.fillText('EXT',px,py);
+}
+
+// ─── PORTÁTIL ─────────────────────────────────────────────────────────────────
+function drawPO_plan(u,sel){
+  const {px,py,facing}=u;
+  const m=CATS_META.po;
+  const bW=u.bodyW*SC, bH=u.bodyH*SC;
+  const hw=bW/2,hh=bH/2;
+
+  CX.fillStyle=sel?'#99f6e4':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+  rrect(px-hw,py-hh,bW,bH,4); CX.fill(); CX.stroke();
+
+  // Air arrow from front face
+  const d=wallDir(facing||'top');
+  const faLen=Math.min(u.fa*SC,Math.min(ROOM.w,ROOM.h)*0.45);
+  const startX=px+d.dx*(facing==='left'||facing==='right'?hw:hh);
+  const startY=py+d.dy*(facing==='top'||facing==='bottom'?hh:hw);
+  drawArrow(startX,startY,startX+d.dx*faLen,startY+d.dy*faLen,'#5eead4',2,false);
+
+  CX.fillStyle=m.col; CX.font=`bold ${Math.max(7,Math.min(9,Math.round(bW/8)))}px Montserrat,sans-serif`;
+  CX.textAlign='center'; CX.textBaseline='middle';
+  CX.fillText(u.name.replace('Portatil ','').replace('ROTO ','R'),px,py);
+}
+
+// ══ LATERAL VIEW ═════════════════════════════════════════════════════════════
+function drawLateral(){
+  const ml=90,mr=60,mt=70,mb=50;
+  const maxW=CV.width-ml-mr, maxH=CV.height-mt-mb;
+  const latSC=Math.min(maxW/ROOM.wm, maxH/ROOM.alto);
+  const LW=ROOM.wm*latSC, LH=ROOM.alto*latSC;
+  const LX=ml+(maxW-LW)/2, LY=mt+(maxH-LH)/2;
+
+  // Background room
+  CX.fillStyle='#f4f8ff'; CX.strokeStyle='#1a2030'; CX.lineWidth=3;
+  CX.fillRect(LX,LY,LW,LH);
+  CX.strokeRect(LX,LY,LW,LH);
+
+  // Ceiling hatching (roof)
+  CX.strokeStyle='#cbd5e1'; CX.lineWidth=1;
+  for(let x=LX;x<LX+LW;x+=20){
+    CX.beginPath(); CX.moveTo(x,LY); CX.lineTo(x-14,LY-14); CX.stroke();
+  }
+  // Floor hatching
+  for(let x=LX;x<LX+LW;x+=14){
+    CX.beginPath(); CX.moveTo(x,LY+LH); CX.lineTo(x+10,LY+LH+10); CX.stroke();
+  }
+
+  // Dimension labels
+  CX.fillStyle='#333'; CX.font=`bold ${Math.max(11,Math.round(latSC*0.18))}px Montserrat,sans-serif`;
+  CX.textAlign='center'; CX.textBaseline='alphabetic';
+  CX.fillText(ROOM.wm+' m',LX+LW/2,LY-28);
+  CX.save(); CX.translate(LX-36,LY+LH/2); CX.rotate(-Math.PI/2);
+  CX.fillText(ROOM.alto+' m',0,0); CX.restore();
+  CX.fillStyle='#aaa'; CX.font='bold 9px Montserrat,sans-serif';
+  CX.fillText('NORTE',LX+8,LY+12);
+  CX.fillText('SUR',LX+LW-16,LY+12);
+
+  // Draw each unit in lateral view
+  UNITS.filter(u=>u.placed).forEach(u=>{
+    const latX=planXtoLatX(u.px,LX,LW);
+    drawUnitLateral(u,latX,LX,LY,LW,LH,latSC);
+  });
+
+  drawBalance();
+  drawScaleBarLateral(LX,LY,LH,latSC);
+}
+
+function planXtoLatX(planPx,LX,LW){
+  const t=(planPx-ROOM.x)/ROOM.w;
+  return LX+LW*Math.max(0.05,Math.min(0.95,t));
+}
+
+function drawUnitLateral(u,latX,LX,LY,LW,LH,latSC){
+  const m=CATS_META[u.cat];
+  const bW=Math.min(u.bodyW*latSC,LW*0.18);
+  const bH=u.bodyH*latSC;
+  const aH=(u.apCirc?u.apR*2:Math.max(u.apW,u.apH))*latSC;
+
+  switch(u.cat){
+    case 'tc':{
+      // Body on roof
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+      rrect(latX-bW/2,LY-bH,bW,bH,3); CX.fill(); CX.stroke();
+      // Apertura circle below ceiling
+      const r=Math.min((u.apR>0?u.apR*latSC:aH/2),bW*0.45,18);
+      CX.fillStyle=m.col+'55'; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+      CX.beginPath(); CX.arc(latX,LY,r,0,Math.PI*2); CX.fill(); CX.stroke();
+      // Airflow arrow downward
+      const fa=Math.min(ROOM.alto*latSC*0.65,LH*0.6);
+      drawArrow(latX,LY+r,latX,LY+r+fa,'#93c5fd',1.8,false);
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText(u.name.replace('Techo','').trim(),latX,LY-bH/2);
+      break;
+    }
+    case 'pw':{
+      const wall=u.wall||'top';
+      let bx,by,bww,bhh;
+      if(wall==='top'||wall==='bottom'){
+        bww=bW; bhh=bH;
+        bx=latX-bW/2;
+        by=wall==='top'?LY-bH:LY+LH;
+      } else {
+        bww=bH; bhh=bW;
+        bx=wall==='left'?LX-bH:LX+LW;
+        by=LY+LH/2-bW/2;
+      }
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+      rrect(bx,by,bww,bhh,3); CX.fill(); CX.stroke();
+      // Apertura bar on wall
+      const ab=Math.max(8,aH*0.08);
+      let ax2,ay2,aw2,ah2;
+      if(wall==='top')   {ax2=latX-aH/2;ay2=LY-ab/2;aw2=aH;ah2=ab;}
+      if(wall==='bottom'){ax2=latX-aH/2;ay2=LY+LH-ab/2;aw2=aH;ah2=ab;}
+      if(wall==='left')  {ax2=LX-ab/2;ay2=LY+LH/2-aH/2;aw2=ab;ah2=aH;}
+      if(wall==='right') {ax2=LX+LW-ab/2;ay2=LY+LH/2-aH/2;aw2=ab;ah2=aH;}
+      CX.fillStyle=m.col; rrect(ax2,ay2,aw2,ah2,2); CX.fill();
+      // Inward arrow
+      const dd=wallDir(wall);
+      const fa=Math.min(u.fa*latSC,LH*0.55);
+      drawArrow(latX+dd.dx*8,LY+LH*(wall==='top'?0:wall==='bottom'?1:0.5)+dd.dy*8,
+                latX+dd.dx*(8+fa),(wall==='top'?LY:wall==='bottom'?LY+LH:LY+LH/2)+dd.dy*(8+fa),'#93c5fd',1.8,false);
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText(u.name.split(' ').slice(0,2).join(' '),bx+bww/2,by+bhh/2);
+      break;
+    }
+    case 'si_siroco':case 'si_central':{
+      const wall=u.wall||'top';
+      const GAP=40, dd=wallDir(wall);
+      let bx,by;
+      if(wall==='top')   {bx=latX-bW/2;by=LY-GAP-bH;}
+      if(wall==='bottom'){bx=latX-bW/2;by=LY+LH+GAP;}
+      if(wall==='left')  {bx=LX-GAP-bH;by=LY+LH/2-bW/2;}
+      if(wall==='right') {bx=LX+LW+GAP;by=LY+LH/2-bW/2;}
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+      rrect(bx,by,bH,bW,4); CX.fill(); CX.stroke();
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText(u.name.split(' ').slice(0,2).join(' '),bx+bH/2,by+bW/2);
+      // Duct
+      const bc={x:bx+bH/2,y:by+bW/2};
+      const wp=wall==='top'?{x:latX,y:LY}:wall==='bottom'?{x:latX,y:LY+LH}:wall==='left'?{x:LX,y:LY+LH/2}:{x:LX+LW,y:LY+LH/2};
+      CX.strokeStyle=m.col; CX.lineWidth=2; CX.setLineDash([5,4]);
+      CX.beginPath(); CX.moveTo(bc.x,bc.y); CX.lineTo(wp.x,wp.y); CX.stroke();
+      CX.setLineDash([]);
+      const fa=Math.min(ROOM.wm*latSC*0.3,LH*0.4);
+      drawArrow(wp.x+dd.dx*5,wp.y+dd.dy*5,wp.x+dd.dx*(5+fa),wp.y+dd.dy*(5+fa),'#93c5fd',1.8,false);
+      break;
+    }
+    case 'ext_exa':{
+      const wall=u.wall||'bottom';
+      let bx,by;
+      if(wall==='top')   {bx=latX-bW/2;by=LY-bH;}
+      if(wall==='bottom'){bx=latX-bW/2;by=LY+LH;}
+      if(wall==='left')  {bx=LX-bH;by=LY+LH/2-bW/2;}
+      if(wall==='right') {bx=LX+LW;by=LY+LH/2-bW/2;}
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+      rrect(bx,by,bW,bH,2); CX.fill(); CX.stroke();
+      const oo=wallOut(wall);
+      drawArrow(bx+bW/2+oo.dx*4,by+bH/2+oo.dy*4,bx+bW/2+oo.dx*36,by+bH/2+oo.dy*36,'#f87171',2,false);
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText(u.name.replace('Extractor ','').replace(' Touch','').replace(' Std',''),bx+bW/2,by+bH/2);
+      break;
+    }
+    case 'ext_si':{
+      const r=Math.max(12,Math.min((u.apR>0?u.apR*latSC:16),24));
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+      CX.beginPath(); CX.arc(latX,LY+LH*0.6,r,0,Math.PI*2); CX.fill(); CX.stroke();
+      drawArrow(latX+r,LY+LH*0.6,LX+LW+30,LY+LH*0.6,'#f87171',1.8,false);
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText('EXT',latX,LY+LH*0.6);
+      break;
+    }
+    case 'po':{
+      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+      rrect(latX-bW/2,LY+LH-bH,bW,bH,3); CX.fill(); CX.stroke();
+      const fa=Math.min(u.fa*latSC,LW*0.4);
+      drawArrow(latX+bW/2,LY+LH-bH/2,latX+bW/2+fa,LY+LH-bH/2,'#5eead4',1.8,false);
+      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+      CX.textAlign='center'; CX.textBaseline='middle';
+      CX.fillText(u.name.replace('Portatil ','R').replace('ROTO ','R'),latX,LY+LH-bH/2);
+      break;
+    }
+  }
+}
+
+// ══ DRAWING HELPERS ═══════════════════════════════════════════════════════════
+function bodyRect(px,py,bW,bH,wall){
+  switch(wall){
+    case 'top':    return{x:px-bW/2,y:py-bH,w:bW,h:bH};
+    case 'bottom': return{x:px-bW/2,y:py,   w:bW,h:bH};
+    case 'left':   return{x:px-bH,  y:py-bW/2,w:bH,h:bW};
+    case 'right':  return{x:px,     y:py-bW/2,w:bH,h:bW};
+    default:       return{x:px-bW/2,y:py-bH,w:bW,h:bH};
+  }
+}
+
+function apBar(px,py,aW,BAR,wall){
+  if(wall==='top'||wall==='bottom') return{x:px-aW/2,y:py-BAR/2,w:aW,h:BAR};
+  return{x:px-BAR/2,y:py-aW/2,w:BAR,h:aW};
+}
+
+function externalBody(px,py,bW,bH,wall,GAP){
+  switch(wall){
+    case 'top':    return{x:px-bW/2,y:py-GAP-bH,w:bW,h:bH};
+    case 'bottom': return{x:px-bW/2,y:py+GAP,    w:bW,h:bH};
+    case 'left':   return{x:px-GAP-bH,y:py-bW/2, w:bH,h:bW};
+    case 'right':  return{x:px+GAP,   y:py-bW/2, w:bH,h:bW};
+    default:       return{x:px-bW/2,y:py-GAP-bH,w:bW,h:bH};
+  }
+}
+
+function drawBodyLabel(br,wall,name,col,bW){
+  const lbl=name.split(' ').slice(0,3).join(' ');
+  const fs=Math.max(7,Math.min(10,Math.round(bW/10)));
+  CX.fillStyle=col; CX.font=`bold ${fs}px Montserrat,sans-serif`;
+  CX.textAlign='center'; CX.textBaseline='middle';
+  const cx=br.x+br.w/2, cy=br.y+br.h/2;
+  if(wall==='left'||wall==='right'){CX.save();CX.translate(cx,cy);CX.rotate(-Math.PI/2);CX.fillText(lbl,0,0);CX.restore();}
+  else CX.fillText(lbl,cx,cy);
+}
+
+function drawBalance(){
+  let inj=0,ext=0;
+  UNITS.filter(u=>u.placed).forEach(u=>{
+    if(isInFlow(u)) inj+=u.q; else ext+=u.q;
+  });
+  if(inj===0&&ext===0) return;
+  const bx=10,by=CV.height-78,bw=220,bh=68;
+  CX.fillStyle='rgba(10,18,30,0.82)'; rrect(bx,by,bw,bh,6); CX.fill();
+  CX.font='bold 10px Montserrat,sans-serif'; CX.textBaseline='alphabetic'; CX.textAlign='left';
+  CX.fillStyle='#93c5fd'; CX.fillText(`Inyección:  ${inj.toLocaleString('es-AR')} m³/h`,bx+10,by+19);
+  CX.fillStyle='#fca5a5'; CX.fillText(`Extracción: ${ext.toLocaleString('es-AR')} m³/h`,bx+10,by+35);
+  const bal=inj-ext;
+  CX.fillStyle=bal>=0?'#86efac':'#fca5a5';
+  CX.fillText(`Balance:    ${bal>=0?'+':''}${bal.toLocaleString('es-AR')} m³/h`,bx+10,by+52);
+  CX.fillStyle='#334155'; CX.font='bold 8px Montserrat,sans-serif';
+  CX.fillText('CAUDAL',bx+10,by+65);
+}
+
+function drawScaleBar(){
+  const s=SC;
+  const barM=s>80?1:s>30?2:s>15?5:10;
+  const barPx=barM*s;
+  const bx=ROOM.x+ROOM.w-barPx-5, by=ROOM.y+ROOM.h+28;
+  CX.strokeStyle='#444'; CX.lineWidth=2;
+  CX.beginPath(); CX.moveTo(bx,by); CX.lineTo(bx+barPx,by);
+  CX.moveTo(bx,by-4); CX.lineTo(bx,by+4);
+  CX.moveTo(bx+barPx,by-4); CX.lineTo(bx+barPx,by+4);
+  CX.stroke();
+  CX.fillStyle='#555'; CX.font='bold 9px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='alphabetic';
+  CX.fillText(barM+' m',bx+barPx/2,by+13);
+}
+
+function drawScaleBarLateral(LX,LY,LH,latSC){
+  const barM=latSC>80?1:latSC>30?2:5;
+  const barPx=barM*latSC;
+  const bx=LX, by=LY+LH+28;
+  CX.strokeStyle='#444'; CX.lineWidth=2;
+  CX.beginPath(); CX.moveTo(bx,by); CX.lineTo(bx+barPx,by);
+  CX.moveTo(bx,by-4); CX.lineTo(bx,by+4);
+  CX.moveTo(bx+barPx,by-4); CX.lineTo(bx+barPx,by+4);
+  CX.stroke();
+  CX.fillStyle='#555'; CX.font='bold 9px Montserrat,sans-serif';
+  CX.textAlign='center'; CX.textBaseline='alphabetic';
+  CX.fillText(barM+' m',bx+barPx/2,by+13);
+}
+
+function drawCompass(){
+  const cx=CV.width-36,cy=36,r=20;
+  CX.fillStyle='rgba(0,0,0,0.2)'; CX.beginPath(); CX.arc(cx,cy,r,0,Math.PI*2); CX.fill();
+  CX.font='bold 10px Montserrat,sans-serif'; CX.textAlign='center'; CX.textBaseline='middle';
+  [['N',cx,cy-r+8,'#e74c3c'],['S',cx,cy+r-8,'#aaa'],['E',cx+r-8,cy,'#aaa'],['O',cx-r+8,cy,'#aaa']]
+  .forEach(([t,x,y,c])=>{CX.fillStyle=c;CX.fillText(t,x,y);});
+}
+
+function drawArrow(x1,y1,x2,y2,col,lw,dashed){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<5) return;
+  const ang=Math.atan2(dy,dx), hl=lw>1.5?10:7;
+  CX.save(); CX.strokeStyle=col; CX.fillStyle=col; CX.lineWidth=lw||2;
+  if(dashed) CX.setLineDash([4,3]);
+  CX.beginPath(); CX.moveTo(x1,y1); CX.lineTo(x2,y2); CX.stroke(); CX.setLineDash([]);
+  CX.beginPath();
+  CX.moveTo(x2,y2);
+  CX.lineTo(x2-hl*Math.cos(ang-0.42),y2-hl*Math.sin(ang-0.42));
+  CX.lineTo(x2-hl*Math.cos(ang+0.42),y2-hl*Math.sin(ang+0.42));
+  CX.closePath(); CX.fill();
+  CX.restore();
+}
+
+function drawArrowEl(el){
+  drawArrow(el.x1,el.y1,el.x2,el.y2,el.id===SELECTED?'#F5C400':'#e74c3c',el.id===SELECTED?2.5:2,false);
+}
+
+function drawTextEl(el){
+  CX.font='bold 13px Montserrat,sans-serif';
+  CX.fillStyle=el.id===SELECTED?'#2563EB':'#222';
+  CX.textAlign='left'; CX.textBaseline='alphabetic';
+  CX.fillText(el.text,el.x,el.y);
+}
+
+function rrect(x,y,w,h,r){
+  CX.beginPath();
+  CX.moveTo(x+r,y); CX.lineTo(x+w-r,y); CX.arcTo(x+w,y,x+w,y+r,r);
+  CX.lineTo(x+w,y+h-r); CX.arcTo(x+w,y+h,x+w-r,y+h,r);
+  CX.lineTo(x+r,y+h); CX.arcTo(x,y+h,x,y+h-r,r);
+  CX.lineTo(x,y+r); CX.arcTo(x,y,x+r,y,r);
+  CX.closePath();
+}
+
+// ══ HIT TEST ══════════════════════════════════════════════════════════════════
+function hitTest(mx,my){
+  for(let i=UNITS.length-1;i>=0;i--){
+    const u=UNITS[i];
+    if(!u.placed) continue;
+    let hw,hh;
+    switch(u.cat){
+      case 'tc':  hw=u.bodyW*SC/2+4;  hh=u.bodyH*SC/2+4;  break;
+      case 'po':  hw=u.bodyW*SC/2+4;  hh=u.bodyH*SC/2+4;  break;
+      case 'ext_si': hw=Math.max(18,(u.apR||0.25)*SC)+4; hh=hw; break;
+      default:{
+        const wall=u.wall||'top';
+        const bW=Math.max(u.bodyW,u.apW||0)*SC/2+4;
+        const bH=Math.max(u.bodyH,0.15)*SC/2+4;
+        // hit box covers body+apertura on both sides of wall
+        if(wall==='top'||wall==='bottom'){hw=bW;hh=bH+10;}
+        else {hw=bH+10;hh=bW;}
+      }
+    }
+    if(Math.abs(mx-u.px)<=hw&&Math.abs(my-u.py)<=hh) return{kind:'unit',id:u.uid};
+  }
+  for(let i=ELEMS.length-1;i>=0;i--){
+    const el=ELEMS[i];
+    if(el.type==='arrow'&&ptSegDist(mx,my,el.x1,el.y1,el.x2,el.y2)<10) return{kind:'el',id:el.id};
+    if(el.type==='text'){
+      CX.font='bold 13px Montserrat,sans-serif';
+      const w=CX.measureText(el.text).width;
+      if(mx>=el.x-2&&mx<=el.x+w+2&&my>=el.y-14&&my<=el.y+4) return{kind:'el',id:el.id};
+    }
+  }
+  return null;
+}
+
+function ptSegDist(px,py,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;
+  if(!l2) return Math.hypot(px-x1,py-y1);
+  const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/l2));
+  return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+}
+
+// ══ CANVAS EVENTS ════════════════════════════════════════════════════════════
+function setupCanvas(){
+  CV.addEventListener('mousedown',onDown);
+  CV.addEventListener('mousemove',onMove);
+  CV.addEventListener('mouseup',onUp);
+  CV.addEventListener('click',onClick);
+  document.addEventListener('keydown',onKey);
+}
+
+function cpos(e){
+  const r=CV.getBoundingClientRect();
+  return{x:(e.clientX-r.left)*(CV.width/r.width),y:(e.clientY-r.top)*(CV.height/r.height)};
+}
+
+function onDown(e){
+  const p=cpos(e);
+  if(TOOL==='arrow'){ADRAW={x1:p.x,y1:p.y,x2:p.x,y2:p.y};return;}
+  if(TOOL==='select'&&!PLACE_ID){
+    const hit=hitTest(p.x,p.y);
+    if(hit){
+      SELECTED=hit.id;
+      const u=UNITS.find(u=>u.uid===hit.id);
+      if(u) DRAG={id:hit.id,kind:'unit',ox:p.x-u.px,oy:p.y-u.py};
+      else{
+        const el=ELEMS.find(e=>e.id===hit.id);
+        if(el&&el.type==='arrow') DRAG={id:hit.id,kind:'arrow',ox:p.x-el.x1,oy:p.y-el.y1,ddx:el.x2-el.x1,ddy:el.y2-el.y1};
+        else if(el) DRAG={id:hit.id,kind:'el',ox:p.x-el.x,oy:p.y-el.y};
+      }
+      document.getElementById('btn_del').style.display='';
+    } else{
+      SELECTED=null;
+      document.getElementById('btn_del').style.display='none';
+    }
+    draw();
+  }
+}
+
+function onMove(e){
+  const p=cpos(e);
+  if(ADRAW){ADRAW.x2=p.x;ADRAW.y2=p.y;draw();return;}
+  if(DRAG){
+    if(DRAG.kind==='unit'){const u=UNITS.find(u=>u.uid===DRAG.id);if(u){u.px=p.x-DRAG.ox;u.py=p.y-DRAG.oy;}}
+    else if(DRAG.kind==='arrow'){const el=ELEMS.find(e=>e.id===DRAG.id);if(el){el.x1=p.x-DRAG.ox;el.y1=p.y-DRAG.oy;el.x2=el.x1+DRAG.ddx;el.y2=el.y1+DRAG.ddy;}}
+    else{const el=ELEMS.find(e=>e.id===DRAG.id);if(el){el.x=p.x-DRAG.ox;el.y=p.y-DRAG.oy;}}
+    draw();
+  }
+}
+
+function onUp(e){
+  if(ADRAW){
+    const{x1,y1,x2,y2}=ADRAW;
+    if(Math.hypot(x2-x1,y2-y1)>15){saveHistory();ELEMS.push({id:gid(),type:'arrow',x1,y1,x2,y2});}
+    ADRAW=null;draw();return;
+  }
+  DRAG=null;
+}
+
+function onClick(e){
+  const p=cpos(e);
+  if(PLACE_ID){
+    const u=UNITS.find(u=>u.uid===PLACE_ID);
+    if(u){saveHistory();u.px=p.x;u.py=p.y;u.placed=true;PLACE_ID=null;CV.style.cursor='default';updateHint();renderSidebar();draw();}
+    return;
+  }
+  if(TOOL==='text'){
+    const txt=prompt('Texto:','');
+    if(txt&&txt.trim()){saveHistory();ELEMS.push({id:gid(),type:'text',x:p.x,y:p.y,text:txt.trim()});draw();}
+  }
+}
+
+function onKey(e){
+  const a=document.activeElement;
+  if(a&&(a.tagName==='INPUT'||a.tagName==='SELECT'||a.tagName==='TEXTAREA')) return;
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected();}
+  if(e.key==='Escape'){PLACE_ID=null;CV.style.cursor='default';updateHint();renderSidebar();}
+}
+
+// ══ TOOLS ═════════════════════════════════════════════════════════════════════
+function setTool(t){
+  TOOL=t;
+  ['select','arrow','text'].forEach(id=>document.getElementById('tool_'+id).classList.toggle('active',id===t));
+  CV.style.cursor={select:'default',arrow:'crosshair',text:'text'}[t]||'default';
+  updateHint();
+}
+
+function setView(v){
+  VIEW=v;
+  document.getElementById('tab_plan').classList.toggle('active',v==='plan');
+  document.getElementById('tab_lat').classList.toggle('active',v==='lateral');
+  draw();
+}
+
+function updateHint(){
+  const hints={select:'Clic para seleccionar · Arrastrá para mover · Supr para eliminar',arrow:'Clic y arrastrá para dibujar flecha de flujo',text:'Clic en el plano para agregar texto'};
+  document.getElementById('hint_bar').textContent=hints[TOOL]||'';
+}
+
+function deleteSelected(){
+  if(!SELECTED) return;
+  saveHistory();
+  const u=UNITS.find(u=>u.uid===SELECTED);
+  if(u){const w=u.wall;u.wall=null;u.placed=false;if(w)repositionWall(w);renderSidebar();}
+  else ELEMS=ELEMS.filter(e=>e.id!==SELECTED);
+  SELECTED=null;
+  document.getElementById('btn_del').style.display='none';
+  draw();
+}
+
+function clearAll(){
+  if(!confirm('¿Limpiar todo el esquema?')) return;
+  saveHistory();
+  UNITS.forEach(u=>{u.wall=null;u.placed=false;});
+  ELEMS=[];SELECTED=null;
+  document.getElementById('btn_del').style.display='none';
+  renderSidebar();draw();
+}
+
+// ══ WALL/FACING ASSIGNMENT ════════════════════════════════════════════════════
+function assignWall(uid,wall){
+  const u=UNITS.find(u=>u.uid===uid);
+  if(!u) return;
+  saveHistory();
+  const prev=u.wall;
+  if(u.wall===wall){u.wall=null;u.placed=false;repositionAll();renderSidebar();calcRoom();return;}
+  u.wall=wall;u.placed=true;
+  if(prev) repositionWall(prev);
+  repositionWall(wall);
+  calcRoom(); renderSidebar();
+}
+
+function assignFacing(uid,facing){
+  const u=UNITS.find(u=>u.uid===uid);
+  if(!u) return;
+  u.facing=facing; renderSidebar(); draw();
+}
+
+function startPlace(uid){
+  PLACE_ID=PLACE_ID===uid?null:uid;
+  CV.style.cursor=PLACE_ID?'crosshair':'default';
+  if(PLACE_ID) document.getElementById('hint_bar').textContent='Clic en el plano para colocar el equipo. Esc para cancelar.';
+  else updateHint();
+  renderSidebar();
+}
+
+// ══ SIDEBAR ═══════════════════════════════════════════════════════════════════
+function renderSidebar(){
+  const cnts={};
+  UNITS.forEach(u=>{cnts[u.name]=(cnts[u.name]||0)+1;});
+  const shown={};
+  document.getElementById('eq_list').innerHTML=UNITS.length?UNITS.map(u=>{
+    shown[u.name]=(shown[u.name]||0)+1;
+    const num=cnts[u.name]>1?` (${shown[u.name]}/${cnts[u.name]})`:'';
+    const m=CATS_META[u.cat]||CATS_META.pw;
+    const useWall=WALL_CATS.includes(u.cat);
+    const useFree=FREE_CATS.includes(u.cat);
+    const isPO=u.cat==='po';
+    const isPlacing=PLACE_ID===u.uid;
+    const wallGrid=useWall?`<div class="wall-grid">
+      <div class="wbtn-sp"></div>
+      <button class="wbtn ${u.wall==='top'?'on':''}" onclick="assignWall('${u.uid}','top')">↑</button>
+      <div class="wbtn-sp"></div>
+      <button class="wbtn ${u.wall==='left'?'on':''}" onclick="assignWall('${u.uid}','left')">←</button>
+      <div class="wbtn-c">PARED</div>
+      <button class="wbtn ${u.wall==='right'?'on':''}" onclick="assignWall('${u.uid}','right')">→</button>
+      <div class="wbtn-sp"></div>
+      <button class="wbtn ${u.wall==='bottom'?'on':''}" onclick="assignWall('${u.uid}','bottom')">↓</button>
+      <div class="wbtn-sp"></div>
+    </div>`:'';
+    const facingRow=isPO?`<div class="facing-row">
+      <button class="fbtn ${u.facing==='top'?'on':''}"    onclick="assignFacing('${u.uid}','top')">↑N</button>
+      <button class="fbtn ${u.facing==='right'?'on':''}"  onclick="assignFacing('${u.uid}','right')">→E</button>
+      <button class="fbtn ${u.facing==='bottom'?'on':''}" onclick="assignFacing('${u.uid}','bottom')">↓S</button>
+      <button class="fbtn ${u.facing==='left'?'on':''}"   onclick="assignFacing('${u.uid}','left')">←O</button>
+    </div>`:'';
+    const placeBtn=useFree?`<button class="place-btn ${isPlacing?'on':''}" onclick="startPlace('${u.uid}')">${isPlacing?'✔ Clic en el plano':'🎯 Ubicar en el plano'}</button>`:'';
+    const status=u.placed?(u.wall?`Pared ${({top:'Norte',bottom:'Sur',left:'Oeste',right:'Este'}[u.wall]||u.wall)}`:'Interior — arrastrá'):'Sin colocar';
+    return `<div class="eq-card ${u.placed?'placed':''} ${isPlacing?'placing':''}">
+      <div class="eq-head">
+        <div class="eq-dot" style="background:${m.col}"></div>
+        <div><div class="eq-name">${u.name.split(' ').slice(0,3).join(' ')}${num}</div><div class="eq-cat">${m.label}</div></div>
+        <button class="del-btn" onclick="removeUnit('${u.uid}')">✕</button>
+      </div>
+      ${wallGrid}${facingRow}${placeBtn}
+      <div class="eq-status ${u.placed?'ok':''}">${u.placed?'✔ ':''} ${status}</div>
+    </div>`;
+  }).join(''):'<p style="font-size:11px;color:#aaa;text-align:center;padding:12px;">Sin equipos.<br>Usá el panel de abajo o abrí desde el cotizador.</p>';
+}
+
+function renderLegend(){
+  document.getElementById('legend_box').innerHTML=
+    Object.entries(CATS_META).map(([cat,m])=>
+      `<div class="leg"><div class="leg-dot" style="background:${m.col}"></div>${m.label}</div>`
+    ).join('');
+}
+
+// ══ ADD / REMOVE EQUIPMENT ════════════════════════════════════════════════════
+function populateAddModel(){
+  const cat=document.getElementById('add_cat').value;
+  const list=CAT_DATA[cat]||[];
+  document.getElementById('add_model').innerHTML=list.map(e=>`<option value="${e.id}">${e.n}</option>`).join('');
+}
+
+function addEquip(){
+  const cat=document.getElementById('add_cat').value;
+  const eid=document.getElementById('add_model').value;
+  const qty=parseInt(document.getElementById('add_qty').value)||1;
+  const e=(CAT_DATA[cat]||[]).find(x=>x.id===eid);
+  if(!e) return;
+  saveHistory();
+  for(let i=0;i<qty;i++) UNITS.push(buildUnit(eid,cat,e.n));
+  autoPlace();
+}
+
+function removeUnit(uid){
+  saveHistory();
+  const u=UNITS.find(u=>u.uid===uid);
+  if(u&&u.wall) repositionWall(u.wall);
+  UNITS=UNITS.filter(u=>u.uid!==uid);
+  if(SELECTED===uid) SELECTED=null;
+  renderSidebar(); calcRoom();
+}
+
+// ══ HISTORY ═══════════════════════════════════════════════════════════════════
+function saveHistory(){
+  HISTORY.push(JSON.stringify({units:UNITS.map(u=>({...u})),elems:ELEMS.map(e=>({...e}))}));
+  if(HISTORY.length>30) HISTORY.shift();
+}
+
+function doUndo(){
+  if(!HISTORY.length) return;
+  const s=JSON.parse(HISTORY.pop());
+  UNITS.length=0; s.units.forEach(u=>UNITS.push(u));
+  ELEMS=s.elems; SELECTED=null;
+  document.getElementById('btn_del').style.display='none';
+  renderSidebar(); calcRoom();
+}
+
+// ══ BACKGROUND ════════════════════════════════════════════════════════════════
+async function loadBg(e){
+  const file=e.target.files[0];if(!file) return;
+  const op=parseFloat(document.getElementById('bg_op').value)/100||0.3;
+  if(file.type==='application/pdf'){
+    try{
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      const page=await pdf.getPage(1);
+      const vp=page.getViewport({scale:2});
+      const oc=document.createElement('canvas');
+      oc.width=vp.width;oc.height=vp.height;
+      await page.render({canvasContext:oc.getContext('2d'),viewport:vp}).promise;
+      BG={img:oc,op};updateBgUI();draw();
+    }catch(err){alert('No se pudo cargar el PDF: '+err.message);}
+  } else{
+    const img=new Image();
+    img.onload=()=>{BG={img,op};updateBgUI();draw();};
+    img.src=URL.createObjectURL(file);
+  }
+}
+
+function updateBgOp(){
+  const v=parseFloat(document.getElementById('bg_op').value)/100;
+  document.getElementById('bg_op_val').textContent=Math.round(v*100)+'%';
+  if(BG){BG.op=v;draw();}
+}
+
+function clearBg(){BG=null;document.getElementById('bg_file').value='';updateBgUI();draw();}
+
+function updateBgUI(){
+  const has=!!BG;
+  document.getElementById('bg_ctrl').style.display=has?'':'none';
+  document.getElementById('bg_lbl').querySelector('p').textContent=has?'✔ Fondo cargado':'PDF o imagen del plano';
+}
+
+// ══ EXPORT ════════════════════════════════════════════════════════════════════
+function downloadPNG(){
+  const a=document.createElement('a');
+  a.download='esquema_simple_clima.png';
+  a.href=CV.toDataURL('image/png');
+  a.click();
+}
+
+function sendToCotizador(){
+  if(!window.opener){alert('Abrí esta herramienta desde el cotizador.');return;}
+  window.opener.postMessage({type:'esquema_sc',dataURL:CV.toDataURL('image/png')},'*');
+  window.close();
+}
+
+// ══ INIT ══════════════════════════════════════════════════════════════════════
+function init(){
+  const p=new URLSearchParams(location.search);
+  if(p.has('largo')){ROOM.wm=parseFloat(p.get('largo'))||10;document.getElementById('inp_largo').value=ROOM.wm;}
+  if(p.has('ancho')){ROOM.hm=parseFloat(p.get('ancho'))||6; document.getElementById('inp_ancho').value=ROOM.hm;}
+  if(p.has('alto')) {ROOM.alto=parseFloat(p.get('alto'))||3; document.getElementById('inp_alto').value=ROOM.alto;}
+  const ambNom=p.get('amb')||'';
+  if(ambNom) document.getElementById('amb_nombre').textContent='— '+ambNom;
+
+  // Build units from URL
+  UNITS=[];
+  if(p.has('eq')){
+    try{
+      const list=JSON.parse(p.get('eq'));
+      list.forEach(item=>{
+        for(let i=0;i<(item.q||1);i++) UNITS.push(buildUnit(item.id||'',item.cat||'pw',item.m||''));
+      });
+    }catch(err){console.warn('eq parse:',err);}
+  }
+
+  // Demo if empty
+  if(!UNITS.length){
+    UNITS=[
+      buildUnit('roto140t','pw','ROTO 140'),
+      buildUnit('roto140t','pw','ROTO 140'),
+      buildUnit('roto90techo','tc','ROTO 90 Techo'),
+      buildUnit('exa140_touch','ext_exa','EXA 140 Touch'),
+    ];
+  }
+
+  const fromCot=!!window.opener;
+  document.getElementById('btn_send').style.display=fromCot?'':'none';
+  document.getElementById('btn_send2').style.display=fromCot?'':'none';
+
+  populateAddModel();
+  renderLegend();
+  setupCanvas();
+  resizeCanvas(); // calls calcRoom → draw inside
+  autoPlace();
+}
+
+init();
+</script>
+</body>
+</html>
