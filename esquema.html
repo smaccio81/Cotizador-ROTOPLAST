@@ -323,9 +323,22 @@ function calcRoom(){
   draw();
 }
 
-function repositionAll(){['top','bottom','left','right'].forEach(w=>repositionWall(w));}
+function repositionAll(){['top','bottom','left','right','ceiling'].forEach(w=>repositionWall(w));}
 
 function repositionWall(wall){
+  if(wall==='ceiling'){
+    // ext_exa en techo → grilla como TC
+    const wu=UNITS.filter(u=>u.wall==='ceiling');
+    if(!wu.length) return;
+    const cols=Math.ceil(Math.sqrt(wu.length));
+    const rows=Math.ceil(wu.length/cols);
+    wu.forEach((u,i)=>{
+      u.px=ROOM.x+ROOM.w*(i%cols+1)/(cols+1);
+      u.py=ROOM.y+ROOM.h*(Math.floor(i/cols)+1)/(rows+1);
+      u.placed=true;
+    });
+    return;
+  }
   const wu=UNITS.filter(u=>u.wall===wall&&WALL_CATS.includes(u.cat));
   wu.forEach((u,i)=>{
     const t=(i+1)/(wu.length+1);
@@ -572,10 +585,26 @@ function drawCentral_plan(u,sel){
   drawArrow(px+d.dx*8,py+d.dy*8,px+d.dx*(8+faLen),py+d.dy*(8+faLen),'#93c5fd',2.5,false);
 }
 
-// ─── EXT EXA (extractor de pared) ────────────────────────────────────────────
+// ─── EXT EXA (extractor de pared o techo) ────────────────────────────────────
 function drawExtExa_plan(u,sel){
   const {px,py,wall}=u;
   const m=CATS_META.ext_exa;
+
+  // Caso especial: montado en techo → vista desde arriba como TC
+  if(wall==='ceiling'){
+    const aW=Math.max(u.apW,u.apH)*SC;
+    const hw=aW/2;
+    CX.fillStyle=sel?'#fde68a':m.fill; CX.strokeStyle=m.col; CX.lineWidth=2;
+    rrect(px-hw,py-hw,aW,aW,4); CX.fill(); CX.stroke();
+    // Cruz de succión (flechas hacia el centro = extrae hacia arriba)
+    [[0,-1],[0,1],[1,0],[-1,0]].forEach(([dx,dy])=>{
+      drawArrow(px+dx*hw*0.85,py+dy*hw*0.85, px+dx*hw*0.35,py+dy*hw*0.35,'#f87171',1.2,false);
+    });
+    CX.fillStyle=m.col; CX.font=`bold ${Math.max(7,Math.min(9,Math.round(aW/8)))}px Montserrat,sans-serif`;
+    CX.textAlign='center'; CX.textBaseline='middle';
+    CX.fillText(u.name.replace(' Touch','').replace(' Std',''),px,py);
+    return;
+  }
   const aW=(u.apW>0?u.apW:1)*SC;
   const BAR=Math.max(12,aW*0.08);
   const o=wallOut(wall), d=wallDir(wall);
@@ -671,7 +700,16 @@ function drawPO_plan(u,sel){
 
 // ══ LATERAL VIEW ═════════════════════════════════════════════════════════════
 function drawLateral(){
-  const ml=90,mr=60,mt=70,mb=50;
+  // Calcular márgenes dinámicos según profundidad de equipos en cada pared
+  const norteUnits=UNITS.filter(u=>u.placed&&u.wall==='top'&&['pw','ext_exa'].includes(u.cat));
+  const surUnits  =UNITS.filter(u=>u.placed&&u.wall==='bottom'&&['pw','ext_exa'].includes(u.cat));
+  const maxDepthN =norteUnits.reduce((mx,u)=>Math.max(mx,u.bodyH),0);
+  const maxDepthS =surUnits.reduce((mx,u)=>Math.max(mx,u.bodyH),0);
+  // Primera pasada: estimar latSC con márgenes base para calcular profundidades en px
+  const ml0=90,mr0=60,mt=70,mb=50;
+  const latSC0=Math.min((CV.width-ml0-mr0)/ROOM.wm,(CV.height-mt-mb)/ROOM.alto);
+  const ml=Math.max(ml0, maxDepthN*latSC0+16);
+  const mr=Math.max(mr0, maxDepthS*latSC0+16);
   const maxW=CV.width-ml-mr, maxH=CV.height-mt-mb;
   const latSC=Math.min(maxW/ROOM.wm, maxH/ROOM.alto);
   const LW=ROOM.wm*latSC, LH=ROOM.alto*latSC;
@@ -702,10 +740,19 @@ function drawLateral(){
   CX.fillText('NORTE',LX+8,LY+12);
   CX.fillText('SUR',LX+LW-16,LY+12);
 
-  // Draw each unit in lateral view
+  // Agrupar por pared para pasar índice (permite escalonar unidades en la misma pared)
+  const wallIdx={};
+  const wallTot={};
   UNITS.filter(u=>u.placed).forEach(u=>{
+    const k=u.wall||('free_'+u.uid);
+    wallTot[k]=(wallTot[k]||0)+1;
+  });
+  UNITS.filter(u=>u.placed).forEach(u=>{
+    const k=u.wall||('free_'+u.uid);
+    wallIdx[k]=(wallIdx[k]||0);
     const latX=planXtoLatX(u.px,LX,LW);
-    drawUnitLateral(u,latX,LX,LY,LW,LH,latSC);
+    drawUnitLateral(u,latX,LX,LY,LW,LH,latSC,wallIdx[k],wallTot[k]);
+    wallIdx[k]++;
   });
 
   drawBalance();
@@ -717,7 +764,7 @@ function planXtoLatX(planPx,LX,LW){
   return LX+LW*Math.max(0.05,Math.min(0.95,t));
 }
 
-function drawUnitLateral(u,latX,LX,LY,LW,LH,latSC){
+function drawUnitLateral(u,latX,LX,LY,LW,LH,latSC,idx=0,total=1){
   const m=CATS_META[u.cat];
   const bW=Math.min(u.bodyW*latSC,LW*0.18);
   const bH=u.bodyH*latSC;
@@ -742,34 +789,46 @@ function drawUnitLateral(u,latX,LX,LY,LW,LH,latSC){
     }
     case 'pw':{
       const wall=u.wall||'top';
-      let bx,by,bww,bhh;
+      // Dimensiones reales a escala
+      const depth=u.bodyH*latSC;         // profundidad del cuerpo (perpendicular a pared)
+      const unitH=Math.max(u.apH,u.apW)*latSC; // altura del equipo ≈ apertura
+      // Altura de montaje fija: centro a 40% desde el techo, escalada por índice si hay varios
+      const spacing=unitH+10;
+      const centerFrac=0.38;
+      const mountY=LY+LH*centerFrac + idx*spacing - (total-1)*spacing/2;
+      const fa=Math.min(u.fa*latSC,LW*0.42);
       if(wall==='top'||wall==='bottom'){
-        bww=bW; bhh=bH;
-        bx=latX-bW/2;
-        by=wall==='top'?LY-bH:LY+LH;
+        const isNorte=wall==='top';
+        const bx=isNorte?LX-depth:LX+LW;
+        const by=mountY-unitH/2;
+        // Cuerpo exterior
+        CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+        rrect(bx,by,depth,unitH,3); CX.fill(); CX.stroke();
+        // Barra de apertura sobre la pared (borde de la pared)
+        const apH_px=Math.max(u.apH,u.apW)*latSC;
+        CX.fillStyle=m.col;
+        if(isNorte) rrect(LX-6,mountY-apH_px/2,6,apH_px,2);
+        else        rrect(LX+LW,mountY-apH_px/2,6,apH_px,2);
+        CX.fill();
+        // Flecha azul hacia adentro
+        if(isNorte) drawArrow(LX+2,mountY,LX+2+fa,mountY,'#93c5fd',1.8,false);
+        else        drawArrow(LX+LW-2,mountY,LX+LW-2-fa,mountY,'#93c5fd',1.8,false);
+        // Etiqueta rotada en el cuerpo
+        CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+        CX.textAlign='center'; CX.textBaseline='middle';
+        CX.save(); CX.translate(bx+depth/2,mountY); CX.rotate(-Math.PI/2);
+        CX.fillText(u.name.split(' ').slice(0,2).join(' '),0,0); CX.restore();
       } else {
-        bww=bH; bhh=bW;
-        bx=wall==='left'?LX-bH:LX+LW;
-        by=LY+LH/2-bW/2;
+        // Paredes Este/Oeste → proyección esquemática (punteada)
+        const projX=wall==='left'?LX+LW*0.08:LX+LW*0.92;
+        CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1; CX.setLineDash([3,3]);
+        rrect(projX-depth/2,mountY-unitH/2,depth,unitH,3); CX.fill(); CX.stroke();
+        CX.setLineDash([]);
+        drawArrow(projX,mountY,projX,mountY+fa,'#93c5fd',1.5,false);
+        CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+        CX.textAlign='center'; CX.textBaseline='alphabetic';
+        CX.fillText(u.name.split(' ').slice(0,2).join(' '),projX,mountY-unitH/2-4);
       }
-      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
-      rrect(bx,by,bww,bhh,3); CX.fill(); CX.stroke();
-      // Apertura bar on wall
-      const ab=Math.max(8,aH*0.08);
-      let ax2,ay2,aw2,ah2;
-      if(wall==='top')   {ax2=latX-aH/2;ay2=LY-ab/2;aw2=aH;ah2=ab;}
-      if(wall==='bottom'){ax2=latX-aH/2;ay2=LY+LH-ab/2;aw2=aH;ah2=ab;}
-      if(wall==='left')  {ax2=LX-ab/2;ay2=LY+LH/2-aH/2;aw2=ab;ah2=aH;}
-      if(wall==='right') {ax2=LX+LW-ab/2;ay2=LY+LH/2-aH/2;aw2=ab;ah2=aH;}
-      CX.fillStyle=m.col; rrect(ax2,ay2,aw2,ah2,2); CX.fill();
-      // Inward arrow
-      const dd=wallDir(wall);
-      const fa=Math.min(u.fa*latSC,LH*0.55);
-      drawArrow(latX+dd.dx*8,LY+LH*(wall==='top'?0:wall==='bottom'?1:0.5)+dd.dy*8,
-                latX+dd.dx*(8+fa),(wall==='top'?LY:wall==='bottom'?LY+LH:LY+LH/2)+dd.dy*(8+fa),'#93c5fd',1.8,false);
-      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
-      CX.textAlign='center'; CX.textBaseline='middle';
-      CX.fillText(u.name.split(' ').slice(0,2).join(' '),bx+bww/2,by+bhh/2);
       break;
     }
     case 'si_siroco':case 'si_central':{
@@ -797,18 +856,53 @@ function drawUnitLateral(u,latX,LX,LY,LW,LH,latSC){
     }
     case 'ext_exa':{
       const wall=u.wall||'bottom';
-      let bx,by;
-      if(wall==='top')   {bx=latX-bW/2;by=LY-bH;}
-      if(wall==='bottom'){bx=latX-bW/2;by=LY+LH;}
-      if(wall==='left')  {bx=LX-bH;by=LY+LH/2-bW/2;}
-      if(wall==='right') {bx=LX+LW;by=LY+LH/2-bW/2;}
-      CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
-      rrect(bx,by,bW,bH,2); CX.fill(); CX.stroke();
-      const oo=wallOut(wall);
-      drawArrow(bx+bW/2+oo.dx*4,by+bH/2+oo.dy*4,bx+bW/2+oo.dx*36,by+bH/2+oo.dy*36,'#f87171',2,false);
-      CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
-      CX.textAlign='center'; CX.textBaseline='middle';
-      CX.fillText(u.name.replace('Extractor ','').replace(' Touch','').replace(' Std',''),bx+bW/2,by+bH/2);
+      const depth=u.bodyH*latSC;
+      const unitH=Math.max(u.apH,u.apW)*latSC;
+      const lbl=u.name.replace('Extractor ','').replace(' Touch','').replace(' Std','');
+      const arrowLen=Math.max(28,latSC*0.4);
+
+      if(wall==='ceiling'){
+        // Montado en techo: cuerpo sobre el cielorraso, flecha roja hacia abajo
+        const bW2=Math.min(u.bodyW*latSC,LW*0.15);
+        CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+        rrect(latX-bW2/2,LY-depth,bW2,depth,3); CX.fill(); CX.stroke();
+        // Apertura cuadrada en el cielorraso
+        const ap=Math.max(u.apW,u.apH)*latSC;
+        CX.fillStyle=m.col; rrect(latX-ap/2,LY-5,ap,5,2); CX.fill();
+        // Flecha roja descendente (extrae del local hacia arriba → representa el flujo)
+        drawArrow(latX,LY-5,latX,LY-5-arrowLen,'#f87171',2,false);
+        CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+        CX.textAlign='center'; CX.textBaseline='middle';
+        CX.fillText(lbl,latX,LY-depth/2);
+        break;
+      }
+
+      const spacing=unitH+10;
+      const mountY=LY+LH*0.38 + idx*spacing - (total-1)*spacing/2;
+      if(wall==='top'||wall==='bottom'){
+        const isNorte=wall==='top';
+        const bx=isNorte?LX-depth:LX+LW;
+        const by=mountY-unitH/2;
+        CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+        rrect(bx,by,depth,unitH,2); CX.fill(); CX.stroke();
+        CX.fillStyle=m.col;
+        if(isNorte) rrect(LX-6,by,6,unitH,2); else rrect(LX+LW,by,6,unitH,2);
+        CX.fill();
+        if(isNorte) drawArrow(LX-6,mountY,LX-6-arrowLen,mountY,'#f87171',2,false);
+        else        drawArrow(LX+LW+6,mountY,LX+LW+6+arrowLen,mountY,'#f87171',2,false);
+        CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+        CX.textAlign='center'; CX.textBaseline='middle';
+        CX.save(); CX.translate(bx+depth/2,mountY); CX.rotate(-Math.PI/2);
+        CX.fillText(lbl,0,0); CX.restore();
+      } else {
+        const projX=wall==='left'?LX+LW*0.05:LX+LW*0.95;
+        CX.fillStyle=m.fill; CX.strokeStyle=m.col; CX.lineWidth=1.5;
+        rrect(projX-depth/2,mountY-unitH/2,depth,unitH,2); CX.fill(); CX.stroke();
+        drawArrow(projX,mountY+unitH/2,projX,mountY+unitH/2+arrowLen,'#f87171',2,false);
+        CX.fillStyle=m.col; CX.font='bold 7px Montserrat,sans-serif';
+        CX.textAlign='center'; CX.textBaseline='middle';
+        CX.fillText(lbl,projX,mountY-unitH/2-8);
+      }
       break;
     }
     case 'ext_si':{
@@ -1127,7 +1221,7 @@ function assignWall(uid,wall){
   u.wall=wall;u.placed=true;
   if(prev) repositionWall(prev);
   repositionWall(wall);
-  calcRoom(); renderSidebar();
+  calcRoom(); renderSidebar(); draw();
 }
 
 function assignFacing(uid,facing){
@@ -1157,25 +1251,26 @@ function renderSidebar(){
     const useFree=FREE_CATS.includes(u.cat);
     const isPO=u.cat==='po';
     const isPlacing=PLACE_ID===u.uid;
+    const wallNames={top:'Norte',bottom:'Sur',left:'Oeste',right:'Este',ceiling:'Techo'};
     const wallGrid=useWall?`<div class="wall-grid">
       <div class="wbtn-sp"></div>
-      <button class="wbtn ${u.wall==='top'?'on':''}" onclick="assignWall('${u.uid}','top')">↑</button>
+      <button class="wbtn ${u.wall==='top'?'on':''}" onclick="assignWall('${u.uid}','top')">↑N</button>
       <div class="wbtn-sp"></div>
-      <button class="wbtn ${u.wall==='left'?'on':''}" onclick="assignWall('${u.uid}','left')">←</button>
+      <button class="wbtn ${u.wall==='left'?'on':''}" onclick="assignWall('${u.uid}','left')">←O</button>
       <div class="wbtn-c">PARED</div>
-      <button class="wbtn ${u.wall==='right'?'on':''}" onclick="assignWall('${u.uid}','right')">→</button>
+      <button class="wbtn ${u.wall==='right'?'on':''}" onclick="assignWall('${u.uid}','right')">E→</button>
       <div class="wbtn-sp"></div>
-      <button class="wbtn ${u.wall==='bottom'?'on':''}" onclick="assignWall('${u.uid}','bottom')">↓</button>
+      <button class="wbtn ${u.wall==='bottom'?'on':''}" onclick="assignWall('${u.uid}','bottom')">↓S</button>
       <div class="wbtn-sp"></div>
-    </div>`:'';
+    </div>${u.cat==='ext_exa'?`<button class="wbtn ${u.wall==='ceiling'?'on':''}" style="width:100%;margin-bottom:5px;font-size:9px;" onclick="assignWall('${u.uid}','ceiling')">▲ Techo (con adaptador)</button>`:''}`:'';
     const facingRow=isPO?`<div class="facing-row">
       <button class="fbtn ${u.facing==='top'?'on':''}"    onclick="assignFacing('${u.uid}','top')">↑N</button>
       <button class="fbtn ${u.facing==='right'?'on':''}"  onclick="assignFacing('${u.uid}','right')">→E</button>
       <button class="fbtn ${u.facing==='bottom'?'on':''}" onclick="assignFacing('${u.uid}','bottom')">↓S</button>
       <button class="fbtn ${u.facing==='left'?'on':''}"   onclick="assignFacing('${u.uid}','left')">←O</button>
     </div>`:'';
-    const placeBtn=useFree?`<button class="place-btn ${isPlacing?'on':''}" onclick="startPlace('${u.uid}')">${isPlacing?'✔ Clic en el plano':'🎯 Ubicar en el plano'}</button>`:'';
-    const status=u.placed?(u.wall?`Pared ${({top:'Norte',bottom:'Sur',left:'Oeste',right:'Este'}[u.wall]||u.wall)}`:'Interior — arrastrá'):'Sin colocar';
+    const placeBtn=(useFree||u.wall==='ceiling')?`<button class="place-btn ${isPlacing?'on':''}" onclick="startPlace('${u.uid}')">${isPlacing?'✔ Clic en el plano':'🎯 Ubicar en el plano'}</button>`:'';
+    const status=u.placed?(u.wall?(u.wall==='ceiling'?'Techo':`Pared ${wallNames[u.wall]||u.wall}`):'Interior — arrastrá'):'Sin colocar';
     return `<div class="eq-card ${u.placed?'placed':''} ${isPlacing?'placing':''}">
       <div class="eq-head">
         <div class="eq-dot" style="background:${m.col}"></div>
