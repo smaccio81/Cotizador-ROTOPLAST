@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Precios — Simple Clima</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --v:#2563EB;--n:#0D1B2E;--go:#1A2840;--am:#F5C400;
+  --r:#e74c3c;--g:#16a34a;--br:#ddd;--gc:#F0F4FF;--f:'Montserrat',sans-serif;
+}
+body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;display:flex;flex-direction:column;font-size:13px;}
+
+/* HEADER */
+.hdr{background:var(--n);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--v);flex-shrink:0;}
+.hdr-title{color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.hdr-title span{color:var(--v);}
+.hdr-actions{display:flex;gap:8px;align-items:center;}
+.badge-custom{font-size:9px;font-weight:700;color:#92400E;background:#fef9c3;padding:3px 9px;border-radius:10px;border:1px solid #e8d870;display:none;}
+
+/* TOOLBAR */
+.toolbar{background:#fff;border-bottom:1px solid var(--br);padding:10px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.toolbar input[type=search]{border:1.5px solid var(--br);border-radius:5px;padding:7px 12px;font-family:var(--f);font-size:12px;width:240px;}
+.toolbar input[type=search]:focus{outline:none;border-color:var(--v);}
+.toolbar-info{font-size:10px;color:#aaa;margin-left:auto;}
+
+/* MAIN */
+.main{flex:1;padding:18px 20px;overflow-y:auto;}
+
+/* CATEGORY SECTION */
+.cat-section{background:#fff;border:1px solid var(--br);border-radius:8px;margin-bottom:14px;overflow:hidden;}
+.cat-header{background:var(--n);padding:9px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.cat-header h3{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.8px;}
+.cat-header .cat-ic{width:24px;height:24px;background:var(--v);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.cat-header .cat-count{font-size:10px;color:#aaa;margin-left:auto;}
+.cat-header .cat-toggle{color:#aaa;font-size:12px;transition:transform .2s;}
+.cat-header.collapsed .cat-toggle{transform:rotate(-90deg);}
+.cat-body{padding:0;}
+
+/* TABLE */
+.precio-table{width:100%;border-collapse:collapse;font-size:12px;}
+.precio-table th{background:#f5f5f5;padding:7px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:1px solid var(--br);}
+.precio-table th.r{text-align:right;}
+.precio-table td{padding:7px 14px;border-bottom:1px solid #f5f5f5;vertical-align:middle;}
+.precio-table tr:last-child td{border-bottom:none;}
+.precio-table tr:hover td{background:#fafafa;}
+.precio-table tr.hidden{display:none;}
+
+/* Equipment name cell */
+.eq-nombre{font-weight:700;color:var(--n);}
+.eq-tipo{font-size:10px;color:#aaa;margin-top:1px;}
+.eq-caudal{font-size:10px;color:#bbb;}
+
+/* Price inputs */
+.inp-precio{width:100px;border:1.5px solid #e8d870;border-radius:4px;padding:5px 8px;font-family:var(--f);font-size:12px;font-weight:700;text-align:right;background:#fffbee;color:var(--n);}
+.inp-precio:focus{outline:none;border-color:var(--v);background:#fff;}
+.inp-costo{width:100px;border:1.5px solid #e0e0e0;border-radius:4px;padding:5px 8px;font-family:var(--f);font-size:12px;font-weight:600;text-align:right;background:#fafafa;color:var(--n);}
+.inp-costo:focus{outline:none;border-color:var(--v);background:#fff;}
+.td-r{text-align:right;}
+
+/* Margen */
+.margen{font-size:11px;font-weight:700;text-align:right;}
+.margen.alto{color:var(--g);}
+.margen.medio{color:#d97706;}
+.margen.bajo{color:var(--r);}
+
+/* Modified indicator */
+.mod-dot{width:7px;height:7px;border-radius:50%;background:var(--am);display:inline-block;margin-right:4px;opacity:0;}
+.mod-dot.active{opacity:1;}
+
+/* Footer */
+.footer{background:var(--n);padding:11px 20px;display:flex;align-items:center;gap:10px;border-top:3px solid var(--v);flex-shrink:0;flex-wrap:wrap;}
+.footer-info{font-size:10px;color:#555;margin-right:auto;}
+
+/* Buttons */
+.btn{font-family:var(--f);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px 18px;border-radius:5px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-v{background:var(--v);color:#fff;}
+.btn-v:hover{background:#1D4ED8;}
+.btn-am{background:var(--am);color:var(--n);}
+.btn-am:hover{background:#e0b000;}
+.btn-o{background:transparent;color:#ccc;border:1.5px solid #555;}
+.btn-o:hover{border-color:#999;color:#fff;}
+.btn-r{background:transparent;color:#e88;border:1.5px solid #555;}
+.btn-r:hover{border-color:var(--r);color:var(--r);}
+
+/* No-opener message */
+.no-opener{text-align:center;padding:60px 20px;color:#aaa;}
+.no-opener h2{font-size:16px;margin-bottom:10px;color:#666;}
+.no-opener p{font-size:12px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">💰 <span>Simple Clima</span> — Gestión de Precios</div>
+  <div class="hdr-actions">
+    <span class="badge-custom" id="badge_custom">● Precios personalizados activos</span>
+    <button class="btn btn-r" onclick="restablecerPrecios()">↩ Restablecer originales</button>
+    <button class="btn btn-am" onclick="guardarPrecios()">💾 Guardar todos los precios</button>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input type="search" id="buscador" placeholder="🔍  Buscar equipo..." oninput="filtrar(this.value)">
+  <span style="font-size:10px;color:#aaa;">Precio = venta al cliente &nbsp;·&nbsp; Costo = precio de compra</span>
+  <span class="toolbar-info" id="toolbar_info"></span>
+</div>
+
+<div class="main" id="main_content">
+  <div class="no-opener" id="msg_no_opener" style="display:none;">
+    <h2>⚠ Sin datos de catálogo</h2>
+    <p>Abrí este panel desde el cotizador haciendo clic en <strong>💰 Precios</strong> en el header.<br>
+    Los equipos se cargan automáticamente desde el catálogo.</p>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="footer-info" id="footer_info">—</span>
+  <button class="btn btn-r" onclick="restablecerPrecios()">↩ Restablecer originales</button>
+  <button class="btn btn-am" onclick="guardarPrecios()">💾 Guardar todos los precios</button>
+</div>
+
+<script>
+// ── Datos de catálogo ──────────────────────────────────────────────────────
+let CAT = null;  // { EQI_BASE, EXT_BASE, ACC_BASE }
+let PRECIOS = {}; // {id: {p, c}}
+let ORIGINALES = {}; // valores originales del catálogo
+let modificados = new Set();
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function init() {
+  // Intentar obtener catálogo desde el cotizador (popup)
+  if (window.opener && window.opener.EQI_BASE) {
+    CAT = {
+      EQI_BASE: window.opener.EQI_BASE,
+      EXT_BASE: window.opener.EXT_BASE,
+      ACC_BASE: window.opener.ACC_BASE || [],
+    };
+  } else {
+    document.getElementById('msg_no_opener').style.display = '';
+    document.getElementById('toolbar_info').textContent = 'Sin catálogo';
+    return;
+  }
+
+  // Guardar valores originales
+  todosLosItems().forEach(e => { ORIGINALES[e.id] = {p: e.p, c: e.c}; });
+
+  // Cargar overrides de localStorage
+  try {
+    const s = localStorage.getItem('simpleclima_prices');
+    if (s) PRECIOS = JSON.parse(s);
+  } catch(e) {}
+
+  // Para cada item, completar PRECIOS con valor actual (override o original)
+  todosLosItems().forEach(e => {
+    if (!PRECIOS[e.id]) PRECIOS[e.id] = {p: e.p, c: e.c};
+  });
+
+  renderTablas();
+  actualizarBadge();
+  actualizarFooterInfo();
+}
+
+function todosLosItems() {
+  if (!CAT) return [];
+  return [
+    ...Object.values(CAT.EQI_BASE).flat(),
+    ...CAT.EXT_BASE,
+    ...CAT.ACC_BASE,
+  ];
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+const SECCIONES = [
+  { key: 'pw',  titulo: 'Inyección — Split Pared',         icon: '❄',  src: () => CAT.EQI_BASE.pw },
+  { key: 'tc',  titulo: 'Inyección — Techo / Cassette',    icon: '⊞',  src: () => CAT.EQI_BASE.tc },
+  { key: 'si',  titulo: 'Inyección — Siroco / Central',    icon: '≋',  src: () => CAT.EQI_BASE.si },
+  { key: 'po',  titulo: 'Inyección — Portátil',            icon: '□',  src: () => CAT.EQI_BASE.po },
+  { key: 'ext', titulo: 'Extracción',                      icon: '⊗',  src: () => CAT.EXT_BASE    },
+  { key: 'acc', titulo: 'Accesorios',                      icon: '🔧', src: () => CAT.ACC_BASE    },
+];
+
+function renderTablas() {
+  const container = document.getElementById('main_content');
+  // Preservar msg_no_opener
+  container.innerHTML = '';
+
+  let totalItems = 0;
+
+  SECCIONES.forEach(sec => {
+    const items = sec.src();
+    if (!items || !items.length) return;
+    totalItems += items.length;
+
+    const section = document.createElement('div');
+    section.className = 'cat-section';
+    section.id = 'sec_' + sec.key;
+
+    section.innerHTML = `
+      <div class="cat-header" onclick="toggleSec('${sec.key}')">
+        <div class="cat-ic">${sec.icon}</div>
+        <h3>${sec.titulo}</h3>
+        <span class="cat-count">${items.length} equipo${items.length > 1 ? 's' : ''}</span>
+        <span class="cat-toggle">▾</span>
+      </div>
+      <div class="cat-body" id="body_${sec.key}">
+        <table class="precio-table">
+          <thead>
+            <tr>
+              <th>Equipo</th>
+              <th class="r" style="width:120px;">Precio Venta (USD)</th>
+              <th class="r" style="width:120px;">Costo (USD)</th>
+              <th class="r" style="width:80px;">Margen</th>
+            </tr>
+          </thead>
+          <tbody id="tbody_${sec.key}">
+          </tbody>
+        </table>
+      </div>`;
+
+    container.appendChild(section);
+
+    const tbody = section.querySelector('#tbody_' + sec.key);
+    items.forEach(eq => {
+      const pr = PRECIOS[eq.id] || {p: eq.p, c: eq.c};
+      const isOverride = pr.p !== eq.p || pr.c !== eq.c;
+      const row = document.createElement('tr');
+      row.id = 'row_' + eq.id;
+      row.dataset.nombre = (eq.n + ' ' + (eq.t || '')).toLowerCase();
+      row.innerHTML = buildRow(eq, pr, isOverride);
+      tbody.appendChild(row);
+    });
+  });
+
+  document.getElementById('toolbar_info').textContent = totalItems + ' equipos en catálogo';
+}
+
+function buildRow(eq, pr, isOverride) {
+  const margen = pr.p > 0 ? Math.round((pr.p - pr.c) / pr.p * 100) : 0;
+  const margenClass = margen >= 30 ? 'alto' : margen >= 15 ? 'medio' : 'bajo';
+  const caudal = eq.q ? formatNum(eq.q) + ' m³/h' : '';
+  return `
+    <td>
+      <span class="mod-dot ${isOverride ? 'active' : ''}" id="dot_${eq.id}" title="Precio modificado"></span>
+      <span class="eq-nombre">${eq.n}</span>
+      <div class="eq-tipo">${eq.t || ''} ${caudal ? '· ' + caudal : ''}</div>
+    </td>
+    <td class="td-r">
+      <input type="number" class="inp-precio" id="p_${eq.id}"
+        value="${pr.p}" min="0" step="1"
+        oninput="onChangeP('${eq.id}', this)">
+    </td>
+    <td class="td-r">
+      <input type="number" class="inp-costo" id="c_${eq.id}"
+        value="${pr.c}" min="0" step="1"
+        oninput="onChangeC('${eq.id}', this)">
+    </td>
+    <td>
+      <div class="margen ${margenClass}" id="mg_${eq.id}">${margen}%</div>
+    </td>`;
+}
+
+function formatNum(n) {
+  return n ? n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '0';
+}
+
+// ── Interacción ────────────────────────────────────────────────────────────
+function onChangeP(id, input) {
+  const p = parseFloat(input.value) || 0;
+  if (!PRECIOS[id]) PRECIOS[id] = {};
+  PRECIOS[id].p = p;
+  modificados.add(id);
+  actualizarMargen(id);
+  actualizarDot(id);
+}
+
+function onChangeC(id, input) {
+  const c = parseFloat(input.value) || 0;
+  if (!PRECIOS[id]) PRECIOS[id] = {};
+  PRECIOS[id].c = c;
+  modificados.add(id);
+  actualizarMargen(id);
+  actualizarDot(id);
+}
+
+function actualizarMargen(id) {
+  const pr = PRECIOS[id];
+  if (!pr) return;
+  const margen = pr.p > 0 ? Math.round((pr.p - pr.c) / pr.p * 100) : 0;
+  const el = document.getElementById('mg_' + id);
+  if (!el) return;
+  el.textContent = margen + '%';
+  el.className = 'margen ' + (margen >= 30 ? 'alto' : margen >= 15 ? 'medio' : 'bajo');
+}
+
+function actualizarDot(id) {
+  const orig = ORIGINALES[id];
+  const pr   = PRECIOS[id];
+  const dot  = document.getElementById('dot_' + id);
+  if (dot && orig && pr) dot.classList.toggle('active', pr.p !== orig.p || pr.c !== orig.c);
+}
+
+function toggleSec(key) {
+  const header = document.querySelector('#sec_' + key + ' .cat-header');
+  const body   = document.getElementById('body_' + key);
+  if (!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  header.classList.toggle('collapsed', !collapsed);
+}
+
+function filtrar(q) {
+  const term = q.trim().toLowerCase();
+  document.querySelectorAll('.precio-table tbody tr').forEach(row => {
+    const nombre = row.dataset.nombre || '';
+    row.classList.toggle('hidden', !!term && !nombre.includes(term));
+  });
+}
+
+// ── Guardar / Restablecer ──────────────────────────────────────────────────
+function guardarPrecios() {
+  if (!Object.keys(PRECIOS).length) return;
+
+  localStorage.setItem('simpleclima_prices', JSON.stringify(PRECIOS));
+
+  // Aplicar en el cotizador abierto sin necesidad de recargar
+  if (window.opener && window.opener.initPrices) {
+    window.opener.initPrices();
+    toast('✔ Precios guardados y aplicados al cotizador');
+  } else {
+    toast('✔ Precios guardados — se aplicarán la próxima vez que abras el cotizador');
+  }
+
+  modificados.clear();
+  actualizarBadge();
+  actualizarFooterInfo();
+}
+
+function restablecerPrecios() {
+  if (!confirm('¿Restablecer todos los precios a los valores originales del catálogo?\n\nSe eliminarán todos los cambios guardados.')) return;
+  localStorage.removeItem('simpleclima_prices');
+
+  // Recargar valores originales en memoria
+  todosLosItems().forEach(e => { PRECIOS[e.id] = {p: e.p, c: e.c}; });
+  modificados.clear();
+
+  // Actualizar inputs en pantalla
+  todosLosItems().forEach(e => {
+    const ip = document.getElementById('p_' + e.id);
+    const ic = document.getElementById('c_' + e.id);
+    if (ip) ip.value = e.p;
+    if (ic) ic.value = e.c;
+    actualizarMargen(e.id);
+    actualizarDot(e.id);
+  });
+
+  // Aplicar en el cotizador
+  if (window.opener && window.opener.initPrices) window.opener.initPrices();
+
+  actualizarBadge();
+  actualizarFooterInfo();
+  toast('↩ Precios restablecidos a valores originales');
+}
+
+// ── UI utils ───────────────────────────────────────────────────────────────
+function actualizarBadge() {
+  const hayCustom = !!localStorage.getItem('simpleclima_prices');
+  document.getElementById('badge_custom').style.display = hayCustom ? '' : 'none';
+  // También actualizar indicador en el cotizador
+  if (window.opener) {
+    const btn = window.opener.document.getElementById('btn_precios');
+    if (btn) btn.style.borderColor = hayCustom ? '#F5C400' : '';
+  }
+}
+
+function actualizarFooterInfo() {
+  const s = localStorage.getItem('simpleclima_prices');
+  if (s) {
+    const n = Object.keys(JSON.parse(s)).length;
+    document.getElementById('footer_info').textContent = `${n} precios personalizados guardados en este dispositivo`;
+  } else {
+    document.getElementById('footer_info').textContent = 'Sin precios personalizados — usando valores del catálogo';
+  }
+}
+
+function toast(msg) {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_toast';
+    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0D1B2E;color:#fff;padding:10px 22px;border-radius:6px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;border-left:4px solid #2563EB;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 3000);
+}
+
+// ── Arranque ───────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
