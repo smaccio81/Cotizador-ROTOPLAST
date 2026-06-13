@@ -257,6 +257,7 @@ let SC = 50; // pixels per meter
 let UNITS=[], ELEMS=[], HISTORY=[];
 let SELECTED=null, TOOL='select', DRAG=null, ADRAW=null, PLACE_ID=null, BG=null;
 let UID=1;
+let EDIT_ID=null;
 const gid=()=>'u'+(UID++);
 
 // Wall categories (use wall buttons), free categories (use click-to-place)
@@ -1378,7 +1379,7 @@ function downloadPNG(){
 
 function sendToCotizador(){
   if(!window.opener){alert('Abrí esta herramienta desde el cotizador.');return;}
-  window.opener.postMessage({type:'esquema_sc',dataURL:CV.toDataURL('image/png')},'*');
+  window.opener.postMessage({type:'esquema_sc',dataURL:CV.toDataURL('image/png'),editId:EDIT_ID},'*');
   window.close();
 }
 
@@ -1388,6 +1389,7 @@ function init(){
   if(p.has('largo')){ROOM.wm=parseFloat(p.get('largo'))||10;document.getElementById('inp_largo').value=ROOM.wm;}
   if(p.has('ancho')){ROOM.hm=parseFloat(p.get('ancho'))||6; document.getElementById('inp_ancho').value=ROOM.hm;}
   if(p.has('alto')) {ROOM.alto=parseFloat(p.get('alto'))||3; document.getElementById('inp_alto').value=ROOM.alto;}
+  EDIT_ID=p.get('editId')||null;
   const ambNom=p.get('amb')||'';
   if(ambNom) document.getElementById('amb_nombre').textContent='— '+ambNom;
 

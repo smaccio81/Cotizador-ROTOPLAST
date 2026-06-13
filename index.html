@@ -724,18 +724,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <div class="ph"><div class="ic">🗺️</div><h2>Esquema de Instalación <span style="font-size:10px;color:#aaa;font-weight:400;text-transform:none;margin-left:6px;">(opcional)</span></h2></div>
     <div class="pb">
       <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:10px;letter-spacing:.4px;">ESQUEMA GENERAL DEL PROYECTO</div>
-      <div class="uz" onclick="document.getElementById('esq_f').click()" id="uz_el">
-        <input type="file" id="esq_f" accept="image/*" onchange="loadEsq(event)">
-        <div class="ui">🖼️</div>
-        <p>Subir esquema general de instalación<br><small>JPG, PNG — se incluirá en el presupuesto</small></p>
-      </div>
-      <img id="esq_prev" class="uprev" style="display:none;">
-      <div id="esq_clr" style="display:none;margin-top:8px;">
-        <button class="btn btn-o" style="font-size:10px;padding:6px 12px;" onclick="clearEsq()">✕ Quitar imagen</button>
-      </div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--br);text-align:center;">
-        <p style="font-size:10px;color:#aaa;margin-bottom:8px;">O generá el esquema directamente con los equipos del proyecto</p>
-        <button class="btn btn-n" style="justify-content:center;" onclick="abrirEsquema()">🏗️ Generar esquema de instalación</button>
+      <input type="file" id="esq_f" accept="image/*" multiple style="display:none" onchange="loadEsq(event)">
+      <div id="esq_gallery"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-o" style="flex:1;justify-content:center;font-size:10px;padding:6px 10px;" onclick="document.getElementById('esq_f').click()">📎 Agregar imagen</button>
+        <button class="btn btn-n" style="flex:1;justify-content:center;font-size:10px;padding:6px 10px;" onclick="abrirEsquema()">🏗️ Generar esquema</button>
       </div>
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid #eee;">
         <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:10px;letter-spacing:.4px;">FOTOS / CROQUIS POR AMBIENTE</div>
@@ -1134,7 +1127,7 @@ function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').valu
 
 // ====== ESTADO ======
 function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null};}
-const S={vol:0,aT:0,aC:0,pE:60,ren:0,qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrl:null,modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false};
+const S={vol:0,aT:0,aC:0,pE:60,ren:0,qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false};
 
 // ====== MODE ======
 function setMode(m){
@@ -1174,6 +1167,7 @@ function init(){
   renderProjPtGrid();
   renderAmbTabs();
   renderItemsLibres();
+  renderEsqGallery();
 }
 
 // ====== AMBIENTES ======
@@ -1488,22 +1482,48 @@ function updEstados(){
 
 // ====== CROQUIS ======
 function loadEsq(e){
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    S.esqUrl=ev.target.result;
-    const p=document.getElementById('esq_prev');p.src=ev.target.result;p.style.display='block';
-    document.getElementById('uz_el').querySelector('p').textContent='✔ Imagen cargada — hacé clic para cambiar';
-    document.getElementById('esq_clr').style.display='block';
-  };
-  r.readAsDataURL(file);
+  const files=Array.from(e.target.files);
+  if(!files.length)return;
+  let pending=files.length;
+  files.forEach(file=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      S.esqUrls.push({id:'ei'+Date.now()+Math.random().toString(36).slice(2),url:ev.target.result,caption:'',source:'upload'});
+      if(--pending===0){renderEsqGallery();document.getElementById('esq_f').value='';}
+    };
+    r.readAsDataURL(file);
+  });
 }
-function clearEsq(){
-  S.esqUrl=null;
-  document.getElementById('esq_prev').style.display='none';
-  document.getElementById('esq_clr').style.display='none';
-  document.getElementById('uz_el').querySelector('p').textContent='Hacé clic para subir el esquema de instalación';
-  document.getElementById('esq_f').value='';
+function removeEsq(id){
+  S.esqUrls=S.esqUrls.filter(x=>x.id!==id);
+  renderEsqGallery();
+}
+function updateEsqCaption(id,val){
+  const item=S.esqUrls.find(x=>x.id===id);
+  if(item)item.caption=val;
+}
+function renderEsqGallery(){
+  const el=document.getElementById('esq_gallery');
+  if(!el)return;
+  if(!S.esqUrls.length){
+    el.innerHTML='<div style="font-size:10px;color:#aaa;text-align:center;padding:14px 10px;border:2px dashed #e0e0e0;border-radius:6px;margin-bottom:8px;">Sin imágenes · Subí JPG/PNG o generá un esquema</div>';
+    return;
+  }
+  el.innerHTML=S.esqUrls.map((img,i)=>`
+    <div style="border:1.5px solid var(--br);border-radius:6px;padding:8px;margin-bottom:8px;background:#fafafa;">
+      <div style="position:relative;margin-bottom:7px;">
+        <img src="${img.url}" style="width:100%;max-height:130px;object-fit:contain;border-radius:4px;display:block;background:#fff;">
+        <button onclick="removeEsq('${img.id}')" title="Quitar" style="position:absolute;top:3px;right:3px;background:#e74c3c;color:#fff;border:none;border-radius:3px;width:19px;height:19px;cursor:pointer;font-size:11px;line-height:1;padding:0;">✕</button>
+        ${img.source==='esquema'?`<button onclick="abrirEsquema('${img.id}')" title="Editar en el esquematizador" style="position:absolute;top:3px;right:26px;background:var(--v);color:#fff;border:none;border-radius:3px;padding:2px 6px;cursor:pointer;font-size:9px;font-weight:700;line-height:19px;">✏ editar</button>`:''}
+        <div style="position:absolute;bottom:3px;left:4px;background:rgba(0,0,0,.45);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px;">${img.source==='esquema'?'ESQUEMA':'FOTO'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <label style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;white-space:nowrap;">Pie:</label>
+        <input type="text" value="${img.caption||''}" placeholder="Pie de imagen (opcional)"
+               oninput="updateEsqCaption('${img.id}',this.value)"
+               style="flex:1;border:1px solid #ddd;border-radius:4px;padding:3px 7px;font-size:10px;font-family:inherit;">
+      </div>
+    </div>`).join('');
 }
 
 // ====== ESQUEMA DE INSTALACIÓN ======
@@ -1518,7 +1538,7 @@ function getEqCat(id){
   if(id.startsWith('ext_siroco')) return 'ext_si';
   return 'ext_exa';
 }
-function abrirEsquema(){
+function abrirEsquema(editId){
   const amb=S.ambientes[S.ambActivo];
   const largo=parseFloat(document.getElementById('d_l').value)||0;
   const ancho=parseFloat(document.getElementById('d_a').value)||0;
@@ -1537,15 +1557,20 @@ function abrirEsquema(){
     amb:amb.nombre||('Ambiente '+(S.ambActivo+1)),
     eq:JSON.stringify(eq)
   });
+  if(editId) params.set('editId',editId);
   window.open('esquema.html?'+params.toString(),'esquema_sc','width=1100,height=780,resizable=yes');
 }
 window.addEventListener('message',e=>{
   if(e.data&&e.data.type==='esquema_sc'){
-    S.esqUrl=e.data.dataURL;
-    const p=document.getElementById('esq_prev');
-    p.src=e.data.dataURL; p.style.display='block';
-    document.getElementById('esq_clr').style.display='block';
-    document.getElementById('uz_el').querySelector('p').textContent='✔ Imagen cargada — hacé clic para cambiar';
+    const {dataURL,editId}=e.data;
+    if(editId){
+      const item=S.esqUrls.find(x=>x.id===editId);
+      if(item){item.url=dataURL;}
+      else S.esqUrls.push({id:editId,url:dataURL,caption:'',source:'esquema'});
+    } else {
+      S.esqUrls.push({id:'ei'+Date.now(),url:dataURL,caption:'',source:'esquema'});
+    }
+    renderEsqGallery();
   }
 });
 
@@ -1881,15 +1906,29 @@ function renderPpto(){
     }
   }
 
-  // ESQUEMA GENERAL
-  if(S.esqUrl){
+  // ESQUEMAS / FOTOS DEL PROYECTO
+  const _esqs=S.esqUrls||[];
+  if(_esqs.length>0){
     h+=`<div class="pp-sec">Esquema de Instalación</div>`;
-    h+=`<img src="${S.esqUrl}" class="esq-img" alt="Esquema" style="margin-bottom:14px;">`;
+    if(_esqs.length===1){
+      h+=`<div style="margin-bottom:14px;">`;
+      h+=`<img src="${_esqs[0].url}" class="esq-img" alt="${_esqs[0].caption||'Esquema'}" style="margin-bottom:${_esqs[0].caption?'4px':'14px'};">`;
+      if(_esqs[0].caption)h+=`<div style="font-size:10px;text-align:center;color:#666;margin-bottom:10px;font-style:italic;">${_esqs[0].caption}</div>`;
+      h+=`</div>`;
+    } else {
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">`;
+      _esqs.forEach(img=>{
+        h+=`<div><img src="${img.url}" style="width:100%;max-height:200px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px;display:block;" alt="${img.caption||''}">`;
+        if(img.caption)h+=`<div style="font-size:9px;text-align:center;color:#666;margin-top:3px;font-style:italic;">${img.caption}</div>`;
+        h+=`</div>`;
+      });
+      h+=`</div>`;
+    }
   }
   // FOTOS/CROQUIS POR AMBIENTE
   const ambsConEsq=(S.ambientes||[]).filter(a=>a.esqUrl);
   if(ambsConEsq.length>0){
-    if(!S.esqUrl)h+=`<div class="pp-sec">Esquemas por Ambiente</div>`;
+    if(!_esqs.length)h+=`<div class="pp-sec">Esquemas por Ambiente</div>`;
     ambsConEsq.forEach((amb,i)=>{
       const nom=amb.nombre||('Ambiente '+(i+1));
       h+=`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:4px;">${nom}</div>`;
@@ -2415,7 +2454,8 @@ function saveCurrentBudget(){
     savedAt:new Date().toISOString(),form:_collectForm(),
     state:{ambientes:JSON.parse(JSON.stringify(S.ambientes)),ambActivo:S.ambActivo,
       vol:S.vol,aT:S.aT,aC:S.aC,pE:S.pE,ren:S.ren,qi:{...S.qi},qe:{...S.qe},com:S.com,pCom:S.pCom,desc:S.desc,modo:S.modo,qpt_proj:{...S.qpt_proj},
-      itemsLibres:JSON.parse(JSON.stringify(S.itemsLibres||[])),ars:S.ars,cotizBNA:S.cotizBNA,iva:S.iva},
+      itemsLibres:JSON.parse(JSON.stringify(S.itemsLibres||[])),ars:S.ars,cotizBNA:S.cotizBNA,iva:S.iva,
+      esqUrls:JSON.parse(JSON.stringify(S.esqUrls||[]))},
     prices:JSON.parse(JSON.stringify(PRICES)),
     ptPrices:typeof PROJ_PT_PRICES!=='undefined'?JSON.parse(JSON.stringify(PROJ_PT_PRICES)):{}};
   budgets[id]=snap;
@@ -2427,8 +2467,10 @@ function loadBudget(id){
   if(!confirm('¿Cargar "'+b.name+'"? Los datos actuales se perderán.'))return;
   const st=b.state||{};
   // Restore scalar state fields
-  const {ambientes,ambActivo,qi,qe,...restState}=st;
+  const {ambientes,ambActivo,qi,qe,esqUrls,...restState}=st;
   Object.assign(S,restState);
+  S.esqUrls=esqUrls||[];
+  renderEsqGallery&&renderEsqGallery();
   if(b.prices)Object.assign(PRICES,b.prices);
   if(b.ptPrices&&typeof PROJ_PT_PRICES!=='undefined')Object.assign(PROJ_PT_PRICES,b.ptPrices);
   _applyForm(b.form);
