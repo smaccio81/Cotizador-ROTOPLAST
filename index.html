@@ -1989,7 +1989,7 @@ function renderPpto(){
   // Ítems libres
   (S.itemsLibres||[]).forEach(it=>{if(!it.desc||!(it.qty>0))return;const s=it.qty*it.precio;accRows.push(`<tr><td>${it.desc}</td><td style="text-align:center;">${it.qty}</td><td style="text-align:right;">${sym} ${fv(it.precio)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
   if(accRows.length>0){
-    if(multiAmb)h+=`<div class="pp-amb-sep">Accesorios y Servicios</div>`;
+    h+=`<div class="pp-amb-sep">Accesorios y Servicios</div>`;
     h+=_tblHead()+accRows.join('')+`</tbody></table>`;
   }
   // Totalizador final
