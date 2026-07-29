@@ -1701,6 +1701,16 @@ function calcEco(){
   if(qE>0&&moExt)rows+=`<tr><td style="font-weight:600;">Instalación Extractor - M.O.</td><td style="text-align:center;">${qE}</td><td style="text-align:right;color:#aaa;">USD ${fn(moEV)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(moEV)}</td><td style="text-align:right;">USD ${fn(qE*moEV)}</td><td style="text-align:right;font-weight:700;">USD ${fn(qE*moEV)}</td></tr>`;
   if(!moIny&&qI>0)rows+=`<tr><td colspan="6" style="color:#bbb;font-style:italic;font-size:10px;">M.O. de inyectores no incluida en este presupuesto</td></tr>`;
   if(!moExt&&qE>0)rows+=`<tr><td colspan="6" style="color:#bbb;font-style:italic;font-size:10px;">M.O. de extractores no incluida en este presupuesto</td></tr>`;
+  // ACCESORIOS: companions automáticos (rejillas de techo) + opcionales
+  const mQaComp={};
+  EQI_BASE.tc.forEach(eq=>{if(eq.companion&&(mQi[eq.id]||0)>0)mQaComp[eq.companion]=(mQaComp[eq.companion]||0)+(mQi[eq.id]||0);});
+  const mQaOpt={};
+  ACC_BASE.filter(a=>a.optional).forEach(a=>{if((S.qa[a.id]||0)>0)mQaOpt[a.id]=S.qa[a.id];});
+  if(Object.keys(mQaComp).length||Object.keys(mQaOpt).length){
+    rows+=`<tr class="sec"><td colspan="6">ACCESORIOS</td></tr>`;
+    Object.entries(mQaComp).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pc=getP(id,'c'),pp=getP(id,'p');rows+=`<tr><td style="font-weight:600;">${acc.n} <span style="color:#bbb;font-weight:400;font-size:10px;">(con equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;color:#aaa;">USD ${fn(pc)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(pp)}</td><td style="text-align:right;">USD ${fn(q*pc)}</td><td style="text-align:right;font-weight:700;">USD ${fn(q*pp)}</td></tr>`;});
+    Object.entries(mQaOpt).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pc=getP(id,'c'),pp=getP(id,'p');rows+=`<tr><td style="font-weight:600;">${acc.n}</td><td style="text-align:center;">${q}</td><td style="text-align:right;color:#aaa;">USD ${fn(pc)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(pp)}</td><td style="text-align:right;">USD ${fn(q*pc)}</td><td style="text-align:right;font-weight:700;">USD ${fn(q*pp)}</td></tr>`;});
+  }
   // DESCUENTO: resta precio al cliente → aparece en tabla de detalle
   if(S.desc&&descMonto>0){
     const dTipo=document.getElementById('desc_tipo').value;
