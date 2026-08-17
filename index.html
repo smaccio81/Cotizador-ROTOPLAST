@@ -269,7 +269,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     print-color-adjust:exact;
     margin:0;padding:0;
   }
-  .hdr,.snav,.no-print,.acts{display:none!important;}
+  .hdr,.snav,.no-print,.acts,.sidebar{display:none!important;}
   .ppto-wrap{border:none;border-radius:0;}
   .pp{max-width:100%;margin:0;padding:0;}
 
@@ -336,8 +336,10 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   /* When printing portátil: hide project ppto */
   .print-portatil #step5{display:none!important;}
   .print-portatil #dP{display:none!important;}
-  /* When printing project: hide portátil */  
+  /* When printing project: hide portátil */
   .print-proyecto #dPT{display:none!important;}
+  .app-main{margin-left:0!important;}
+  .app-shell{display:block;}
 }
 .pp-print-header{display:none;}
 .pp-print-footer{display:none;}
@@ -434,12 +436,147 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .dim-vol-input{font-size:15px!important;font-weight:700!important;border-color:var(--v)!important;background:#EFF6FF!important;}
 .dim-sup-input{font-size:15px!important;font-weight:700!important;border-color:#2563EB!important;}
 .pct-num-input{width:64px;border:1.5px solid var(--br);border-radius:5px;padding:6px 8px;font-size:16px;font-weight:800;text-align:center;color:var(--v);font-family:var(--f);}
+
+/* ===== SIDEBAR LAYOUT ===== */
+.app-shell{display:flex;min-height:100vh;}
+.sidebar{
+  width:220px;background:var(--go);flex-shrink:0;
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;z-index:100;
+  transition:width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;
+}
+.sidebar.collapsed{width:56px;}
+.sb-header{
+  padding:12px 14px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid #1A3050;flex-shrink:0;
+}
+.sb-logo{height:26px;object-fit:contain;min-width:26px;flex-shrink:0;}
+.sb-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;overflow:hidden;flex:1;}
+.sb-title span{color:var(--v);}
+.sidebar.collapsed .sb-title{opacity:0;width:0;}
+.sb-toggle{background:none;border:none;color:#7090b0;cursor:pointer;font-size:18px;padding:2px 4px;flex-shrink:0;line-height:1;}
+.sb-toggle:hover{color:#fff;}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0;}
+.sb-label{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:#3A5070;padding:12px 16px 4px;white-space:nowrap;
+}
+.sidebar.collapsed .sb-label{opacity:0;}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;font-family:var(--f);font-size:12px;font-weight:600;
+  color:#7090b0;background:none;border:none;cursor:pointer;
+  width:100%;text-align:left;transition:all .15s;white-space:nowrap;
+}
+.sb-item:hover{background:#1A3050;color:#c0d0e0;}
+.sb-item.active{background:var(--v);color:var(--n);}
+.sb-item.done .si-num{background:#1e4d3a;color:#4ade80;}
+.si-icon{font-size:15px;flex-shrink:0;width:24px;text-align:center;display:block;}
+.si-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sidebar.collapsed .si-text{display:none;}
+.si-num{
+  width:22px;height:22px;border-radius:50%;
+  background:#243550;color:#7090b0;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s;
+}
+.sb-item.active .si-num{background:var(--n);color:var(--v);}
+.sb-bottom{padding:10px 12px;border-top:1px solid #1A3050;flex-shrink:0;}
+.sb-mode-toggle{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+.sidebar.collapsed .sb-mode-toggle{display:none;}
+.sb-modeBtn{
+  font-family:var(--f);font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;padding:6px 10px;border:1.5px solid #2A4060;
+  border-radius:4px;background:none;color:#5070a0;cursor:pointer;transition:all .15s;
+}
+.sb-modeBtn.active{background:var(--v);border-color:var(--v);color:var(--n);}
+.sb-firebase-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:700;color:#4ade80;
+  white-space:nowrap;padding-top:6px;
+}
+.sidebar.collapsed .sb-firebase-badge .si-text{display:none;}
+
+.app-main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .25s cubic-bezier(.4,0,.2,1);}
+.app-main.sb-collapsed{margin-left:56px;}
+
+/* hdr sticky dentro de app-main */
+.hdr{position:sticky;top:0;z-index:50;}
+
+/* Ocultar el div.mode-wrap del hdr en pantalla — ya está en sidebar */
+.hdr .mode-wrap{display:none;}
+
+/* Ajustar .main para no tener max-width fijo en modo sidebar */
+.app-main .main{max-width:none;margin:0;padding:22px 24px;}
+
+@media(max-width:768px){
+  .sidebar{width:56px;}
+  .sidebar.collapsed{width:0;}
+  .app-main{margin-left:56px;}
+  .app-main.sb-collapsed{margin-left:0;}
+}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
+
+<div class="app-shell" id="app_shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <img id="sb_logo" class="sb-logo" alt="SC">
+    <span class="sb-title">Simple <span>Clima</span></span>
+    <button class="sb-toggle" onclick="toggleSidebar()" title="Colapsar">&#9776;</button>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-label">Clientes</div>
+    <button class="sb-item" id="sbi_clientes" onclick="goSection('clientes')">
+      <span class="si-icon">&#128101;</span><span class="si-text">Clientes</span>
+    </button>
+    <div class="sb-label">Cotización</div>
+    <button class="sb-item active" id="sbi_1" onclick="goStep(1)">
+      <span class="si-num">1</span><span class="si-text">Cliente / Proyecto</span>
+    </button>
+    <button class="sb-item" id="sbi_2" onclick="goStep(2)">
+      <span class="si-num">2</span><span class="si-text">Espacio</span>
+    </button>
+    <button class="sb-item" id="sbi_3" onclick="goStep(3)">
+      <span class="si-num">3</span><span class="si-text">Equipos</span>
+    </button>
+    <button class="sb-item" id="sbi_4" onclick="goStep(4)">
+      <span class="si-num">4</span><span class="si-text">Económico</span>
+    </button>
+    <button class="sb-item" id="sbi_5" onclick="goStep(5)">
+      <span class="si-num">5</span><span class="si-text">Presupuesto</span>
+    </button>
+    <div class="sb-label">Herramientas</div>
+    <button class="sb-item" onclick="saveCurrentBudget()">
+      <span class="si-icon">&#128190;</span><span class="si-text">Guardar</span>
+    </button>
+    <button class="sb-item" onclick="openGestor()">
+      <span class="si-icon">&#128194;</span><span class="si-text">Presupuestos</span>
+    </button>
+    <button class="sb-item" onclick="abrirPrecios()">
+      <span class="si-icon">&#128176;</span><span class="si-text">Precios</span>
+    </button>
+  </div>
+  <div class="sb-bottom">
+    <div class="sb-mode-toggle">
+      <button class="sb-modeBtn active" onclick="setMode('p')" id="mP_sb">&#128208; Proyecto</button>
+      <button class="sb-modeBtn" onclick="setMode('pt')" id="mPT_sb">&#127939; Port&#225;til</button>
+    </div>
+    <div class="sb-firebase-badge" id="sb_fb_badge" style="display:none;">
+      <span>&#9729;</span><span class="si-text"> Firebase activo</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="app-main" id="app_main">
 
 <div class="hdr">
   <div class="hdr-l">
@@ -452,21 +589,56 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <button class="hdr-btn" id="btn_precios" onclick="abrirPrecios()" title="Gestión de precios base">&#128176; Precios</button>
   </div>
   <div class="mode-wrap">
-    <button class="mbtn active" onclick="setMode('p')" id="mP">📐 Proyecto</button>
-    <button class="mbtn" onclick="setMode('pt')" id="mPT">🏃 Portátil</button>
+    <button class="mbtn active" onclick="setMode('p')" id="mP">&#128208; Proyecto</button>
+    <button class="mbtn" onclick="setMode('pt')" id="mPT">&#127939; Port&#225;til</button>
   </div>
 </div>
 
 <!-- MODO PROYECTO -->
 <div id="dP">
-<div class="snav">
-  <button class="sbtn active" onclick="goStep(1)" id="sb1"><span class="nm">1</span>Cliente</button>
-  <button class="sbtn" onclick="goStep(2)" id="sb2"><span class="nm">2</span>Espacio</button>
-  <button class="sbtn" onclick="goStep(3)" id="sb3"><span class="nm">3</span>Equipos</button>
-  <button class="sbtn" onclick="goStep(4)" id="sb4"><span class="nm">4</span>Económico</button>
-  <button class="sbtn" onclick="goStep(5)" id="sb5"><span class="nm">5</span>Presupuesto</button>
-</div>
 <div class="main">
+
+<!-- SECCIÓN CLIENTES -->
+<div class="sec" id="sec_clientes">
+  <div class="panel">
+    <div class="ph" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="ic">&#128101;</div><h2>Clientes</h2></div>
+      <button class="btn btn-v" onclick="showClientForm()">+ Nuevo Cliente</button>
+    </div>
+    <div class="pb">
+      <div class="fld" style="margin-bottom:12px;">
+        <label>Buscar cliente</label>
+        <input type="text" id="cli_search" placeholder="Nombre, empresa..." oninput="filterClients(this.value)">
+      </div>
+      <div id="cli_list">
+        <div style="text-align:center;padding:30px;color:#bbb;">Cargando clientes...</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" id="cli_form_panel" style="display:none;">
+    <div class="ph"><div class="ic">&#9999;</div><h2 id="cli_form_tit">Nuevo Cliente</h2></div>
+    <div class="pb">
+      <div class="fg2">
+        <div class="fld"><label>Nombre / Razón Social *</label><input type="text" id="cf_nombre" placeholder="Ej: Juan García / Los Tilos SRL"></div>
+        <div class="fld"><label>Empresa</label><input type="text" id="cf_empresa" placeholder="Ej: Los Tilos SRL"></div>
+        <div class="fld"><label>Teléfono</label><input type="text" id="cf_tel" placeholder="+54 ..."></div>
+        <div class="fld"><label>Email</label><input type="email" id="cf_email" placeholder="contacto@..."></div>
+        <div class="fld full"><label>Dirección</label><input type="text" id="cf_dir" placeholder="Calle, ciudad..."></div>
+      </div>
+      <div class="acts">
+        <button class="btn btn-o" onclick="hideClientForm()">Cancelar</button>
+        <button class="btn btn-v" onclick="saveClient()">Guardar Cliente</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel" id="cli_hist_panel" style="display:none;">
+    <div class="ph" style="justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="ic">&#128203;</div><h2 id="cli_hist_tit">Presupuestos</h2></div>
+      <button class="btn btn-o" style="font-size:10px;" onclick="hideClientHist()">&#8592; Volver</button>
+    </div>
+    <div class="pb" id="cli_hist_body"></div>
+  </div>
+</div>
 
 <!-- S1 -->
 <div class="sec active" id="step1">
@@ -891,6 +1063,9 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 </div>
 </div>
 
+</div><!-- /app-main -->
+</div><!-- /app-shell -->
+
 <script>
 const IMG_SRC = {
   'roto190':'Equipos/Pared/ROTO 190 f.png','roto180':'Equipos/Pared/ROTO 180.png',
@@ -926,6 +1101,7 @@ const TIMG = {"enc_header": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABNkAA
 
 // Set header logo
 document.getElementById('hdr_logo').src = LOGOS.sc;
+const _sbLogo=document.getElementById('sb_logo');if(_sbLogo)_sbLogo.src=LOGOS.sc;
 
 // ══ FIREBASE ══════════════════════════════════════════════════════════════════
 // Pegá acá el objeto firebaseConfig que te da Firebase Console
@@ -1200,7 +1376,7 @@ function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').valu
 
 // ====== ESTADO ======
 function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null};}
-const S={vol:0,aT:0,aC:0,pE:60,ren:0,qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false};
+const S={vol:0,aT:0,aC:0,pE:60,ren:0,qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
 
 // ====== MODE ======
 function setMode(m){
@@ -1210,13 +1386,32 @@ function setMode(m){
   document.getElementById('mP').classList.toggle('active',m==='p');
   document.getElementById('mPT').classList.toggle('active',m==='pt');
   if(m==='pt')renderPtGrid();
+  // Sync sidebar mode buttons
+  document.querySelectorAll('.sb-modeBtn').forEach(b=>b.classList.remove('active'));
+  const sbm=document.getElementById((m==='p'?'mP':'mPT')+'_sb');
+  if(sbm) sbm.classList.add('active');
 }
 
 // ====== STEPS ======
 function goStep(n){
-  document.querySelectorAll('#dP .sec').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step'+n).classList.add('active');
-  document.querySelectorAll('.sbtn').forEach((b,i)=>{b.classList.remove('active','done');if(i+1===n)b.classList.add('active');else if(i+1<n)b.classList.add('done');});
+  // Ocultar sec_clientes
+  const sc=document.getElementById('sec_clientes');
+  if(sc) sc.classList.remove('active');
+  // Ocultar todos los steps
+  [1,2,3,4,5].forEach(i=>{
+    const s=document.getElementById('step'+i);
+    if(s) s.classList.remove('active');
+  });
+  // Mostrar step objetivo
+  const target=document.getElementById('step'+n);
+  if(target) target.classList.add('active');
+  // Actualizar sidebar items
+  _setSidebarActive('sbi_'+n);
+  // Backward compat: update old sbtn buttons if they exist
+  [1,2,3,4,5].forEach(i=>{
+    const sb=document.getElementById('sb'+i);
+    if(sb) sb.classList.toggle('active',i===n);
+  });
   if(n===4)calcEco();
   if(n===5)renderPpto();
   window.scrollTo(0,0);
@@ -2531,7 +2726,7 @@ async function saveCurrentBudget(){
   saveAmbState();
   const id='b'+Date.now();
   const snap={id,name:nm,clientName:document.getElementById('cl_n').value||'—',ref:document.getElementById('cl_r').value||'',
-    savedAt:new Date().toISOString(),form:_collectForm(),
+    savedAt:new Date().toISOString(),form:_collectForm(),_clienteId:S._clienteId||null,
     state:{ambientes:JSON.parse(JSON.stringify(S.ambientes)),ambActivo:S.ambActivo,
       vol:S.vol,aT:S.aT,aC:S.aC,pE:S.pE,ren:S.ren,qi:{...S.qi},qe:{...S.qe},com:S.com,pCom:S.pCom,desc:S.desc,modo:S.modo,qpt_proj:{...S.qpt_proj},
       itemsLibres:JSON.parse(JSON.stringify(S.itemsLibres||[])),ars:S.ars,cotizBNA:S.cotizBNA,iva:S.iva,
@@ -2596,6 +2791,8 @@ async function renderBudgetList(){
     const entries=await _cloudGetAll();
     const badge=document.getElementById('cloud_badge');
     if(badge)badge.style.display=_db?'':'none';
+    const sbBadge=document.getElementById('sb_fb_badge');
+    if(sbBadge) sbBadge.style.display=_db?'flex':'none';
     if(!entries.length){list.innerHTML='<div class="budget-empty"><div class="bi">📋</div>No hay presupuestos guardados aún.</div>';return;}
     list.innerHTML=entries.map(b=>{
       const d=new Date(b.savedAt);
@@ -2807,6 +3004,196 @@ function _initPreviewHooks(){
 
 _initPreviewHooks();
 init();
+
+// ====== SIDEBAR ======
+let _sidebarCollapsed=false;
+function toggleSidebar(){
+  _sidebarCollapsed=!_sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',_sidebarCollapsed);
+  document.getElementById('app_main').classList.toggle('sb-collapsed',_sidebarCollapsed);
+}
+function _setSidebarActive(id){
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+function goSection(s){
+  if(s==='clientes'){
+    [1,2,3,4,5].forEach(n=>{const e=document.getElementById('step'+n);if(e)e.classList.remove('active');});
+    const sc=document.getElementById('sec_clientes');
+    if(sc) sc.classList.add('active');
+    _setSidebarActive('sbi_clientes');
+    loadClients();
+  }
+}
+
+// ====== CLIENTES ======
+const CLI_COL='clientes';
+const CLI_LOCAL_KEY='sc_clients_v1';
+let _allClients=[];
+let _editingClientId=null;
+
+function _getClientsLocal(){try{return JSON.parse(localStorage.getItem(CLI_LOCAL_KEY))||{};}catch(e){return {};}}
+function _saveClientsLocal(d){localStorage.setItem(CLI_LOCAL_KEY,JSON.stringify(d));}
+
+async function _cloudSaveClient(id,data){
+  if(!_db){const all=_getClientsLocal();all[id]=data;_saveClientsLocal(all);return;}
+  await _db.collection(CLI_COL).doc(id).set(data);
+}
+async function _cloudGetAllClients(){
+  if(!_db) return Object.values(_getClientsLocal());
+  const snap=await _db.collection(CLI_COL).orderBy('nombre').get();
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+async function _cloudDeleteClient(id){
+  if(!_db){const all=_getClientsLocal();delete all[id];_saveClientsLocal(all);return;}
+  await _db.collection(CLI_COL).doc(id).delete();
+}
+
+async function loadClients(){
+  const el=document.getElementById('cli_list');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#bbb;font-size:12px;">Cargando...</div>';
+  try{
+    _allClients=await _cloudGetAllClients();
+    renderClientList(_allClients);
+  }catch(e){
+    el.innerHTML='<div style="color:var(--r);padding:10px;font-size:12px;">Error al cargar clientes: '+e.message+'</div>';
+  }
+}
+
+function filterClients(q){
+  const filtered=q.trim()
+    ?_allClients.filter(c=>(c.nombre+' '+(c.empresa||'')).toLowerCase().includes(q.toLowerCase()))
+    :_allClients;
+  renderClientList(filtered);
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderClientList(clients){
+  const el=document.getElementById('cli_list');
+  if(!el) return;
+  if(!clients.length){
+    el.innerHTML='<div style="text-align:center;padding:36px;color:#bbb;font-size:12px;"><div style="font-size:32px;margin-bottom:8px;">&#128101;</div>Sin clientes guardados.<br>Us&#225; "Nuevo Cliente" para agregar uno.</div>';
+    return;
+  }
+  el.innerHTML=clients.map(c=>`
+    <div class="budget-item" style="flex-wrap:wrap;gap:8px;">
+      <div style="width:36px;height:36px;background:var(--v);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--n);font-size:16px;font-weight:800;flex-shrink:0;">
+        ${(c.nombre||'?')[0].toUpperCase()}
+      </div>
+      <div class="budget-info">
+        <div class="budget-name">${escH(c.nombre||'Sin nombre')}</div>
+        <div class="budget-meta">${[c.empresa,c.tel,c.email].filter(Boolean).map(escH).join(' · ')}</div>
+        ${c.dir?'<div class="budget-meta">'+escH(c.dir)+'</div>':''}
+      </div>
+      <div class="budget-actions" style="flex-wrap:wrap;gap:4px;">
+        <button class="btn btn-v" style="font-size:10px;padding:6px 10px;" onclick="loadClientToQuote('${c.id}')">&#128203; Cargar</button>
+        <button class="btn btn-o" style="font-size:10px;padding:6px 10px;" onclick="viewClientHistory('${c.id}')">&#128196; Historial</button>
+        <button class="btn btn-o" style="font-size:10px;padding:6px 10px;" onclick="editClient('${c.id}')">&#9999;</button>
+        <button class="btn btn-o" style="font-size:10px;padding:6px 10px;color:var(--r);border-color:#f5ccc8;" onclick="deleteClient('${c.id}')">&#10005;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showClientForm(id=null){
+  _editingClientId=id;
+  const panel=document.getElementById('cli_form_panel');
+  document.getElementById('cli_form_tit').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  if(id){
+    const c=_allClients.find(x=>x.id===id)||{};
+    document.getElementById('cf_nombre').value=c.nombre||'';
+    document.getElementById('cf_empresa').value=c.empresa||'';
+    document.getElementById('cf_tel').value=c.tel||'';
+    document.getElementById('cf_email').value=c.email||'';
+    document.getElementById('cf_dir').value=c.dir||'';
+  } else {
+    ['cf_nombre','cf_empresa','cf_tel','cf_email','cf_dir'].forEach(id2=>document.getElementById(id2).value='');
+  }
+  panel.style.display='';
+  document.getElementById('cf_nombre').focus();
+}
+function hideClientForm(){
+  document.getElementById('cli_form_panel').style.display='none';
+  _editingClientId=null;
+}
+async function saveClient(){
+  const nombre=document.getElementById('cf_nombre').value.trim();
+  if(!nombre){alert('Ingresá el nombre del cliente');return;}
+  const data={
+    nombre,
+    empresa:document.getElementById('cf_empresa').value.trim(),
+    tel:document.getElementById('cf_tel').value.trim(),
+    email:document.getElementById('cf_email').value.trim(),
+    dir:document.getElementById('cf_dir').value.trim(),
+    updatedAt:new Date().toISOString()
+  };
+  const id=_editingClientId||('cli_'+Date.now());
+  if(!_editingClientId) data.createdAt=data.updatedAt;
+  data.id=id;
+  try{
+    await _cloudSaveClient(id,data);
+    showToast('Cliente guardado');
+    hideClientForm();
+    await loadClients();
+  }catch(e){alert('Error al guardar: '+e.message);}
+}
+function editClient(id){showClientForm(id);}
+async function deleteClient(id){
+  const c=_allClients.find(x=>x.id===id);
+  if(!confirm('&#191;Eliminar cliente "'+(c?.nombre||id)+'"?')) return;
+  try{
+    await _cloudDeleteClient(id);
+    showToast('Cliente eliminado');
+    await loadClients();
+  }catch(e){alert('Error: '+e.message);}
+}
+function loadClientToQuote(id){
+  const c=_allClients.find(x=>x.id===id);
+  if(!c) return;
+  const el=document.getElementById('cl_n');
+  if(el) el.value=c.nombre||'';
+  S._clienteId=id;
+  goStep(1);
+  showToast('Cliente "'+c.nombre+'" cargado al presupuesto');
+}
+async function viewClientHistory(id){
+  const c=_allClients.find(x=>x.id===id)||{};
+  const panel=document.getElementById('cli_hist_panel');
+  document.getElementById('cli_hist_tit').textContent='Presupuestos · '+(c.nombre||'');
+  const body=document.getElementById('cli_hist_body');
+  body.innerHTML='<div style="text-align:center;padding:20px;color:#bbb;font-size:12px;">Buscando...</div>';
+  panel.style.display='';
+  try{
+    const all=await _cloudGetAll();
+    const related=all.filter(b=>{
+      if(b._clienteId&&b._clienteId===id) return true;
+      const bName=(b.state?.clNombre||b.name||'').toLowerCase();
+      const cFirst=(c.nombre||'').toLowerCase().split(' ')[0];
+      return cFirst&&bName.includes(cFirst);
+    });
+    if(!related.length){
+      body.innerHTML='<div style="text-align:center;padding:24px;color:#bbb;font-size:12px;">Sin presupuestos encontrados para este cliente.</div>';
+      return;
+    }
+    body.innerHTML=related.map(b=>`
+      <div class="budget-item">
+        <div class="budget-info">
+          <div class="budget-name">${escH(b.name||'Sin nombre')}</div>
+          <div class="budget-meta">${b.savedAt?new Date(b.savedAt).toLocaleDateString('es-AR'):''}</div>
+        </div>
+        <div class="budget-actions">
+          <button class="btn btn-v" style="font-size:10px;padding:6px 10px;" onclick="loadBudget('${escH(b.id)}');hideClientHist();">Abrir</button>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){
+    body.innerHTML='<div style="color:var(--r);padding:10px;font-size:12px;">Error: '+e.message+'</div>';
+  }
+}
+function hideClientHist(){document.getElementById('cli_hist_panel').style.display='none';}
 
 </script>
 
