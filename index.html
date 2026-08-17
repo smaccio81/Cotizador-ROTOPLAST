@@ -839,9 +839,9 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     </div>
   </div>
 
-  <!-- GARANTÍA Y VALIDEZ - visible por defecto -->
+  <!-- GARANTÍA, VALIDEZ Y FORMA DE PAGO - visible por defecto -->
   <div class="panel" id="gar_panel">
-    <div class="ph"><div class="ic">🛡️</div><h2>Garantía y Validez</h2></div>
+    <div class="ph"><div class="ic">🛡️</div><h2>Garantía, Validez y Forma de Pago</h2></div>
     <div class="pb">
       <div class="fg2" style="margin-bottom:12px;">
         <div class="fld">
@@ -853,9 +853,32 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
           <input type="text" id="gar_inst" value="1 año sobre trabajos de instalación">
         </div>
       </div>
-      <div class="fld" style="max-width:260px;">
-        <label>Validez del presupuesto (días)</label>
-        <input type="number" id="gar_validez" value="15" min="1">
+      <div class="fg2" style="margin-bottom:12px;">
+        <div class="fld">
+          <label>Validez del presupuesto (días)</label>
+          <input type="number" id="gar_validez" value="15" min="1">
+        </div>
+        <div class="fld">
+          <label>Forma de pago</label>
+          <select id="pago_modo" onchange="togglePagoModo()">
+            <option value="std">Estándar: 50% anticipo · 50% contra entrega</option>
+            <option value="plan">Anticipo + cheques (calculado)</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg3" id="pago_plan_fields" style="display:none;">
+        <div class="fld">
+          <label>Anticipo (%)</label>
+          <input type="number" id="pago_ant_pct" value="30" min="0" max="100">
+        </div>
+        <div class="fld">
+          <label>Cantidad de cheques</label>
+          <input type="number" id="pago_cheques" value="3" min="1" max="12">
+        </div>
+        <div class="fld">
+          <label>Intervalo entre cheques (días)</label>
+          <input type="number" id="pago_dias" value="30" min="7" step="1">
+        </div>
       </div>
     </div>
   </div>
@@ -2156,6 +2179,9 @@ function toggleGarPanel(){
 function toggleMantPanel(){
   document.getElementById('mant_panel').style.display=document.getElementById('op_mant').checked?'block':'none';
 }
+function togglePagoModo(){
+  document.getElementById('pago_plan_fields').style.display=document.getElementById('pago_modo').value==='plan'?'grid':'none';
+}
 
 // ====== GUARDAR IMAGEN RESUMEN ======
 async function guardarImgResumen(){
@@ -2506,11 +2532,27 @@ function renderPpto(){
   }
 
   // CONDICIONES
+  // Forma de pago (estándar o anticipo + cheques calculados sobre el total)
+  let pagoHtml;
+  const pagoModo=(document.getElementById('pago_modo')||{}).value||'std';
+  if(pagoModo==='plan'){
+    const antPct=_nv('pago_ant_pct',30);
+    const nCh=Math.max(1,Math.round(_nv('pago_cheques',3)));
+    const interv=_nv('pago_dias',30);
+    const antMonto=Math.round(totalFinal*antPct/100);
+    const cuota=Math.round((totalFinal-antMonto)/nCh);
+    const dias=Array.from({length:nCh},(_,i)=>i*interv);
+    const diasTxt=dias.map(d=>_fa(d)).join(', ');
+    pagoHtml=`<p>Anticipo del ${_fa(antPct)}% (${sym} ${fv(antMonto)}) a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} de ${sym} ${fv(cuota)} cada uno, a ${diasTxt} días de la entrega.</p>`;
+  } else {
+    pagoHtml=`<p>50% Anticipo a la Orden de Compra<br>50% Restante contra entrega de equipos e instalación.</p>`;
+  }
+  const garValDias=_nv('gar_validez',15);
   h+=`<div class="pp-conds">
     <div class="pp-cond">
       <h4>Condiciones de Pago</h4>
-      <p>50% Anticipo a la Orden de Compra<br>50% Restante contra entrega de equipos e instalación.</p>
-      <p style="margin-top:6px;"><strong>Validez:</strong> 15 días hábiles.<br><strong>Plazo de entrega:</strong> 45 días hábiles desde pago anticipo.</p>
+      ${pagoHtml}
+      <p style="margin-top:6px;"><strong>Validez:</strong> ${_fa(garValDias)} días hábiles.<br><strong>Plazo de entrega:</strong> 45 días hábiles desde pago anticipo.</p>
     </div>
     <div class="pp-cond">
       ${document.getElementById('op_inst').checked ? `
@@ -2525,20 +2567,13 @@ function renderPpto(){
     </div>
     <div class="pp-cond" style="grid-column:1/-1;">
       <h4>Garantía</h4>
+      ${document.getElementById('op_gar').checked?`
+      <p><strong>Equipos:</strong> ${(document.getElementById('gar_equipos').value||'1 año de garantía de fábrica')} contra defectos de fabricación.${document.getElementById('op_inst').checked?` <strong>Instalación:</strong> ${(document.getElementById('gar_inst').value||'1 año sobre trabajos de instalación')}.`:''} La garantía aplica siempre que los equipos hayan sido instalados conforme a la entrega técnica, operados correctamente y con mantenimiento preventivo periódico aplicado.</p>
+      `:`
       <p>Los equipos tienen garantía de 1 (un) año contra defectos de fabricación, siempre que hayan sido instalados conforme a la entrega técnica, operados correctamente y con mantenimiento preventivo periódico aplicado.</p>
+      `}
     </div>
   </div>`;
-
-  // GARANTÍA Y VALIDEZ
-  if(document.getElementById('op_gar').checked){
-    const garEq=(document.getElementById('gar_equipos').value||'').trim()||'1 año de garantía de fábrica';
-    const garIn=(document.getElementById('gar_inst').value||'').trim()||'1 año sobre trabajos de instalación';
-    const garVal=_nv('gar_validez',15);
-    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
-    h+=`<div class="pp-sec">Garantía y Validez</div>`;
-    h+=`<p style="font-size:12px;color:#333;line-height:1.8;"><strong>Garantía de equipos:</strong> ${garEq}.<br><strong>Garantía de instalación:</strong> ${garIn}.<br>Presupuesto válido por ${_fa(garVal)} días desde la fecha de emisión.</p>`;
-    h+=`</div>`;
-  }
 
   h+=`<div class="pp-bottom-spacer"></div>`;
   h+=`</div>`; // /pp-body
@@ -2935,7 +2970,7 @@ function _collectForm(){
     'chk_iva','chk_ars','cotiz_bna',
     'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas','comp_carga','comp_frig_unit',
     'op_agua','agua_lh','agua_horas',
-    'op_gar','gar_equipos','gar_inst','gar_validez',
+    'op_gar','gar_equipos','gar_inst','gar_validez','pago_modo','pago_ant_pct','pago_cheques','pago_dias',
     'op_mant','mant_texto',
     'pt_n','pt_f','pt_l','pt_r','pt_chk','pt_pct','pt_chk_desc','pt_desc_tipo','pt_desc_val'];
   const fd={};ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;fd[id]=(el.type==='checkbox')?el.checked:el.value;});return fd;
@@ -2950,6 +2985,7 @@ function _applyForm(fd){
   if(g('op_agua'))g('agua_panel').style.display=g('op_agua').checked?'block':'none';
   if(g('op_gar'))g('gar_panel').style.display=g('op_gar').checked?'block':'none';
   if(g('op_mant'))g('mant_panel').style.display=g('op_mant').checked?'block':'none';
+  if(g('pago_modo'))togglePagoModo();
   if(g('chk_com'))g('com_box').style.display=g('chk_com').checked?'flex':'none';
   togDesc&&togDesc();togComPt&&togComPt();togDescPt&&togDescPt();
 }
