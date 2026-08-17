@@ -658,6 +658,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
         <div class="fld"><label>Teléfono</label><input type="text" id="cf_tel" placeholder="+54 ..."></div>
         <div class="fld"><label>Email</label><input type="email" id="cf_email" placeholder="contacto@..."></div>
         <div class="fld full"><label>Dirección</label><input type="text" id="cf_dir" placeholder="Calle, ciudad..."></div>
+        <div class="fld"><label>Ciudad</label><input type="text" id="cf_ciudad" placeholder="Corrientes"></div>
+        <div class="fld"><label>Provincia</label><input type="text" id="cf_prov" placeholder="Corrientes"></div>
+        <div class="fld"><label>Rubro</label><input type="text" id="cf_rubro" placeholder="Ej: Deportivo, Industrial, Avícola..."></div>
+        <div class="fld"><label>Producto de interés</label><input type="text" id="cf_producto" placeholder="Ej: Evaporativo de techo"></div>
+        <div class="fld"><label>Responsable</label><input type="text" id="cf_resp" placeholder="Ej: Seba"></div>
       </div>
       <div class="acts">
         <button class="btn btn-o" onclick="hideClientForm()">Cancelar</button>
@@ -3144,15 +3149,13 @@ function showClientForm(id=null){
   _editingClientId=id;
   const panel=document.getElementById('cli_form_panel');
   document.getElementById('cli_form_tit').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  const _cfMap={cf_nombre:'nombre',cf_empresa:'empresa',cf_tel:'tel',cf_email:'email',cf_dir:'dir',cf_ciudad:'ciudad',cf_prov:'provincia',cf_rubro:'rubro',cf_producto:'producto',cf_resp:'responsable'};
   if(id){
     const c=_allClients.find(x=>x.id===id)||{};
-    document.getElementById('cf_nombre').value=c.nombre||'';
-    document.getElementById('cf_empresa').value=c.empresa||'';
-    document.getElementById('cf_tel').value=c.tel||'';
-    document.getElementById('cf_email').value=c.email||'';
-    document.getElementById('cf_dir').value=c.dir||'';
+    Object.entries(_cfMap).forEach(([fid,key])=>{document.getElementById(fid).value=c[key]||'';});
   } else {
-    ['cf_nombre','cf_empresa','cf_tel','cf_email','cf_dir'].forEach(id2=>document.getElementById(id2).value='');
+    Object.keys(_cfMap).forEach(fid=>{document.getElementById(fid).value='';});
+    document.getElementById('cf_resp').value='Seba';
   }
   panel.style.display='';
   document.getElementById('cf_nombre').focus();
@@ -3170,6 +3173,11 @@ async function saveClient(){
     tel:document.getElementById('cf_tel').value.trim(),
     email:document.getElementById('cf_email').value.trim(),
     dir:document.getElementById('cf_dir').value.trim(),
+    ciudad:document.getElementById('cf_ciudad').value.trim(),
+    provincia:document.getElementById('cf_prov').value.trim(),
+    rubro:document.getElementById('cf_rubro').value.trim(),
+    producto:document.getElementById('cf_producto').value.trim(),
+    responsable:document.getElementById('cf_resp').value.trim(),
     updatedAt:new Date().toISOString()
   };
   const id=_editingClientId||('cli_'+Date.now());
@@ -3270,6 +3278,8 @@ async function importFromCRMText(txt){
     tel:(data.tel||'').trim(),
     email:(existing&&existing.email)||'',
     dir,
+    ciudad:(data.ciudad||'').trim(),
+    provincia:(data.provincia||'').trim(),
     crmId:data.crmId||null,
     rubro:(data.rubro||'').trim(),
     producto:(data.producto||'').trim(),
