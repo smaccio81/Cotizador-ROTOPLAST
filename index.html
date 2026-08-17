@@ -435,6 +435,9 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .dim-sup-input{font-size:15px!important;font-weight:700!important;border-color:#2563EB!important;}
 .pct-num-input{width:64px;border:1.5px solid var(--br);border-radius:5px;padding:6px 8px;font-size:16px;font-weight:800;text-align:center;color:var(--v);font-family:var(--f);}
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -923,6 +926,76 @@ const TIMG = {"enc_header": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABNkAA
 
 // Set header logo
 document.getElementById('hdr_logo').src = LOGOS.sc;
+
+// ══ FIREBASE ══════════════════════════════════════════════════════════════════
+// Pegá acá el objeto firebaseConfig que te da Firebase Console
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+let _db = null;
+(function(){
+  if(!FIREBASE_CONFIG.apiKey) return;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    _db = firebase.firestore();
+    console.log('[Firebase] Conectado al proyecto:', FIREBASE_CONFIG.projectId);
+  }catch(e){ console.warn('[Firebase] Error al inicializar:', e.message); }
+})();
+const CLOUD_COL = 'presupuestos';
+
+// Imágenes (base64) se guardan local por límite de tamaño de Firestore (1 MB/doc)
+function _saveLocalImgs(id, esqUrls){
+  try{ localStorage.setItem('sc_imgs_'+id, JSON.stringify(esqUrls||[])); }catch(e){}
+}
+function _loadLocalImgs(id){
+  try{ const s=localStorage.getItem('sc_imgs_'+id); return s?JSON.parse(s):[]; }catch(e){ return []; }
+}
+function _delLocalImgs(id){ try{ localStorage.removeItem('sc_imgs_'+id); }catch(e){} }
+
+// ── Cloud helpers ──────────────────────────────────────────────────────────────
+async function _cloudSave(id, snap){
+  if(!_db){
+    // localStorage fallback
+    const all=_getBudgets_local(); all[id]=snap; _saveBudgets_local(all);
+    return;
+  }
+  // Strip esqUrls antes de subir a Firestore, guardalas localmente
+  _saveLocalImgs(id, snap.state?.esqUrls||[]);
+  const cloudSnap={...snap, state:{...snap.state, esqUrls:[]}};
+  await _db.collection(CLOUD_COL).doc(id).set(cloudSnap);
+}
+async function _cloudGetAll(){
+  if(!_db) return Object.values(_getBudgets_local());
+  const snap=await _db.collection(CLOUD_COL).orderBy('savedAt','desc').get();
+  return snap.docs.map(d=>d.data());
+}
+async function _cloudGet(id){
+  if(!_db) return _getBudgets_local()[id]||null;
+  const doc=await _db.collection(CLOUD_COL).doc(id).get();
+  if(!doc.exists) return null;
+  const data=doc.data();
+  if(data.state) data.state.esqUrls=_loadLocalImgs(id);
+  return data;
+}
+async function _cloudDelete(id){
+  if(!_db){ const all=_getBudgets_local(); delete all[id]; _saveBudgets_local(all); return; }
+  await _db.collection(CLOUD_COL).doc(id).delete();
+  _delLocalImgs(id);
+}
+async function _cloudRename(id, name){
+  if(!_db){ const all=_getBudgets_local(); if(all[id]){all[id].name=name; _saveBudgets_local(all);} return; }
+  await _db.collection(CLOUD_COL).doc(id).update({name});
+}
+
+// ── localStorage fallback ─────────────────────────────────────────────────────
+const BUDGET_KEY_LOCAL='sc_budgets_v1';
+function _getBudgets_local(){try{return JSON.parse(localStorage.getItem(BUDGET_KEY_LOCAL))||{};}catch(e){return {};}}
+function _saveBudgets_local(d){localStorage.setItem(BUDGET_KEY_LOCAL,JSON.stringify(d));}
 
 // ====== DATOS ======
 const TIPOS = [
@@ -2431,11 +2504,8 @@ function genPptoPt(){
 
 
 // ================================================================
-// GESTOR DE PRESUPUESTOS (localStorage)
+// GESTOR DE PRESUPUESTOS (Firebase / localStorage fallback)
 // ================================================================
-const BUDGET_KEY='sc_budgets_v1';
-function _getBudgets(){try{return JSON.parse(localStorage.getItem(BUDGET_KEY))||{};}catch(e){return {};}}
-function _saveBudgets(d){localStorage.setItem(BUDGET_KEY,JSON.stringify(d));}
 function _collectForm(){
   const ids=['cl_n','cl_f','cl_l','cl_r','cl_d','cl_o','ren',
     'op_intro','op_breve','op_tec','op_acl','op_fich','op_conc','op_eco','op_inst',
@@ -2454,12 +2524,12 @@ function _applyForm(fd){
   if(g('chk_com'))g('com_box').style.display=g('chk_com').checked?'flex':'none';
   togDesc&&togDesc();togComPt&&togComPt();togDescPt&&togDescPt();
 }
-function saveCurrentBudget(){
+async function saveCurrentBudget(){
   const def=(document.getElementById('cl_n').value||'Sin nombre')+' — '+new Date().toLocaleDateString('es-AR');
   const name=prompt('Nombre del presupuesto:',def);if(name===null)return;
   const nm=name.trim()||def;
-  saveAmbState(); // persist current ambiente before snapshotting
-  const budgets=_getBudgets();const id='b'+Date.now();
+  saveAmbState();
+  const id='b'+Date.now();
   const snap={id,name:nm,clientName:document.getElementById('cl_n').value||'—',ref:document.getElementById('cl_r').value||'',
     savedAt:new Date().toISOString(),form:_collectForm(),
     state:{ambientes:JSON.parse(JSON.stringify(S.ambientes)),ambActivo:S.ambActivo,
@@ -2468,15 +2538,16 @@ function saveCurrentBudget(){
       esqUrls:JSON.parse(JSON.stringify(S.esqUrls||[]))},
     prices:JSON.parse(JSON.stringify(PRICES)),
     ptPrices:typeof PROJ_PT_PRICES!=='undefined'?JSON.parse(JSON.stringify(PROJ_PT_PRICES)):{}};
-  budgets[id]=snap;
-  try{_saveBudgets(budgets);showToast('💾 Presupuesto guardado');renderBudgetList();}
-  catch(e){if(e.name==='QuotaExceededError')alert('Sin espacio. Eliminá presupuestos viejos.');else alert('Error: '+e.message);}
+  try{
+    await _cloudSave(id,snap);
+    showToast(_db?'☁️ Guardado en la nube':'💾 Presupuesto guardado');
+    renderBudgetList();
+  }catch(e){alert('Error al guardar: '+e.message);}
 }
-function loadBudget(id){
-  const b=_getBudgets()[id];if(!b)return;
+async function loadBudget(id){
+  const b=await _cloudGet(id);if(!b)return;
   if(!confirm('¿Cargar "'+b.name+'"? Los datos actuales se perderán.'))return;
   const st=b.state||{};
-  // Restore scalar state fields
   const {ambientes,ambActivo,qi,qe,esqUrls,...restState}=st;
   Object.assign(S,restState);
   S.esqUrls=esqUrls||[];
@@ -2486,7 +2557,6 @@ function loadBudget(id){
   _applyForm(b.form);
   ['pw','tc','si','po'].forEach(c=>renderTab&&renderTab(c));
   renderExtTab&&renderExtTab();renderProjPtGrid&&renderProjPtGrid();
-  // Restore ambientes (or build one from legacy flat state)
   if(ambientes&&ambientes.length>0){
     S.ambientes=ambientes;S.ambActivo=ambActivo||0;
   }else{
@@ -2499,7 +2569,6 @@ function loadBudget(id){
   }
   loadAmbState(S.ambActivo);renderAmbTabs();
   renderItemsLibres&&renderItemsLibres();
-  // Restaurar checkboxes nuevos
   const civa=document.getElementById('chk_iva');if(civa)civa.checked=!!S.iva;
   const cars=document.getElementById('chk_ars');if(cars)cars.checked=!!S.ars;
   const cbna=document.getElementById('cotiz_bna');if(cbna)cbna.value=S.cotizBNA||'';
@@ -2507,35 +2576,43 @@ function loadBudget(id){
   if(st.modo)setMode(st.modo);
   closeGestor();showToast('✅ Cargado: '+b.name);schedulePreviewUpdate();
 }
-function renameBudget(id){
-  const budgets=_getBudgets();const b=budgets[id];if(!b)return;
+async function renameBudget(id){
+  const entries=await _cloudGetAll();
+  const b=entries.find(x=>x.id===id);if(!b)return;
   const name=prompt('Nuevo nombre:',b.name);if(!name||!name.trim())return;
-  b.name=name.trim();_saveBudgets(budgets);renderBudgetList();
+  await _cloudRename(id,name.trim());
+  renderBudgetList();
 }
-function deleteBudget(id){
-  const budgets=_getBudgets();if(!budgets[id])return;
-  if(!confirm('¿Eliminar "'+budgets[id].name+'"?'))return;
-  delete budgets[id];_saveBudgets(budgets);renderBudgetList();showToast('🗑 Eliminado');
+async function deleteBudget(id){
+  const entries=await _cloudGetAll();
+  const b=entries.find(x=>x.id===id);if(!b)return;
+  if(!confirm('¿Eliminar "'+b.name+'"?'))return;
+  await _cloudDelete(id);renderBudgetList();showToast('🗑 Eliminado');
 }
-function renderBudgetList(){
-  const budgets=_getBudgets();const list=document.getElementById('budget_list');if(!list)return;
-  const entries=Object.values(budgets).sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
-  if(!entries.length){list.innerHTML='<div class="budget-empty"><div class="bi">📋</div>No hay presupuestos guardados aún.</div>';return;}
-  list.innerHTML=entries.map(b=>{
-    const d=new Date(b.savedAt);
-    const ds=d.toLocaleDateString('es-AR')+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<div class="budget-item">'+
-      '<div class="budget-info">'+
-        '<div class="budget-name" title="'+b.name+'">'+b.name+'</div>'+
-        '<div class="budget-meta">Cliente: '+b.clientName+(b.ref?' · Ref: '+b.ref:'')+' · '+ds+'</div>'+
-      '</div>'+
-      '<div class="budget-actions">'+
-        '<button class="btn btn-v" style="padding:5px 11px;font-size:10px;" onclick="loadBudget(\''+esc(b.id)+'\')">Cargar</button>'+
-        '<button class="btn btn-o" style="padding:5px 10px;font-size:10px;" onclick="renameBudget(\''+esc(b.id)+'\')" title="Renombrar">✏️</button>'+
-        '<button class="btn btn-o" style="padding:5px 10px;font-size:10px;color:var(--r);border-color:#f5ccc8;" onclick="deleteBudget(\''+esc(b.id)+'\')" title="Eliminar">✕</button>'+
-      '</div></div>';
-  }).join('');
+async function renderBudgetList(){
+  const list=document.getElementById('budget_list');if(!list)return;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px;">'+(_db?'☁️ Cargando...':'Cargando...')+'</div>';
+  try{
+    const entries=await _cloudGetAll();
+    const badge=document.getElementById('cloud_badge');
+    if(badge)badge.style.display=_db?'':'none';
+    if(!entries.length){list.innerHTML='<div class="budget-empty"><div class="bi">📋</div>No hay presupuestos guardados aún.</div>';return;}
+    list.innerHTML=entries.map(b=>{
+      const d=new Date(b.savedAt);
+      const ds=d.toLocaleDateString('es-AR')+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<div class="budget-item">'+
+        '<div class="budget-info">'+
+          '<div class="budget-name" title="'+b.name+'">'+b.name+'</div>'+
+          '<div class="budget-meta">Cliente: '+b.clientName+(b.ref?' · Ref: '+b.ref:'')+' · '+ds+'</div>'+
+        '</div>'+
+        '<div class="budget-actions">'+
+          '<button class="btn btn-v" style="padding:5px 11px;font-size:10px;" onclick="loadBudget(\''+esc(b.id)+'\')">Cargar</button>'+
+          '<button class="btn btn-o" style="padding:5px 10px;font-size:10px;" onclick="renameBudget(\''+esc(b.id)+'\')" title="Renombrar">✏️</button>'+
+          '<button class="btn btn-o" style="padding:5px 10px;font-size:10px;color:var(--r);border-color:#f5ccc8;" onclick="deleteBudget(\''+esc(b.id)+'\')" title="Eliminar">✕</button>'+
+        '</div></div>';
+    }).join('');
+  }catch(e){list.innerHTML='<div style="color:#e74c3c;padding:12px;font-size:12px;">Error al cargar: '+e.message+'</div>';}
 }
 function openGestor(){renderBudgetList();document.getElementById('modal_gestor').style.display='flex';}
 function closeGestor(){document.getElementById('modal_gestor').style.display='none';}
@@ -2627,10 +2704,10 @@ function clearAmbEsq(idx){
   if(S.ambientes[idx])S.ambientes[idx].esqUrl=null;
   renderAmbEsquemas();
 }
-function exportBudgets(){
-  const data=_getBudgets();
-  const entries=Object.values(data);
+async function exportBudgets(){
+  const entries=await _cloudGetAll();
   if(!entries.length){alert('No hay presupuestos guardados para exportar.');return;}
+  const data=Object.fromEntries(entries.map(e=>[e.id,e]));
   const json=JSON.stringify(data,null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
@@ -2641,26 +2718,27 @@ function exportBudgets(){
   URL.revokeObjectURL(url);
   showToast('📤 '+entries.length+' presupuesto(s) exportado(s)');
 }
-function importBudgets(){
+async function importBudgets(){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='.json,application/json';
   inp.onchange=e=>{
     const file=e.target.files[0];if(!file)return;
     const reader=new FileReader();
-    reader.onload=ev=>{
+    reader.onload=async ev=>{
       try{
         const imported=JSON.parse(ev.target.result);
         if(typeof imported!=='object'||Array.isArray(imported))throw new Error('Formato inválido');
-        const existing=_getBudgets();
+        const existing=await _cloudGetAll();
+        const existingIds=new Set(existing.map(e=>e.id));
         let added=0,skipped=0;
-        Object.entries(imported).forEach(([id,snap])=>{
-          if(!snap.id||!snap.name||!snap.savedAt){skipped++;return;}
-          if(existing[id]){
-            if(!confirm('Ya existe "'+snap.name+'". ¿Sobreescribir?')){skipped++;return;}
+        for(const [id,snap] of Object.entries(imported)){
+          if(!snap.id||!snap.name||!snap.savedAt){skipped++;continue;}
+          if(existingIds.has(id)){
+            if(!confirm('Ya existe "'+snap.name+'". ¿Sobreescribir?')){skipped++;continue;}
           }
-          existing[id]=snap;added++;
-        });
-        _saveBudgets(existing);renderBudgetList();
+          await _cloudSave(id,snap);added++;
+        }
+        renderBudgetList();
         showToast('📥 '+added+' importado(s)'+(skipped?' · '+skipped+' omitido(s)':''));
       }catch(err){alert('Error al importar: '+err.message);}
     };
@@ -2738,7 +2816,7 @@ init();
 <!-- MODAL GESTOR -->
 <div class="modal-overlay" id="modal_gestor" style="display:none;" onclick="if(event.target===this)closeGestor()">
   <div class="modal-box">
-    <div class="modal-hdr"><h3>&#128194; Presupuestos Guardados</h3><button class="modal-close" onclick="closeGestor()">&#10005;</button></div>
+    <div class="modal-hdr"><h3>&#128194; Presupuestos Guardados</h3><span id="cloud_badge" style="display:none;background:#16a34a;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.5px;">&#9729; NUBE</span><button class="modal-close" onclick="closeGestor()">&#10005;</button></div>
     <div class="modal-body">
       <button class="btn btn-v" onclick="saveCurrentBudget()" style="width:100%;justify-content:center;margin-bottom:10px;">&#128190; Guardar Presupuesto Actual</button>
       <div style="display:flex;gap:8px;margin-bottom:14px;">
