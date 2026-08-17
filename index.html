@@ -784,7 +784,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel" id="comp_panel" style="display:none;">
     <div class="ph"><div class="ic">⚡</div><h2>Comparativa Operativa vs Aire Acondicionado</h2></div>
     <div class="pb">
-      <div class="alrt alrt-i" style="margin-bottom:12px;">Si dejás los kW en 0, se estiman automáticamente: 1,1 kW por equipo inyector seleccionado y un AA equivalente de 8 veces esa potencia.</div>
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Si dejás los kW en 0, el evaporativo se calcula sumando el consumo real de ficha técnica de los equipos del presupuesto, y el AA equivalente se estima en 8 veces esa potencia (criterio conservador; el rango real es 8-15×).</div>
       <div class="fg2" style="margin-bottom:12px;">
         <div class="fld">
           <label>kW totales evaporativo (0 = auto)</label>
@@ -812,11 +812,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel" id="agua_panel" style="display:none;">
     <div class="ph"><div class="ic">💧</div><h2>Consumo de Agua Estimado</h2></div>
     <div class="pb">
-      <div class="alrt alrt-i" style="margin-bottom:12px;">Se calcula con la cantidad de equipos inyectores seleccionados en el proyecto.</div>
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Se calcula con el caudal de aire real (m³/h) de los equipos del presupuesto. El coeficiente típico es 10-18 L/h cada 10.000 m³/h; con la humedad del NEA el consumo real tiende al rango bajo.</div>
       <div class="fg2">
         <div class="fld">
-          <label>Litros/hora por equipo (máxima demanda)</label>
-          <input type="number" id="agua_lh" value="25" min="0">
+          <label>Litros/hora cada 10.000 m³/h de caudal</label>
+          <input type="number" id="agua_lh" value="12" min="0">
         </div>
         <div class="fld">
           <label>Horas de uso por día</label>
@@ -2430,9 +2430,12 @@ function renderPpto(){
   const _fa=v=>Math.round(v).toLocaleString('es-AR');
 
   // COMPARATIVA DE COSTO OPERATIVO VS AA
+  // kW y caudal reales según ficha técnica de los equipos del presupuesto
+  let _kwReal=0,_qAire=0;
+  allEqs().forEach(e=>{const q=rQi[e.id]||0;if(q>0){_kwReal+=q*(e.kw||0);_qAire+=q*(e.q||0);}});
   if(document.getElementById('op_comp').checked){
     let kwEv=_nv('comp_kw_ev',0);
-    if(!(kwEv>0))kwEv=qI*1.1;
+    if(!(kwEv>0))kwEv=_kwReal||qI*1.1;
     let kwAa=_nv('comp_kw_aa',0);
     if(!(kwAa>0))kwAa=kwEv*8;
     const tarifa=_nv('comp_tarifa',130);
@@ -2451,20 +2454,20 @@ function renderPpto(){
     h+=`<tr><td>Costo mensual (26 días)</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmEv)}</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmAa)}</td></tr>`;
     h+=`<tr style="background:#f8f8f8;font-weight:700;"><td>Ahorro con evaporativo</td><td colspan="2" style="text-align:right;">${_f1(ahorroPct)}% — $ ${_fa(ahorroMes)}/mes</td></tr>`;
     h+=`</tbody></table>`;
-    h+=`<p class="pp-nota">Valores orientativos según tarifa informada. El evaporativo además funciona con puertas y ventanas abiertas, renovando el 100% del aire.</p>`;
+    h+=`<p class="pp-nota">Consumo del evaporativo según ficha técnica de los equipos cotizados. Valores orientativos según tarifa informada. El evaporativo además funciona con puertas y ventanas abiertas, renovando el 100% del aire.</p>`;
     h+=`</div>`;
   }
 
-  // CONSUMO DE AGUA ESTIMADO
+  // CONSUMO DE AGUA ESTIMADO (por caudal de aire real de los equipos)
   if(document.getElementById('op_agua').checked){
-    const lh=_nv('agua_lh',25);
+    const coef=_nv('agua_lh',12); // L/h cada 10.000 m³/h de caudal
     const hd=_nv('agua_horas',8);
-    const lhTot=qI*lh;
+    const lhTot=(_qAire/10000)*coef;
     const lDia=lhTot*hd;
     const duchas=(lDia/150).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
     h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
     h+=`<div class="pp-sec">Consumo de Agua</div>`;
-    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en máxima demanda (${qI} equipo${qI===1?'':'s'} × ${_fa(lh)} L/h) ≈ <strong>${_fa(lDia)} litros</strong> por día de uso. Como referencia, equivale a ${duchas} duchas diarias. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
+    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en condiciones de máxima demanda (${qI} equipo${qI===1?'':'s'}, ${_fa(_qAire)} m³/h de caudal total) ≈ <strong>${_fa(lDia)} litros</strong> por día de uso. Como referencia, equivale a ${duchas} duchas diarias. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
     h+=`</div>`;
   }
 
