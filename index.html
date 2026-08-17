@@ -784,25 +784,38 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel" id="comp_panel" style="display:none;">
     <div class="ph"><div class="ic">⚡</div><h2>Comparativa Operativa vs Aire Acondicionado</h2></div>
     <div class="pb">
-      <div class="alrt alrt-i" style="margin-bottom:12px;">Si dejás los kW en 0, el evaporativo se calcula sumando el consumo real de ficha técnica de los equipos del presupuesto, y el AA equivalente se estima en 8 veces esa potencia (criterio conservador; el rango real es 8-15×).</div>
+      <div class="alrt alrt-i" style="margin-bottom:12px;">El evaporativo usa el consumo real de ficha técnica de los equipos del presupuesto. El aire acondicionado se dimensiona de verdad: carga térmica del espacio (volumen × frigorías/m³) → cantidad de equipos AA → consumo eléctrico con COP 2,8.</div>
       <div class="fg2" style="margin-bottom:12px;">
         <div class="fld">
-          <label>kW totales evaporativo (0 = auto)</label>
-          <input type="number" id="comp_kw_ev" value="0" min="0" step="0.1">
+          <label>Carga térmica (frigorías/h por m³)</label>
+          <input type="number" id="comp_carga" value="60" min="10">
+          <div class="hint">50-70 para galpón de chapa sin aislación en el NEA; 35-45 para local aislado</div>
         </div>
         <div class="fld">
-          <label>kW aire acondicionado equivalente (0 = auto)</label>
-          <input type="number" id="comp_kw_aa" value="0" min="0" step="0.1">
+          <label>Frigorías por equipo AA de referencia</label>
+          <input type="number" id="comp_frig_unit" value="18000" min="2000" step="1000">
+          <div class="hint">18.000 = piso-techo 6 TR típico; 45.000 = roof-top 15 TR</div>
         </div>
       </div>
-      <div class="fg2">
+      <div class="fg2" style="margin-bottom:12px;">
         <div class="fld">
           <label>Tarifa eléctrica (ARS por kWh)</label>
-          <input type="number" id="comp_tarifa" value="130" min="0">
+          <input type="number" id="comp_tarifa" value="265" min="0">
+          <div class="hint">Default: franja excedente DPEC + IVA (factura jul 2026). Comercial/industrial: ajustar</div>
         </div>
         <div class="fld">
           <label>Horas de uso por día</label>
           <input type="number" id="comp_horas" value="8" min="1" max="24">
+        </div>
+      </div>
+      <div class="fg2">
+        <div class="fld">
+          <label>kW totales evaporativo (0 = auto por ficha técnica)</label>
+          <input type="number" id="comp_kw_ev" value="0" min="0" step="0.1">
+        </div>
+        <div class="fld">
+          <label>kW aire acondicionado (0 = auto por carga térmica)</label>
+          <input type="number" id="comp_kw_aa" value="0" min="0" step="0.1">
         </div>
       </div>
     </div>
@@ -2436,9 +2449,15 @@ function renderPpto(){
   if(document.getElementById('op_comp').checked){
     let kwEv=_nv('comp_kw_ev',0);
     if(!(kwEv>0))kwEv=_kwReal||qI*1.1;
+    // Dimensionamiento real del AA por carga térmica del espacio
+    const _volTot=S.ambientes.reduce((t,a)=>t+(a.vol>0?a.vol:0),0)||S.vol||0;
+    const carga=_nv('comp_carga',60);
+    const frigUnit=_nv('comp_frig_unit',18000);
+    const frigTot=_volTot*carga;
+    const nAA=frigTot>0?Math.ceil(frigTot/frigUnit):0;
     let kwAa=_nv('comp_kw_aa',0);
-    if(!(kwAa>0))kwAa=kwEv*8;
-    const tarifa=_nv('comp_tarifa',130);
+    if(!(kwAa>0))kwAa=frigTot>0?(frigTot*1.163/1000)/2.8:kwEv*8;
+    const tarifa=_nv('comp_tarifa',265);
     const horas=_nv('comp_horas',8);
     const chEv=kwEv*tarifa, chAa=kwAa*tarifa;
     const cdEv=chEv*horas, cdAa=chAa*horas;
@@ -2447,14 +2466,18 @@ function renderPpto(){
     const ahorroPct=cmAa>0?(ahorroMes/cmAa*100):0;
     h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
     h+=`<div class="pp-sec">Comparativa de Costo Operativo</div>`;
+    if(frigTot>0){
+      h+=`<p style="font-size:12px;color:#333;line-height:1.8;margin-bottom:8px;">Para climatizar los <strong>${_fa(_volTot)} m³</strong> del espacio con aire acondicionado se requieren aprox. <strong>${_fa(frigTot)} frigorías/h</strong> (${_fa(carga)} frig/m³), es decir <strong>${nAA} equipo${nAA===1?'':'s'} de ${_fa(frigUnit)} frigorías</strong>, con un consumo eléctrico estimado de ${_f1(kwAa)} kW.</p>`;
+    }
     h+=`<table class="pp-tabla"><thead><tr><th>Concepto</th><th style="text-align:right;">Evaporativo</th><th style="text-align:right;">Aire Acondicionado</th></tr></thead><tbody>`;
+    if(frigTot>0)h+=`<tr><td>Equipos necesarios</td><td style="text-align:right;">${qI}</td><td style="text-align:right;">${nAA} × ${_fa(frigUnit)} frig</td></tr>`;
     h+=`<tr><td>Consumo (kW)</td><td style="text-align:right;">${_f1(kwEv)}</td><td style="text-align:right;">${_f1(kwAa)}</td></tr>`;
     h+=`<tr><td>Costo por hora (ARS)</td><td style="text-align:right;">$ ${_fa(chEv)}</td><td style="text-align:right;">$ ${_fa(chAa)}</td></tr>`;
     h+=`<tr><td>Costo por día (${_fa(horas)} h)</td><td style="text-align:right;">$ ${_fa(cdEv)}</td><td style="text-align:right;">$ ${_fa(cdAa)}</td></tr>`;
     h+=`<tr><td>Costo mensual (26 días)</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmEv)}</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmAa)}</td></tr>`;
     h+=`<tr style="background:#f8f8f8;font-weight:700;"><td>Ahorro con evaporativo</td><td colspan="2" style="text-align:right;">${_f1(ahorroPct)}% — $ ${_fa(ahorroMes)}/mes</td></tr>`;
     h+=`</tbody></table>`;
-    h+=`<p class="pp-nota">Consumo del evaporativo según ficha técnica de los equipos cotizados. Valores orientativos según tarifa informada. El evaporativo además funciona con puertas y ventanas abiertas, renovando el 100% del aire.</p>`;
+    h+=`<p class="pp-nota">Consumo del evaporativo según ficha técnica de los equipos cotizados; aire acondicionado dimensionado por carga térmica del espacio (COP 2,8). Valores orientativos según tarifa informada. El evaporativo además funciona con puertas y ventanas abiertas, renovando el 100% del aire.</p>`;
     h+=`</div>`;
   }
 
@@ -2910,7 +2933,7 @@ function _collectForm(){
     'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
     'chk_iva','chk_ars','cotiz_bna',
-    'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas',
+    'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas','comp_carga','comp_frig_unit',
     'op_agua','agua_lh','agua_horas',
     'op_gar','gar_equipos','gar_inst','gar_validez',
     'op_mant','mant_texto',
