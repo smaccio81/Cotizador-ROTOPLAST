@@ -706,6 +706,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div class="trow"><label><input type="checkbox" id="op_conc" checked>Incluir conclusión</label><span class="th">Va antes de la tabla de precios</span></div>
       <div class="trow"><label><input type="checkbox" id="op_eco" onchange="toggleEcoPanel()">Incluir análisis económico orientativo</label><span class="th">Escenarios de recupero de inversión, precio por unidad, m²</span></div>
       <div class="trow"><label><input type="checkbox" id="op_inst" checked>Cotización incluye instalación</label><span class="th">Muestra "La Instalación Incluye / No Incluye" en condiciones. Sin tilde: solo provisión de equipos.</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_rend" onchange="toggleRendPanel()">Incluir rendimiento según condiciones climáticas</label><span class="th">Tabla de temperatura de salida estimada para día seco y día húmedo</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_comp" onchange="toggleCompPanel()">Incluir comparativa operativa vs aire acondicionado</label><span class="th">Costo por hora, día y mes: evaporativo vs AA equivalente</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_agua" onchange="toggleAguaPanel()">Incluir consumo de agua estimado</label><span class="th">Litros por hora y por día según cantidad de equipos</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_gar" checked onchange="toggleGarPanel()">Incluir garantía y validez</label><span class="th">Garantía de equipos e instalación y validez del presupuesto</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_mant" onchange="toggleMantPanel()">Incluir plan de mantenimiento</label><span class="th">Recomendación de mantenimiento pre y post temporada</span></div>
     </div>
   </div>
 
@@ -770,6 +775,112 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
         <textarea id="eco_texto" rows="6" placeholder="Ej: Considerando el nivel de actividad del espacio y el costo de la inversión propuesta, el sistema representa una inversión de USD X por m² climatizado. Con una ocupación promedio de X horas diarias a USD Y por hora, el recupero estimado se alcanza en aproximadamente Z meses..."></textarea>
       </div>
       <div class="hint" style="margin-top:6px;">Tip: podés mencionar costo por m², plazos de recupero, comparación con aire acondicionado, ahorro energético, etc.</div>
+    </div>
+  </div>
+
+  <!-- RENDIMIENTO CLIMÁTICO - hidden by default -->
+  <div class="panel" id="rend_panel" style="display:none;">
+    <div class="ph"><div class="ic">🌡️</div><h2>Rendimiento Según Condiciones Climáticas</h2></div>
+    <div class="pb">
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Se estima la temperatura de salida del aire con bulbo húmedo (Stull) y eficiencia de saturación del 85%, para un escenario seco y uno húmedo.</div>
+      <div class="fg2" style="margin-bottom:12px;">
+        <div class="fld">
+          <label>Día seco: T exterior (°C)</label>
+          <input type="number" id="rend_ts1" value="38" step="0.5">
+        </div>
+        <div class="fld">
+          <label>Día seco: Humedad relativa (%)</label>
+          <input type="number" id="rend_hr1" value="35" min="1" max="100">
+        </div>
+      </div>
+      <div class="fg2">
+        <div class="fld">
+          <label>Día húmedo: T exterior (°C)</label>
+          <input type="number" id="rend_ts2" value="33" step="0.5">
+        </div>
+        <div class="fld">
+          <label>Día húmedo: Humedad relativa (%)</label>
+          <input type="number" id="rend_hr2" value="70" min="1" max="100">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARATIVA VS AA - hidden by default -->
+  <div class="panel" id="comp_panel" style="display:none;">
+    <div class="ph"><div class="ic">⚡</div><h2>Comparativa Operativa vs Aire Acondicionado</h2></div>
+    <div class="pb">
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Si dejás los kW en 0, se estiman automáticamente: 1,1 kW por equipo inyector seleccionado y un AA equivalente de 8 veces esa potencia.</div>
+      <div class="fg2" style="margin-bottom:12px;">
+        <div class="fld">
+          <label>kW totales evaporativo (0 = auto)</label>
+          <input type="number" id="comp_kw_ev" value="0" min="0" step="0.1">
+        </div>
+        <div class="fld">
+          <label>kW aire acondicionado equivalente (0 = auto)</label>
+          <input type="number" id="comp_kw_aa" value="0" min="0" step="0.1">
+        </div>
+      </div>
+      <div class="fg2">
+        <div class="fld">
+          <label>Tarifa eléctrica (ARS por kWh)</label>
+          <input type="number" id="comp_tarifa" value="130" min="0">
+        </div>
+        <div class="fld">
+          <label>Horas de uso por día</label>
+          <input type="number" id="comp_horas" value="8" min="1" max="24">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSUMO DE AGUA - hidden by default -->
+  <div class="panel" id="agua_panel" style="display:none;">
+    <div class="ph"><div class="ic">💧</div><h2>Consumo de Agua Estimado</h2></div>
+    <div class="pb">
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Se calcula con la cantidad de equipos inyectores seleccionados en el proyecto.</div>
+      <div class="fg2">
+        <div class="fld">
+          <label>Litros/hora por equipo (máxima demanda)</label>
+          <input type="number" id="agua_lh" value="25" min="0">
+        </div>
+        <div class="fld">
+          <label>Horas de uso por día</label>
+          <input type="number" id="agua_horas" value="8" min="1" max="24">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GARANTÍA Y VALIDEZ - visible por defecto -->
+  <div class="panel" id="gar_panel">
+    <div class="ph"><div class="ic">🛡️</div><h2>Garantía y Validez</h2></div>
+    <div class="pb">
+      <div class="fg2" style="margin-bottom:12px;">
+        <div class="fld">
+          <label>Garantía de equipos</label>
+          <input type="text" id="gar_equipos" value="1 año de garantía de fábrica">
+        </div>
+        <div class="fld">
+          <label>Garantía de instalación</label>
+          <input type="text" id="gar_inst" value="1 año sobre trabajos de instalación">
+        </div>
+      </div>
+      <div class="fld" style="max-width:260px;">
+        <label>Validez del presupuesto (días)</label>
+        <input type="number" id="gar_validez" value="15" min="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN DE MANTENIMIENTO - hidden by default -->
+  <div class="panel" id="mant_panel" style="display:none;">
+    <div class="ph"><div class="ic">🔧</div><h2>Plan de Mantenimiento</h2></div>
+    <div class="pb">
+      <div class="fld">
+        <label>Texto del plan de mantenimiento</label>
+        <textarea id="mant_texto" rows="4">Se recomienda un mantenimiento pre-temporada (limpieza de paneles evaporativos y batea, control de bomba y flotante, ajuste de purga, prueba general) y un cierre post-temporada (drenado completo y limpieza). Consultá por nuestro Plan Temporada con visita programada.</textarea>
+      </div>
     </div>
   </div>
 
@@ -2046,6 +2157,25 @@ function toggleEcoPanel(){
 function toggleAclPanel(){
   document.getElementById('acl_panel').style.display=document.getElementById('op_acl').checked?'block':'none';
 }
+function toggleRendPanel(){
+  document.getElementById('rend_panel').style.display=document.getElementById('op_rend').checked?'block':'none';
+}
+function toggleCompPanel(){
+  document.getElementById('comp_panel').style.display=document.getElementById('op_comp').checked?'block':'none';
+}
+function toggleAguaPanel(){
+  document.getElementById('agua_panel').style.display=document.getElementById('op_agua').checked?'block':'none';
+}
+function toggleGarPanel(){
+  document.getElementById('gar_panel').style.display=document.getElementById('op_gar').checked?'block':'none';
+}
+function toggleMantPanel(){
+  document.getElementById('mant_panel').style.display=document.getElementById('op_mant').checked?'block':'none';
+}
+// Bulbo húmedo aprox. (Stull 2011)
+function tbhStull(T,rh){
+  return T*Math.atan(0.151977*Math.sqrt(rh+8.313659))+Math.atan(T+rh)-Math.atan(rh-1.676331)+0.00391838*Math.pow(rh,1.5)*Math.atan(0.023101*rh)-4.686035;
+}
 
 // ====== GUARDAR IMAGEN RESUMEN ======
 async function guardarImgResumen(){
@@ -2327,6 +2457,80 @@ function renderPpto(){
     h+=`<p class="pp-nota">Todos los valores se expresan en Dólares Americanos.${S.iva?' Incluye IVA 10,5%.':' No incluye IVA 10,5%.'} Tasa de cotización: Venta Banco Nación Argentina vigente al día de pago.</p>`;
   }
 
+  // SECCIONES OPCIONALES TÉCNICO-COMERCIALES
+  const _nv=(id,d)=>{const el=document.getElementById(id);const v=el?parseFloat(el.value):NaN;return isNaN(v)?d:v;};
+  const _f1=v=>v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const _fa=v=>Math.round(v).toLocaleString('es-AR');
+
+  // RENDIMIENTO SEGÚN CONDICIONES CLIMÁTICAS
+  if(document.getElementById('op_rend').checked){
+    const esc=[
+      {t:_nv('rend_ts1',38),hr:_nv('rend_hr1',35),nom:'Día seco',obs:'Máximo rendimiento'},
+      {t:_nv('rend_ts2',33),hr:_nv('rend_hr2',70),nom:'Día húmedo',obs:'Rendimiento moderado: el beneficio principal es la renovación de aire y la sensación por velocidad de aire'}
+    ];
+    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+    h+=`<div class="pp-sec">Rendimiento Estimado Según Condiciones</div>`;
+    h+=`<table class="pp-tabla"><thead><tr><th>Escenario</th><th style="text-align:center;">T exterior</th><th style="text-align:center;">HR</th><th style="text-align:center;">T salida estimada</th><th>Observación</th></tr></thead><tbody>`;
+    esc.forEach(e=>{
+      const tbh=tbhStull(e.t,e.hr);
+      const tsal=e.t-0.85*(e.t-tbh);
+      h+=`<tr><td>${e.nom}</td><td style="text-align:center;">${_f1(e.t)} °C</td><td style="text-align:center;">${_f1(e.hr)}%</td><td style="text-align:center;font-weight:700;">${_f1(tsal)} °C</td><td>${e.obs}</td></tr>`;
+    });
+    h+=`</tbody></table>`;
+    h+=`<p class="pp-nota">El enfriamiento evaporativo rinde más cuanto más seco está el aire. Los valores son estimativos, calculados con eficiencia de saturación del 85%.</p>`;
+    h+=`</div>`;
+  }
+
+  // COMPARATIVA DE COSTO OPERATIVO VS AA
+  if(document.getElementById('op_comp').checked){
+    let kwEv=_nv('comp_kw_ev',0);
+    if(!(kwEv>0))kwEv=qI*1.1;
+    let kwAa=_nv('comp_kw_aa',0);
+    if(!(kwAa>0))kwAa=kwEv*8;
+    const tarifa=_nv('comp_tarifa',130);
+    const horas=_nv('comp_horas',8);
+    const chEv=kwEv*tarifa, chAa=kwAa*tarifa;
+    const cdEv=chEv*horas, cdAa=chAa*horas;
+    const cmEv=cdEv*26, cmAa=cdAa*26;
+    const ahorroMes=cmAa-cmEv;
+    const ahorroPct=cmAa>0?(ahorroMes/cmAa*100):0;
+    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+    h+=`<div class="pp-sec">Comparativa de Costo Operativo</div>`;
+    h+=`<table class="pp-tabla"><thead><tr><th>Concepto</th><th style="text-align:right;">Evaporativo</th><th style="text-align:right;">Aire Acondicionado</th></tr></thead><tbody>`;
+    h+=`<tr><td>Consumo (kW)</td><td style="text-align:right;">${_f1(kwEv)}</td><td style="text-align:right;">${_f1(kwAa)}</td></tr>`;
+    h+=`<tr><td>Costo por hora (ARS)</td><td style="text-align:right;">$ ${_fa(chEv)}</td><td style="text-align:right;">$ ${_fa(chAa)}</td></tr>`;
+    h+=`<tr><td>Costo por día (${_fa(horas)} h)</td><td style="text-align:right;">$ ${_fa(cdEv)}</td><td style="text-align:right;">$ ${_fa(cdAa)}</td></tr>`;
+    h+=`<tr><td>Costo mensual (26 días)</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmEv)}</td><td style="text-align:right;font-weight:700;">$ ${_fa(cmAa)}</td></tr>`;
+    h+=`<tr style="background:#f8f8f8;font-weight:700;"><td>Ahorro con evaporativo</td><td colspan="2" style="text-align:right;">${_f1(ahorroPct)}% — $ ${_fa(ahorroMes)}/mes</td></tr>`;
+    h+=`</tbody></table>`;
+    h+=`<p class="pp-nota">Valores orientativos según tarifa informada. El evaporativo además funciona con puertas y ventanas abiertas, renovando el 100% del aire.</p>`;
+    h+=`</div>`;
+  }
+
+  // CONSUMO DE AGUA ESTIMADO
+  if(document.getElementById('op_agua').checked){
+    const lh=_nv('agua_lh',25);
+    const hd=_nv('agua_horas',8);
+    const lhTot=qI*lh;
+    const lDia=lhTot*hd;
+    const duchas=(lDia/150).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+    h+=`<div class="pp-sec">Consumo de Agua</div>`;
+    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en máxima demanda (${qI} equipo${qI===1?'':'s'} × ${_fa(lh)} L/h) ≈ <strong>${_fa(lDia)} litros</strong> por día de uso. Como referencia, equivale a ${duchas} duchas diarias. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
+    h+=`</div>`;
+  }
+
+  // PLAN DE MANTENIMIENTO
+  if(document.getElementById('op_mant').checked){
+    const mantTxt=(document.getElementById('mant_texto').value||'').trim();
+    if(mantTxt){
+      h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+      h+=`<div class="pp-sec">Mantenimiento Recomendado</div>`;
+      h+=`<p style="font-size:12px;color:#333;line-height:1.8;">${mantTxt.split('\n').join('<br>')}</p>`;
+      h+=`</div>`;
+    }
+  }
+
   // CONDICIONES
   h+=`<div class="pp-conds">
     <div class="pp-cond">
@@ -2350,6 +2554,17 @@ function renderPpto(){
       <p>Los equipos tienen garantía de 1 (un) año contra defectos de fabricación, siempre que hayan sido instalados conforme a la entrega técnica, operados correctamente y con mantenimiento preventivo periódico aplicado.</p>
     </div>
   </div>`;
+
+  // GARANTÍA Y VALIDEZ
+  if(document.getElementById('op_gar').checked){
+    const garEq=(document.getElementById('gar_equipos').value||'').trim()||'1 año de garantía de fábrica';
+    const garIn=(document.getElementById('gar_inst').value||'').trim()||'1 año sobre trabajos de instalación';
+    const garVal=_nv('gar_validez',15);
+    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+    h+=`<div class="pp-sec">Garantía y Validez</div>`;
+    h+=`<p style="font-size:12px;color:#333;line-height:1.8;"><strong>Garantía de equipos:</strong> ${garEq}.<br><strong>Garantía de instalación:</strong> ${garIn}.<br>Presupuesto válido por ${_fa(garVal)} días desde la fecha de emisión.</p>`;
+    h+=`</div>`;
+  }
 
   h+=`<div class="pp-bottom-spacer"></div>`;
   h+=`</div>`; // /pp-body
@@ -2744,6 +2959,11 @@ function _collectForm(){
     'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
     'chk_iva','chk_ars','cotiz_bna',
+    'op_rend','rend_ts1','rend_hr1','rend_ts2','rend_hr2',
+    'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas',
+    'op_agua','agua_lh','agua_horas',
+    'op_gar','gar_equipos','gar_inst','gar_validez',
+    'op_mant','mant_texto',
     'pt_n','pt_f','pt_l','pt_r','pt_chk','pt_pct','pt_chk_desc','pt_desc_tipo','pt_desc_val'];
   const fd={};ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;fd[id]=(el.type==='checkbox')?el.checked:el.value;});return fd;
 }
@@ -2753,6 +2973,11 @@ function _applyForm(fd){
   const g=id=>document.getElementById(id);
   if(g('op_acl'))g('acl_panel').style.display=g('op_acl').checked?'block':'none';
   if(g('op_eco'))g('eco_panel').style.display=g('op_eco').checked?'block':'none';
+  if(g('op_rend'))g('rend_panel').style.display=g('op_rend').checked?'block':'none';
+  if(g('op_comp'))g('comp_panel').style.display=g('op_comp').checked?'block':'none';
+  if(g('op_agua'))g('agua_panel').style.display=g('op_agua').checked?'block':'none';
+  if(g('op_gar'))g('gar_panel').style.display=g('op_gar').checked?'block':'none';
+  if(g('op_mant'))g('mant_panel').style.display=g('op_mant').checked?'block':'none';
   if(g('chk_com'))g('com_box').style.display=g('chk_com').checked?'flex':'none';
   togDesc&&togDesc();togComPt&&togComPt();togDescPt&&togDescPt();
 }
