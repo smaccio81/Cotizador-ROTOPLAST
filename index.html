@@ -621,7 +621,10 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel">
     <div class="ph" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;align-items:center;gap:10px;"><div class="ic">&#128101;</div><h2>Clientes</h2></div>
-      <button class="btn btn-v" onclick="showClientForm()">+ Nuevo Cliente</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-am" style="font-size:10px;padding:8px 14px;" onclick="importFromCRM()">&#128203; Pegar desde CRM</button>
+        <button class="btn btn-v" style="font-size:10px;padding:8px 14px;" onclick="showClientForm()">+ Nuevo Cliente</button>
+      </div>
     </div>
     <div class="pb">
       <div class="fld" style="margin-bottom:12px;">
@@ -630,6 +633,19 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       </div>
       <div id="cli_list">
         <div style="text-align:center;padding:30px;color:#bbb;">Cargando clientes...</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" id="cli_crm_panel" style="display:none;">
+    <div class="ph"><div class="ic">&#128203;</div><h2>Pegar cliente desde CRM</h2></div>
+    <div class="pb">
+      <div class="alrt alrt-i" style="margin-bottom:10px;">En el CRM us&#225; el bot&#243;n "&#129518; Pasar al cotizador" de la ficha del contacto, y peg&#225; ac&#225; lo copiado (Ctrl+V).</div>
+      <div class="fld">
+        <textarea id="crm_paste_area" rows="4" placeholder='{"simpleclima":"cliente-v1", ...}'></textarea>
+      </div>
+      <div class="acts">
+        <button class="btn btn-o" onclick="document.getElementById('cli_crm_panel').style.display='none'">Cancelar</button>
+        <button class="btn btn-v" onclick="importFromCRMText(document.getElementById('crm_paste_area').value)">Importar</button>
       </div>
     </div>
   </div>
@@ -3109,9 +3125,10 @@ function renderClientList(clients){
         ${(c.nombre||'?')[0].toUpperCase()}
       </div>
       <div class="budget-info">
-        <div class="budget-name">${escH(c.nombre||'Sin nombre')}</div>
+        <div class="budget-name">${escH(c.nombre||'Sin nombre')}${c.crmId?' <span class="ibadge" style="font-size:8px;">CRM</span>':''}</div>
         <div class="budget-meta">${[c.empresa,c.tel,c.email].filter(Boolean).map(escH).join(' · ')}</div>
         ${c.dir?'<div class="budget-meta">'+escH(c.dir)+'</div>':''}
+        ${(c.rubro||c.producto)?'<div class="budget-meta">'+[c.rubro,c.producto].filter(Boolean).map(escH).join(' · ')+'</div>':''}
       </div>
       <div class="budget-actions" style="flex-wrap:wrap;gap:4px;">
         <button class="btn btn-v" style="font-size:10px;padding:6px 10px;" onclick="loadClientToQuote('${c.id}')">&#128203; Cargar</button>
@@ -3158,6 +3175,11 @@ async function saveClient(){
   const id=_editingClientId||('cli_'+Date.now());
   if(!_editingClientId) data.createdAt=data.updatedAt;
   data.id=id;
+  // Al editar, conservar campos extra (crmId, rubro, producto, createdAt...)
+  if(_editingClientId){
+    const prev=_allClients.find(c=>c.id===_editingClientId);
+    if(prev) Object.assign(data,Object.fromEntries(Object.entries(prev).filter(([k])=>!(k in data))));
+  }
   try{
     await _cloudSaveClient(id,data);
     showToast('Cliente guardado');
@@ -3219,6 +3241,57 @@ async function viewClientHistory(id){
   }
 }
 function hideClientHist(){document.getElementById('cli_hist_panel').style.display='none';}
+
+// ====== IMPORTAR DESDE CRM ======
+async function importFromCRM(){
+  try{
+    const txt=await navigator.clipboard.readText();
+    if(txt&&txt.trim().startsWith('{')){await importFromCRMText(txt);return;}
+  }catch(e){/* sin permiso de portapapeles: fallback manual */}
+  const p=document.getElementById('cli_crm_panel');
+  p.style.display='';
+  document.getElementById('crm_paste_area').value='';
+  document.getElementById('crm_paste_area').focus();
+}
+async function importFromCRMText(txt){
+  let data;
+  try{data=JSON.parse(txt.trim());}
+  catch(e){alert('Eso no parece un cliente del CRM (JSON inválido).');return;}
+  if(data.simpleclima!=='cliente-v1'){alert('Eso no parece un cliente del CRM.');return;}
+  const dir=(data.direccion||'').trim()||[data.ciudad,data.provincia].filter(Boolean).join(', ');
+  // Si ya existe un cliente con el mismo crmId, actualizarlo en vez de duplicar
+  try{if(!_allClients.length)_allClients=await _cloudGetAllClients();}catch(e){}
+  const existing=_allClients.find(c=>c.crmId&&c.crmId===data.crmId);
+  const id=existing?existing.id:('cli_'+Date.now());
+  const cli={
+    id,
+    nombre:(data.nombre||'').trim(),
+    empresa:(data.empresa||'').trim(),
+    tel:(data.tel||'').trim(),
+    email:(existing&&existing.email)||'',
+    dir,
+    crmId:data.crmId||null,
+    rubro:(data.rubro||'').trim(),
+    producto:(data.producto||'').trim(),
+    responsable:(data.responsable||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+  if(!existing)cli.createdAt=cli.updatedAt;
+  if(!cli.nombre){alert('El cliente del CRM no tiene nombre.');return;}
+  try{
+    await _cloudSaveClient(id,cli);
+    document.getElementById('cli_crm_panel').style.display='none';
+    await loadClients();
+    loadClientToQuote(id);
+    // Pista del equipo de interés en notas internas
+    const notas=document.getElementById('cl_o');
+    if(notas&&!notas.value.trim()){
+      const extra=[cli.rubro?'Rubro: '+cli.rubro:'',cli.producto?'Interés CRM: '+cli.producto:'',cli.tel?'Tel: '+cli.tel:''].filter(Boolean).join(' · ');
+      if(extra)notas.value=extra;
+    }
+    showToast(existing?'Cliente actualizado desde CRM':'Cliente importado desde CRM');
+  }catch(e){alert('Error al guardar: '+e.message);}
+}
 
 </script>
 
