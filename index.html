@@ -706,7 +706,6 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div class="trow"><label><input type="checkbox" id="op_conc" checked>Incluir conclusión</label><span class="th">Va antes de la tabla de precios</span></div>
       <div class="trow"><label><input type="checkbox" id="op_eco" onchange="toggleEcoPanel()">Incluir análisis económico orientativo</label><span class="th">Escenarios de recupero de inversión, precio por unidad, m²</span></div>
       <div class="trow"><label><input type="checkbox" id="op_inst" checked>Cotización incluye instalación</label><span class="th">Muestra "La Instalación Incluye / No Incluye" en condiciones. Sin tilde: solo provisión de equipos.</span></div>
-      <div class="trow"><label><input type="checkbox" id="op_rend" onchange="toggleRendPanel()">Incluir rendimiento según condiciones climáticas</label><span class="th">Tabla de temperatura de salida estimada para día seco y día húmedo</span></div>
       <div class="trow"><label><input type="checkbox" id="op_comp" onchange="toggleCompPanel()">Incluir comparativa operativa vs aire acondicionado</label><span class="th">Costo por hora, día y mes: evaporativo vs AA equivalente</span></div>
       <div class="trow"><label><input type="checkbox" id="op_agua" onchange="toggleAguaPanel()">Incluir consumo de agua estimado</label><span class="th">Litros por hora y por día según cantidad de equipos</span></div>
       <div class="trow"><label><input type="checkbox" id="op_gar" checked onchange="toggleGarPanel()">Incluir garantía y validez</label><span class="th">Garantía de equipos e instalación y validez del presupuesto</span></div>
@@ -779,32 +778,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   </div>
 
   <!-- RENDIMIENTO CLIMÁTICO - hidden by default -->
-  <div class="panel" id="rend_panel" style="display:none;">
-    <div class="ph"><div class="ic">🌡️</div><h2>Rendimiento Según Condiciones Climáticas</h2></div>
-    <div class="pb">
-      <div class="alrt alrt-i" style="margin-bottom:12px;">Se estima la temperatura de salida del aire con bulbo húmedo (Stull) y eficiencia de saturación del 85%, para un escenario seco y uno húmedo.</div>
-      <div class="fg2" style="margin-bottom:12px;">
-        <div class="fld">
-          <label>Día seco: T exterior (°C)</label>
-          <input type="number" id="rend_ts1" value="38" step="0.5">
-        </div>
-        <div class="fld">
-          <label>Día seco: Humedad relativa (%)</label>
-          <input type="number" id="rend_hr1" value="35" min="1" max="100">
-        </div>
-      </div>
-      <div class="fg2">
-        <div class="fld">
-          <label>Día húmedo: T exterior (°C)</label>
-          <input type="number" id="rend_ts2" value="33" step="0.5">
-        </div>
-        <div class="fld">
-          <label>Día húmedo: Humedad relativa (%)</label>
-          <input type="number" id="rend_hr2" value="70" min="1" max="100">
-        </div>
-      </div>
-    </div>
-  </div>
+  
 
   <!-- COMPARATIVA VS AA - hidden by default -->
   <div class="panel" id="comp_panel" style="display:none;">
@@ -2157,9 +2131,6 @@ function toggleEcoPanel(){
 function toggleAclPanel(){
   document.getElementById('acl_panel').style.display=document.getElementById('op_acl').checked?'block':'none';
 }
-function toggleRendPanel(){
-  document.getElementById('rend_panel').style.display=document.getElementById('op_rend').checked?'block':'none';
-}
 function toggleCompPanel(){
   document.getElementById('comp_panel').style.display=document.getElementById('op_comp').checked?'block':'none';
 }
@@ -2171,10 +2142,6 @@ function toggleGarPanel(){
 }
 function toggleMantPanel(){
   document.getElementById('mant_panel').style.display=document.getElementById('op_mant').checked?'block':'none';
-}
-// Bulbo húmedo aprox. (Stull 2011)
-function tbhStull(T,rh){
-  return T*Math.atan(0.151977*Math.sqrt(rh+8.313659))+Math.atan(T+rh)-Math.atan(rh-1.676331)+0.00391838*Math.pow(rh,1.5)*Math.atan(0.023101*rh)-4.686035;
 }
 
 // ====== GUARDAR IMAGEN RESUMEN ======
@@ -2461,25 +2428,6 @@ function renderPpto(){
   const _nv=(id,d)=>{const el=document.getElementById(id);const v=el?parseFloat(el.value):NaN;return isNaN(v)?d:v;};
   const _f1=v=>v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
   const _fa=v=>Math.round(v).toLocaleString('es-AR');
-
-  // RENDIMIENTO SEGÚN CONDICIONES CLIMÁTICAS
-  if(document.getElementById('op_rend').checked){
-    const esc=[
-      {t:_nv('rend_ts1',38),hr:_nv('rend_hr1',35),nom:'Día seco',obs:'Máximo rendimiento'},
-      {t:_nv('rend_ts2',33),hr:_nv('rend_hr2',70),nom:'Día húmedo',obs:'Rendimiento moderado: el beneficio principal es la renovación de aire y la sensación por velocidad de aire'}
-    ];
-    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
-    h+=`<div class="pp-sec">Rendimiento Estimado Según Condiciones</div>`;
-    h+=`<table class="pp-tabla"><thead><tr><th>Escenario</th><th style="text-align:center;">T exterior</th><th style="text-align:center;">HR</th><th style="text-align:center;">T salida estimada</th><th>Observación</th></tr></thead><tbody>`;
-    esc.forEach(e=>{
-      const tbh=tbhStull(e.t,e.hr);
-      const tsal=e.t-0.85*(e.t-tbh);
-      h+=`<tr><td>${e.nom}</td><td style="text-align:center;">${_f1(e.t)} °C</td><td style="text-align:center;">${_f1(e.hr)}%</td><td style="text-align:center;font-weight:700;">${_f1(tsal)} °C</td><td>${e.obs}</td></tr>`;
-    });
-    h+=`</tbody></table>`;
-    h+=`<p class="pp-nota">El enfriamiento evaporativo rinde más cuanto más seco está el aire. Los valores son estimativos, calculados con eficiencia de saturación del 85%.</p>`;
-    h+=`</div>`;
-  }
 
   // COMPARATIVA DE COSTO OPERATIVO VS AA
   if(document.getElementById('op_comp').checked){
@@ -2959,7 +2907,6 @@ function _collectForm(){
     'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
     'chk_iva','chk_ars','cotiz_bna',
-    'op_rend','rend_ts1','rend_hr1','rend_ts2','rend_hr2',
     'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas',
     'op_agua','agua_lh','agua_horas',
     'op_gar','gar_equipos','gar_inst','gar_validez',
@@ -2973,7 +2920,6 @@ function _applyForm(fd){
   const g=id=>document.getElementById(id);
   if(g('op_acl'))g('acl_panel').style.display=g('op_acl').checked?'block':'none';
   if(g('op_eco'))g('eco_panel').style.display=g('op_eco').checked?'block':'none';
-  if(g('op_rend'))g('rend_panel').style.display=g('op_rend').checked?'block':'none';
   if(g('op_comp'))g('comp_panel').style.display=g('op_comp').checked?'block':'none';
   if(g('op_agua'))g('agua_panel').style.display=g('op_agua').checked?'block':'none';
   if(g('op_gar'))g('gar_panel').style.display=g('op_gar').checked?'block':'none';
