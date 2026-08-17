@@ -2541,9 +2541,9 @@ function renderPpto(){
     const interv=_nv('pago_dias',30);
     const antMonto=Math.round(totalFinal*antPct/100);
     const cuota=Math.round((totalFinal-antMonto)/nCh);
-    const dias=Array.from({length:nCh},(_,i)=>i*interv);
+    const dias=Array.from({length:nCh},(_,i)=>(i+1)*interv);
     const diasTxt=dias.map(d=>_fa(d)).join(', ');
-    pagoHtml=`<p>Anticipo del ${_fa(antPct)}% (${sym} ${fv(antMonto)}) a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} de ${sym} ${fv(cuota)} cada uno, a ${diasTxt} días de la entrega.</p>`;
+    pagoHtml=`<p>Anticipo del ${_fa(antPct)}% (${sym} ${fv(antMonto)}) a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} de ${sym} ${fv(cuota)} cada uno, a ${diasTxt} días.</p>`;
   } else {
     pagoHtml=`<p>50% Anticipo a la Orden de Compra<br>50% Restante contra entrega de equipos e instalación.</p>`;
   }
