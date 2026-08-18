@@ -688,7 +688,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
         <div class="fld"><label>Razón Social / Nombre</label><input type="text" id="cl_n" placeholder="Ej: Los Tilos Pádel"></div>
         <div class="fld"><label>Fecha</label><input type="date" id="cl_f"></div>
         <div class="fld"><label>Localidad</label><input type="text" id="cl_l" placeholder="Corrientes"></div>
-        <div class="fld"><label>Ref. / N° Presupuesto</label><input type="text" id="cl_r" placeholder="P-2026-001"></div>
+        <div class="fld"><label>Ref. / N° Presupuesto</label><input type="text" id="cl_r" placeholder="Vacío = se numera solo al guardar"></div>
       </div>
       <div class="fld full" style="margin-bottom:10px;"><label>Descripción del Proyecto</label><textarea id="cl_d" placeholder="Descripción del sistema propuesto..."></textarea></div>
       <div class="fld full"><label>Notas Internas (no aparece en presupuesto)</label><textarea id="cl_o" placeholder="Contacto, condiciones especiales..."></textarea></div>
@@ -701,6 +701,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div class="trow"><label><input type="checkbox" id="op_intro" checked>Incluir introducción</label><span class="th">Presentación de Simple Clima y descripción del sistema</span></div>
       <div class="trow"><label><input type="checkbox" id="op_breve">Versión breve de la introducción</label><span class="th">Solo párrafo principal, sin texto ASHRAE</span></div>
       <div class="trow"><label><input type="checkbox" id="op_tec" checked>Incluir análisis técnico del espacio</label><span class="th">Tabla de dimensiones, caudales y renovaciones</span></div>
+      <div class="trow"><label><input type="checkbox" id="op_renovmin" checked>Mostrar renovación de aire en minutos</label><span class="th">"El aire se renueva por completo cada X minutos" según capacidad instalada</span></div>
       <div class="trow"><label><input type="checkbox" id="op_acl" onchange="toggleAclPanel()">Agregar aclaración al análisis técnico</label><span class="th">Párrafo libre antes de las tablas de dimensiones</span></div>
       <div class="trow"><label><input type="checkbox" id="op_fich" checked>Incluir fichas técnicas de equipos</label><span class="th">Imagen y especificaciones por modelo seleccionado</span></div>
       <div class="trow"><label><input type="checkbox" id="op_conc" checked>Incluir conclusión</label><span class="th">Va antes de la tabla de precios</span></div>
@@ -2310,6 +2311,15 @@ function renderPpto(){
           <td class="hc">Ext. instalada</td><td><strong>${fn(aTiE)} m³/h</strong></td>
         </tr></tbody>
       </table>
+      ${(()=>{
+        if(!document.getElementById('op_renovmin').checked)return '';
+        const caud=aTiI>0?aTiI:a.vol*aRen;
+        if(!(caud>0&&a.vol>0))return '';
+        const mins=60*a.vol/caud;
+        const renH=caud/a.vol;
+        const tiempoTxt=mins<1.5?`${Math.round(mins*60)} segundos`:`${mins.toLocaleString('es-AR',{maximumFractionDigits:1})} minutos`;
+        return `<p style="font-size:11px;color:#333;margin:6px 0 10px;">💨 Con la capacidad ${aTiI>0?'instalada':'de diseño'}, el aire de este ambiente se renueva por completo cada <strong>${tiempoTxt}</strong> (${renH.toLocaleString('es-AR',{maximumFractionDigits:1})} renovaciones por hora), expulsando el aire viciado y el calor acumulado.</p>`;
+      })()}
       ${altNota?`<p style="font-size:10px;color:#999;font-style:italic;margin-top:4px;margin-bottom:10px;">${altNota}</p>`:''}`;
     });
 
@@ -2964,7 +2974,7 @@ function genPptoPt(){
 // ================================================================
 function _collectForm(){
   const ids=['cl_n','cl_f','cl_l','cl_r','cl_d','cl_o','ren',
-    'op_intro','op_breve','op_tec','op_acl','op_fich','op_conc','op_eco','op_inst',
+    'op_intro','op_breve','op_tec','op_renovmin','op_acl','op_fich','op_conc','op_eco','op_inst',
     'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
     'chk_iva','chk_ars','cotiz_bna',
@@ -2994,6 +3004,17 @@ async function saveCurrentBudget(){
   const name=prompt('Nombre del presupuesto:',def);if(name===null)return;
   const nm=name.trim()||def;
   saveAmbState();
+  // Numeración automática P-AAAA-NNN si el campo referencia está vacío
+  const refEl=document.getElementById('cl_r');
+  if(refEl&&!refEl.value.trim()){
+    try{
+      const all=await _cloudGetAll();
+      const yr=new Date().getFullYear();
+      let max=0;
+      all.forEach(b=>{const m=String(b.ref||'').match(/^P-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
+      refEl.value='P-'+yr+'-'+String(max+1).padStart(3,'0');
+    }catch(e){}
+  }
   const id='b'+Date.now();
   const snap={id,name:nm,clientName:document.getElementById('cl_n').value||'—',ref:document.getElementById('cl_r').value||'',
     savedAt:new Date().toISOString(),form:_collectForm(),_clienteId:S._clienteId||null,
