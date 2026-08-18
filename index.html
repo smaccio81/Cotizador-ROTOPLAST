@@ -954,6 +954,15 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
             <div class="hint">O ingresá el m³ directamente si ya lo tenés calculado</div>
           </div>
         </div>
+        <!-- Sectores anexos: espacios contiguos servidos por el mismo sistema (conducto) -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #ddd;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+            <div class="dim-tit" style="margin:0;">Sectores anexos <em style="color:#bbb;font-weight:400;">(espacio contiguo servido por el mismo sistema vía conducto — su volumen se suma al cálculo)</em></div>
+            <button class="amb-add" style="font-size:10px;padding:4px 12px;" onclick="addSector()">+ Agregar sector</button>
+          </div>
+          <div id="sect_list"></div>
+          <div id="sect_total" style="display:none;font-size:12px;font-weight:700;color:var(--v);margin-top:6px;"></div>
+        </div>
       </div>
       <div class="fld">
         <label>% Extracción sobre caudal instalado de inyección</label>
@@ -1533,8 +1542,8 @@ function moInyVal(){return parseFloat(document.getElementById('mo_iny_val').valu
 function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').value)||0;}
 
 // ====== ESTADO ======
-function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null};}
-const S={vol:0,aT:0,aC:0,pE:60,ren:0,qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
+function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null,sectores:[]};}
+const S={vol:0,aT:0,aC:0,pE:60,ren:0,sectores:[],qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
 
 // ====== MODE ======
 function setMode(m){
@@ -1626,6 +1635,7 @@ function saveAmbState(){
   a.pE=S.pE;
   a.qi={};allEqs().forEach(e=>{a.qi[e.id]=S.qi[e.id]||0;});
   a.qe={};EXT_BASE.forEach(e=>{a.qe[e.id]=S.qe[e.id]||0;});
+  a.sectores=JSON.parse(JSON.stringify(S.sectores||[]));
 }
 function loadAmbState(idx){
   const a=S.ambientes[idx];if(!a)return;
@@ -1635,7 +1645,11 @@ function loadAmbState(idx){
   document.getElementById('d_at').value=a.d_at||'';
   document.getElementById('d_ac').value=a.d_ac||'';
   const supEl=document.getElementById('d_sup');if(supEl)supEl.value=a.sup>0?a.sup:'';
-  const volEl=document.getElementById('d_vol');if(volEl)volEl.value=a.vol>0?a.vol:'';
+  S.sectores=JSON.parse(JSON.stringify(a.sectores||[]));
+  renderSectores();
+  // El campo volumen muestra solo el sector principal; los sectores se suman aparte
+  const _svLoad=(a.sectores||[]).reduce((t,sx)=>t+((parseFloat(sx.l)||0)*(parseFloat(sx.a)||0)*(parseFloat(sx.h)||0)),0);
+  const volEl=document.getElementById('d_vol');if(volEl)volEl.value=a.vol>0?+(a.vol-_svLoad).toFixed(4):'';
   S.dimSource=a.dimSource||'lah';
   S.vol=a.vol||0;S.aT=a.aT||0;S.aC=a.aC||0;
   S.pE=a.pE!=null?a.pE:60;
@@ -1664,6 +1678,7 @@ function addAmb(){
   EXT_BASE.forEach(e=>{S.qe[e.id]=0;const el=document.getElementById('qe_'+e.id);if(el)el.value=0;});
   // reset dims display
   ['d_l','d_a','d_at','d_ac','d_sup','d_vol','ren'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  S.sectores=[];renderSectores();
   S.vol=0;S.aT=0;S.aC=0;S.ren=0;S.dimSource='lah';
   S.ambActivo=newIdx;S.ambientes[newIdx].pE=60;
   document.getElementById('pct_e').value=60;const pn=document.getElementById('pct_e_num');if(pn)pn.value=60;S.pE=60;
@@ -1702,6 +1717,49 @@ function selTipo(el,a,b,cx){
   else{document.getElementById('ren').value='';document.getElementById('ren').focus();}
 }
 
+// ====== SECTORES ANEXOS ======
+function sectVol(sx){return (parseFloat(sx.l)||0)*(parseFloat(sx.a)||0)*(parseFloat(sx.h)||0);}
+function sectoresVolTotal(){return (S.sectores||[]).reduce((t,sx)=>t+sectVol(sx),0);}
+function addSector(){
+  if(!S.sectores)S.sectores=[];
+  S.sectores.push({id:'s'+Date.now(),nom:'',l:'',a:'',h:''});
+  renderSectores();calcDim();
+}
+function delSector(id){
+  S.sectores=(S.sectores||[]).filter(x=>x.id!==id);
+  renderSectores();calcDim();
+}
+function updSector(id,k,v){
+  const sx=(S.sectores||[]).find(x=>x.id===id);
+  if(sx)sx[k]=v;
+  calcDim();
+  const vEl=document.getElementById('sv_'+id);
+  if(vEl&&sx)vEl.textContent=sectVol(sx)>0?(+sectVol(sx).toFixed(1)).toLocaleString('es-AR')+' m³':'— m³';
+}
+function renderSectores(){
+  const el=document.getElementById('sect_list');
+  if(!el)return;
+  el.innerHTML=(S.sectores||[]).map((sx,i)=>`
+    <div style="display:grid;grid-template-columns:1.4fr .7fr .7fr .7fr auto auto;gap:6px;align-items:end;margin-bottom:6px;">
+      <div class="fld"><label>Nombre</label><input type="text" value="${(sx.nom||'').replace(/"/g,'&quot;')}" placeholder="Ej: Depósito anexo" oninput="updSector('${sx.id}','nom',this.value)"></div>
+      <div class="fld"><label>Largo</label><input type="number" value="${sx.l||''}" placeholder="m" oninput="updSector('${sx.id}','l',this.value)"></div>
+      <div class="fld"><label>Ancho</label><input type="number" value="${sx.a||''}" placeholder="m" oninput="updSector('${sx.id}','a',this.value)"></div>
+      <div class="fld"><label>Altura</label><input type="number" value="${sx.h||''}" placeholder="m" oninput="updSector('${sx.id}','h',this.value)"></div>
+      <span id="sv_${sx.id}" style="font-size:12px;font-weight:700;color:var(--v);padding-bottom:9px;white-space:nowrap;">${sectVol(sx)>0?(+sectVol(sx).toFixed(1)).toLocaleString('es-AR')+' m³':'— m³'}</span>
+      <button class="il-del" style="margin-bottom:5px;" onclick="delSector('${sx.id}')" title="Quitar sector">✕</button>
+    </div>`).join('');
+  _updSectTotal();
+}
+function _updSectTotal(){
+  const tEl=document.getElementById('sect_total');
+  if(!tEl)return;
+  const sv=sectoresVolTotal();
+  if(sv>0&&S.vol>0){
+    tEl.style.display='block';
+    tEl.textContent='Volumen total del ambiente (principal + sectores): '+(+S.vol.toFixed(1)).toLocaleString('es-AR')+' m³';
+  } else tEl.style.display='none';
+}
+
 // ====== DIM ======
 function calcDim(src){
   const l=parseFloat(document.getElementById('d_l').value)||0;
@@ -1729,6 +1787,10 @@ function calcDim(src){
     S.vol=parseFloat(volEl.value)||0;
     if(ac>0&&supEl&&document.activeElement!==supEl)supEl.value=S.vol>0?+(S.vol/ac).toFixed(4):'';
   }
+  // Sumar sectores anexos (mismo sistema vía conducto)
+  const _sv=sectoresVolTotal();
+  if(_sv>0)S.vol+=_sv;
+  _updSectTotal();
   calcCaudal();
 }
 function updExtPct(){
@@ -2295,10 +2357,19 @@ function renderPpto(){
       }else{
         dimRow=`<tr><td class="hc">Largo</td><td>${adl} m</td><td class="hc">Ancho</td><td>${ada} m</td><td class="hc">Altura Total</td><td>${adat} m</td><td class="hc">Volumen</td><td><strong>${fn(a.vol)} m³</strong></td></tr>`;
       }
+      let sectRow='';
+      if(a.sectores&&a.sectores.length){
+        const parts=a.sectores.map((sx,si)=>{
+          const v=(parseFloat(sx.l)||0)*(parseFloat(sx.a)||0)*(parseFloat(sx.h)||0);
+          return `${sx.nom||('Sector '+(si+2))}: ${sx.l||0}×${sx.a||0}×${sx.h||0} m (${fn(v)} m³)`;
+        }).join(' · ');
+        sectRow=`<tr><td class="hc">Sectores anexos</td><td colspan="7">${parts} — integrados al mismo sistema mediante conducto</td></tr>`;
+      }
       h+=`<table class="pp-esp">
         <thead><tr><th colspan="8">${nom} — ${ambNom}</th></tr></thead>
         <tbody>
           ${dimRow}
+          ${sectRow}
           <tr><td class="hc">Renovaciones</td><td>${aRen} r/h</td><td class="hc">Altura Cálculo</td><td><strong>${adac} m</strong></td><td class="hc">Caudal Diseño</td><td colspan="3"><strong>${fn(a.vol*aRen)} m³/h</strong></td></tr>
         </tbody>
       </table>
