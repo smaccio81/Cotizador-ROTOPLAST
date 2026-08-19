@@ -4,9 +4,10 @@
 payload `simpleclima: "cliente-v1"` con `empresa: ""` aunque el contacto tenga cargada una
 empresa / razón social en el CRM.
 
-Caso real: contacto **Eduardo Portillo**, arquitecto de **Hiper del Pollo**. El JSON exportado
-trae `"nombre": "Eduardo Portillo", "empresa": ""` — la empresa se pierde y el presupuesto
-sale a nombre de la persona sola.
+Caso real: contacto **Eduardo Portillo**, de **Los Tilos Pádel**. El JSON exportado trae
+`"nombre": "Eduardo Portillo", "empresa": ""` — la empresa se pierde y el presupuesto sale
+a nombre de la persona sola. (Ojo: hay más de un Eduardo en el CRM — otro Eduardo, arquitecto,
+es el contacto de Hiper del Pollo. Por eso mismo importa que cada contacto viaje con SU empresa.)
 
 ## Qué corregir
 
@@ -25,7 +26,7 @@ En la función que arma el payload del botón "Pasar al cotizador":
   "simpleclima": "cliente-v1",
   "crmId": "6bf23936-8f35-4760-9d6d-c880966b11fa",
   "nombre": "Eduardo Portillo",
-  "empresa": "Hiper del Pollo",
+  "empresa": "Los Tilos Pádel",
   "tel": "5492215993309",
   "ciudad": "Corrientes",
   "provincia": "Corrientes",
@@ -38,8 +39,9 @@ En la función que arma el payload del botón "Pasar al cotizador":
 
 ## Cómo lo usa el cotizador (ya implementado — no requiere cambios allá)
 
-- El campo "Razón Social / Nombre" del presupuesto se arma como
-  **"Hiper del Pollo — At.: Eduardo Portillo"** cuando hay empresa, o solo la persona si no hay.
+- El cotizador tiene campos separados: **Razón Social / Empresa** (`empresa` del payload) y
+  **Persona de contacto** (`nombre`). El presupuesto sale a nombre de la razón social; si viene
+  vacía, sale la persona. Teléfono, dirección y "ciudad, provincia" se cargan en sus campos.
 - Defensivo: si `empresa` viene vacía pero `nombre` trae "Persona — Empresa", el cotizador
   los separa igual. Pero lo correcto es que el CRM mande el dato en su campo.
 - Dedup por `crmId`: reexportar el mismo contacto actualiza el cliente, no lo duplica; si la
