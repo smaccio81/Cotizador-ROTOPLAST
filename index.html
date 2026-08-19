@@ -3534,10 +3534,14 @@ function loadClientToQuote(id){
   const c=_allClients.find(x=>x.id===id);
   if(!c) return;
   const el=document.getElementById('cl_n');
-  if(el) el.value=c.nombre||'';
+  // Razón social primero; si hay persona de contacto, va como "At.:"
+  const razon=(c.empresa||'').trim(), persona=(c.nombre||'').trim();
+  if(el) el.value=razon?(persona?razon+' — At.: '+persona:razon):persona;
+  const locEl=document.getElementById('cl_l');
+  if(locEl&&!locEl.value.trim()&&(c.ciudad||c.provincia))locEl.value=[c.ciudad,c.provincia].filter(Boolean).join(', ');
   S._clienteId=id;
   goStep(1);
-  showToast('Cliente "'+c.nombre+'" cargado al presupuesto');
+  showToast('Cliente "'+(razon||persona)+'" cargado al presupuesto');
 }
 async function viewClientHistory(id){
   const c=_allClients.find(x=>x.id===id)||{};
@@ -3591,6 +3595,9 @@ async function importFromCRMText(txt){
   try{data=JSON.parse(txt.trim());}
   catch(e){alert('Eso no parece un cliente del CRM (JSON inválido).');return;}
   if(data.simpleclima!=='cliente-v1'){alert('Eso no parece un cliente del CRM.');return;}
+  // Defensivo: si empresa viene vacía pero el nombre trae "Persona — Empresa", separar
+  let _nom=(data.nombre||'').trim(), _emp=(data.empresa||'').trim();
+  if(!_emp&&_nom.includes(' — ')){const p=_nom.split(' — ');_nom=p[0].trim();_emp=p.slice(1).join(' — ').trim();}
   const dir=(data.direccion||'').trim()||[data.ciudad,data.provincia].filter(Boolean).join(', ');
   // Si ya existe un cliente con el mismo crmId, actualizarlo en vez de duplicar
   try{if(!_allClients.length)_allClients=await _cloudGetAllClients();}catch(e){}
@@ -3598,8 +3605,8 @@ async function importFromCRMText(txt){
   const id=existing?existing.id:('cli_'+Date.now());
   const cli={
     id,
-    nombre:(data.nombre||'').trim(),
-    empresa:(data.empresa||'').trim(),
+    nombre:_nom,
+    empresa:_emp||(existing&&existing.empresa)||'',
     tel:(data.tel||'').trim(),
     email:(existing&&existing.email)||'',
     dir,
