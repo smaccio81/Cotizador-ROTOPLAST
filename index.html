@@ -685,8 +685,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <div class="ph"><div class="ic">👤</div><h2>Datos del Cliente y Proyecto</h2></div>
     <div class="pb">
       <div class="fg2" style="margin-bottom:12px;">
-        <div class="fld"><label>Razón Social / Nombre</label><input type="text" id="cl_n" placeholder="Ej: Los Tilos Pádel"></div>
+        <div class="fld"><label>Razón Social / Empresa</label><input type="text" id="cl_n" placeholder="Ej: Los Tilos Pádel"><div class="hint">Es lo que sale en el presupuesto; si queda vacío, sale la persona de contacto</div></div>
+        <div class="fld"><label>Persona de contacto</label><input type="text" id="cl_persona" placeholder="Ej: Arq. Eduardo Portillo"></div>
+        <div class="fld"><label>Teléfono</label><input type="text" id="cl_tel" placeholder="+54 ..."></div>
         <div class="fld"><label>Fecha</label><input type="date" id="cl_f"></div>
+        <div class="fld"><label>Dirección</label><input type="text" id="cl_dir" placeholder="Calle, número..."></div>
         <div class="fld"><label>Localidad</label><input type="text" id="cl_l" placeholder="Corrientes"></div>
         <div class="fld"><label>Ref. / N° Presupuesto</label><input type="text" id="cl_r" placeholder="Vacío = se numera solo al guardar"></div>
       </div>
@@ -1543,6 +1546,7 @@ function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').valu
 
 // ====== ESTADO ======
 function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null,sectores:[]};}
+function clienteNom(fb){const r=(document.getElementById('cl_n')||{value:''}).value.trim();const p=(document.getElementById('cl_persona')||{value:''}).value.trim();return r||p||fb;}
 const S={vol:0,aT:0,aC:0,pE:60,ren:0,sectores:[],qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
 
 // ====== MODE ======
@@ -2129,7 +2133,7 @@ function calcEco(){
   const margen=vNeta-ctot-com; // margen neto = venta - costo - comision
   const mpct=ctot>0?(margen/ctot*100).toFixed(1):0;
 
-  const nom=document.getElementById('cl_n').value||'Proyecto';
+  const nom=clienteNom('Proyecto');
   document.getElementById('ri_nombre').textContent=nom;
   document.getElementById('ri_ceq').textContent=f(ceq+cext);
   document.getElementById('ri_cmo').textContent=f(cMo);
@@ -2249,7 +2253,7 @@ function togglePagoModo(){
 // ====== GUARDAR IMAGEN RESUMEN ======
 async function guardarImgResumen(){
   const el=document.getElementById('resumen_interno_cap');
-  const nom=document.getElementById('cl_n').value||'proyecto';
+  const nom=clienteNom('proyecto');
   try{
     const canvas=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true});
     const link=document.createElement('a');
@@ -2261,7 +2265,7 @@ async function guardarImgResumen(){
 
 // ====== PRESUPUESTO ======
 function renderPpto(){
-  const nom=document.getElementById('cl_n').value||'Cliente';
+  const nom=clienteNom('Cliente');
   const fecha=document.getElementById('cl_f').value;
   const loc=document.getElementById('cl_l').value||'Corrientes';
   const ref=document.getElementById('cl_r').value;
@@ -3044,7 +3048,7 @@ function genPptoPt(){
 // GESTOR DE PRESUPUESTOS (Firebase / localStorage fallback)
 // ================================================================
 function _collectForm(){
-  const ids=['cl_n','cl_f','cl_l','cl_r','cl_d','cl_o','ren',
+  const ids=['cl_n','cl_persona','cl_tel','cl_dir','cl_f','cl_l','cl_r','cl_d','cl_o','ren',
     'op_intro','op_breve','op_tec','op_renovmin','op_acl','op_fich','op_conc','op_eco','op_inst',
     'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
@@ -3071,7 +3075,7 @@ function _applyForm(fd){
   togDesc&&togDesc();togComPt&&togComPt();togDescPt&&togDescPt();
 }
 async function saveCurrentBudget(){
-  const def=(document.getElementById('cl_n').value||'Sin nombre')+' — '+new Date().toLocaleDateString('es-AR');
+  const def=(clienteNom('Sin nombre'))+' — '+new Date().toLocaleDateString('es-AR');
   const name=prompt('Nombre del presupuesto:',def);if(name===null)return;
   const nm=name.trim()||def;
   saveAmbState();
@@ -3087,7 +3091,7 @@ async function saveCurrentBudget(){
     }catch(e){}
   }
   const id='b'+Date.now();
-  const snap={id,name:nm,clientName:document.getElementById('cl_n').value||'—',ref:document.getElementById('cl_r').value||'',
+  const snap={id,name:nm,clientName:clienteNom('—'),ref:document.getElementById('cl_r').value||'',
     savedAt:new Date().toISOString(),form:_collectForm(),_clienteId:S._clienteId||null,
     state:{ambientes:JSON.parse(JSON.stringify(S.ambientes)),ambActivo:S.ambActivo,
       vol:S.vol,aT:S.aT,aC:S.aC,pE:S.pE,ren:S.ren,qi:{...S.qi},qe:{...S.qe},com:S.com,pCom:S.pCom,desc:S.desc,modo:S.modo,qpt_proj:{...S.qpt_proj},
@@ -3533,12 +3537,15 @@ async function deleteClient(id){
 function loadClientToQuote(id){
   const c=_allClients.find(x=>x.id===id);
   if(!c) return;
-  const el=document.getElementById('cl_n');
-  // Razón social primero; si hay persona de contacto, va como "At.:"
   const razon=(c.empresa||'').trim(), persona=(c.nombre||'').trim();
-  if(el) el.value=razon?(persona?razon+' — At.: '+persona:razon):persona;
-  const locEl=document.getElementById('cl_l');
-  if(locEl&&!locEl.value.trim()&&(c.ciudad||c.provincia))locEl.value=[c.ciudad,c.provincia].filter(Boolean).join(', ');
+  const _set=(fid,v)=>{const e=document.getElementById(fid);if(e&&v)e.value=v;};
+  _set('cl_n',razon);
+  _set('cl_persona',persona);
+  _set('cl_tel',(c.tel||'').trim());
+  _set('cl_dir',(c.dir||'').trim());
+  _set('cl_l',[c.ciudad,c.provincia].filter(Boolean).join(', '));
+  // Si no hay razón social, limpiar cl_n para que el presupuesto use la persona
+  if(!razon){const e=document.getElementById('cl_n');if(e)e.value='';}
   S._clienteId=id;
   goStep(1);
   showToast('Cliente "'+(razon||persona)+'" cargado al presupuesto');
