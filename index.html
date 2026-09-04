@@ -435,6 +435,15 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .amb-tab .amb-x:hover{opacity:1;}
 .amb-add{font-family:var(--f);font-size:11px;font-weight:700;padding:5px 12px;border:1.5px dashed var(--v);border-radius:20px;background:none;color:var(--v);cursor:pointer;transition:all .15s;}
 .amb-add:hover{background:#EBF2F8;}
+/* ===== OPCIONES POR AMBIENTE ===== */
+.op-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 18px;background:#fffbee;border-top:1px solid #f0e7c0;border-bottom:1px solid #f0e7c0;}
+.op-bar-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#bbb;margin-right:2px;}
+.op-tab{font-family:var(--f);font-size:11px;font-weight:700;padding:4px 11px;border:1.5px solid #e8d870;border-radius:20px;background:#fff;color:#b59b20;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.op-tab.active{background:var(--am);border-color:var(--am);color:#fff;}
+.op-tab .amb-x{font-size:12px;opacity:.6;cursor:pointer;margin-left:2px;line-height:1;}
+.op-tab .amb-x:hover{opacity:1;}
+.op-tab-add{font-family:var(--f);font-size:10px;font-weight:700;padding:4px 11px;border:1.5px dashed #e8d870;border-radius:20px;background:none;color:#b59b20;cursor:pointer;transition:all .15s;}
+.op-tab-add:hover{background:#fffbee;}
 .dim-direct-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed #ddd;}
 .dim-vol-input{font-size:15px!important;font-weight:700!important;border-color:var(--v)!important;background:#EBF2F8!important;}
 .dim-sup-input{font-size:15px!important;font-weight:700!important;border-color:#2563EB!important;}
@@ -1011,6 +1020,10 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <span style="font-size:10px;color:#aaa;font-weight:400;text-transform:none;">Seleccioná el ambiente y asigná sus equipos</span>
     </div>
     <div class="amb-bar" id="amb_tabs_s3"></div>
+    <div class="op-bar" id="op_bar_s3">
+      <span class="op-bar-lbl">Alternativas:</span>
+      <div id="op_tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+    </div>
   </div>
   <div class="panel">
     <div class="ph"><div class="ic">❄️</div><h2>Equipos de Inyección</h2></div>
@@ -1545,7 +1558,77 @@ function moInyVal(){return parseFloat(document.getElementById('mo_iny_val').valu
 function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').value)||0;}
 
 // ====== ESTADO ======
-function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null,sectores:[]};}
+function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null,sectores:[],opciones:[{nombre:'Opción A',qi:{},qe:{}}],opActivo:0};}
+
+// ====== OPCIONES POR AMBIENTE ======
+function ensureOpciones(a){
+  if(!a.opciones||!a.opciones.length){
+    a.opciones=[{nombre:'Opción A',qi:JSON.parse(JSON.stringify(a.qi||{})),qe:JSON.parse(JSON.stringify(a.qe||{}))}];
+    a.opActivo=0;
+  }
+}
+function getActiveOp(a){ensureOpciones(a);return a.opciones[a.opActivo||0]||a.opciones[0];}
+function ambQi(a){return getActiveOp(a).qi||{};}
+function ambQe(a){return getActiveOp(a).qe||{};}
+
+function renderOpTabs(){
+  const a=S.ambientes[S.ambActivo];if(!a)return;
+  ensureOpciones(a);
+  const ops=a.opciones;
+  const el=document.getElementById('op_tabs');if(!el)return;
+  const bar=document.getElementById('op_bar_s3');
+  if(bar) bar.style.display='flex';
+  const canAdd=ops.length<4;
+  let h=ops.map((op,i)=>`<button class="op-tab${i===a.opActivo?' active':''}" onclick="switchOp(${i})">${op.nombre||'Opción '+(i+1)}${ops.length>1?` <span class="amb-x" onclick="event.stopPropagation();delOp(${i})">✕</span>`:''}</button>`).join('');
+  if(canAdd) h+=`<button class="op-tab-add" onclick="addOp()">+ Alternativa</button>`;
+  el.innerHTML=h;
+}
+function saveOpState(){
+  const a=S.ambientes[S.ambActivo];if(!a)return;
+  ensureOpciones(a);
+  const op=a.opciones[a.opActivo||0];if(!op)return;
+  op.qi={};allEqs().forEach(e=>{op.qi[e.id]=S.qi[e.id]||0;});
+  op.qe={};EXT_BASE.forEach(e=>{op.qe[e.id]=S.qe[e.id]||0;});
+}
+function loadOpEquip(op){
+  allEqs().forEach(e=>{S.qi[e.id]=(op&&op.qi&&op.qi[e.id])||0;const el=document.getElementById('qi_'+e.id);if(el)el.value=S.qi[e.id];});
+  EXT_BASE.forEach(e=>{S.qe[e.id]=(op&&op.qe&&op.qe[e.id])||0;const el=document.getElementById('qe_'+e.id);if(el)el.value=S.qe[e.id];});
+}
+function switchOp(idx){
+  if(!S.ambientes[S.ambActivo])return;
+  saveOpState();
+  S.ambientes[S.ambActivo].opActivo=idx;
+  loadOpEquip(S.ambientes[S.ambActivo].opciones[idx]);
+  renderOpTabs();
+  calcCaudal();updEstados();updSugs();
+}
+function addOp(){
+  const a=S.ambientes[S.ambActivo];if(!a)return;
+  ensureOpciones(a);
+  if(a.opciones.length>=4){showToast('⚠ Máximo 4 alternativas por ambiente');return;}
+  saveOpState();
+  const names=['Opción A','Opción B','Opción C','Opción D'];
+  const newOp={nombre:names[a.opciones.length]||'Opción '+(a.opciones.length+1),qi:{},qe:{}};
+  a.opciones.push(newOp);
+  a.opActivo=a.opciones.length-1;
+  loadOpEquip(newOp);
+  renderOpTabs();
+  calcCaudal();updEstados();updSugs();
+  showToast('✅ '+newOp.nombre+' agregada');
+}
+function delOp(idx){
+  const a=S.ambientes[S.ambActivo];if(!a)return;
+  ensureOpciones(a);
+  if(a.opciones.length<=1){showToast('⚠ No podés eliminar la única alternativa');return;}
+  const nom=a.opciones[idx].nombre||'Opción '+(idx+1);
+  if(!confirm('¿Eliminar "'+nom+'"?'))return;
+  a.opciones.splice(idx,1);
+  a.opActivo=Math.max(0,Math.min(a.opActivo||0,a.opciones.length-1));
+  loadOpEquip(a.opciones[a.opActivo]);
+  renderOpTabs();
+  calcCaudal();updEstados();updSugs();
+  showToast('🗑 '+nom+' eliminada');
+}
 function clienteNom(fb){const r=(document.getElementById('cl_n')||{value:''}).value.trim();const p=(document.getElementById('cl_persona')||{value:''}).value.trim();return r||p||fb;}
 const S={vol:0,aT:0,aC:0,pE:60,ren:0,sectores:[],qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
 
@@ -1624,6 +1707,7 @@ function renderAmbTabs(){
   const tit=document.getElementById('amb_panel_tit');if(tit)tit.textContent='Datos del Ambiente — '+nom;
   const nomEl=document.getElementById('amb_nombre');if(nomEl)nomEl.value=a.nombre||'';
   renderAmbEsquemas&&renderAmbEsquemas();
+  renderOpTabs();
 }
 function saveAmbState(){
   const a=S.ambientes[S.ambActivo];if(!a)return;
@@ -1637,9 +1721,8 @@ function saveAmbState(){
   a.vol=S.vol;a.aT=S.aT;a.aC=S.aC;
   a.ren_val=document.getElementById('ren').value;
   a.pE=S.pE;
-  a.qi={};allEqs().forEach(e=>{a.qi[e.id]=S.qi[e.id]||0;});
-  a.qe={};EXT_BASE.forEach(e=>{a.qe[e.id]=S.qe[e.id]||0;});
   a.sectores=JSON.parse(JSON.stringify(S.sectores||[]));
+  saveOpState();
 }
 function loadAmbState(idx){
   const a=S.ambientes[idx];if(!a)return;
@@ -1663,8 +1746,9 @@ function loadAmbState(idx){
   document.getElementById('st_ep').textContent=S.pE;
   document.getElementById('ren').value=a.ren_val||'';
   document.querySelectorAll('.tc').forEach(c=>c.classList.remove('sel'));
-  allEqs().forEach(e=>{S.qi[e.id]=(a.qi&&a.qi[e.id])||0;const el=document.getElementById('qi_'+e.id);if(el)el.value=S.qi[e.id];});
-  EXT_BASE.forEach(e=>{S.qe[e.id]=(a.qe&&a.qe[e.id])||0;const el=document.getElementById('qe_'+e.id);if(el)el.value=S.qe[e.id];});
+  ensureOpciones(a);
+  loadOpEquip(a.opciones[a.opActivo||0]);
+  renderOpTabs();
   S.ren=parseFloat(a.ren_val)||0;
   calcCaudal();updEstados();updSugs();
 }
@@ -2037,12 +2121,13 @@ function abrirEsquema(editId){
   const ancho=parseFloat(document.getElementById('d_a').value)||0;
   const alto=parseFloat(document.getElementById('d_at').value)||0;
   const eq=[];
+  const _aqi=ambQi(amb),_aqe=ambQe(amb);
   allEqs().forEach(e=>{
-    const q=(amb.qi&&amb.qi[e.id])||0;
+    const q=(_aqi[e.id])||0;
     if(q>0) eq.push({id:e.id, m:e.n, q, cat:getEqCat(e.id)});
   });
   EXT_BASE.forEach(e=>{
-    const q=(amb.qe&&amb.qe[e.id])||0;
+    const q=(_aqe[e.id])||0;
     if(q>0) eq.push({id:e.id, m:e.n, q, cat:getEqCat(e.id)});
   });
   const params=new URLSearchParams({
@@ -2100,8 +2185,9 @@ function calcEco(){
   let ceq=0,veq=0,qI=0;
   let cext=0,vext=0,qE=0;
   S.ambientes.forEach(amb=>{
-    allEqs().forEach(e=>{const q=amb.qi[e.id]||0;if(q>0){ceq+=q*getP(e.id,'c');veq+=q*getP(e.id,'p');qI+=q;}});
-    EXT_BASE.forEach(e=>{const q=amb.qe[e.id]||0;if(q>0){cext+=q*getP(e.id,'c');vext+=q*getP(e.id,'p');qE+=q;}});
+    const qi=ambQi(amb),qe=ambQe(amb);
+    allEqs().forEach(e=>{const q=qi[e.id]||0;if(q>0){ceq+=q*getP(e.id,'c');veq+=q*getP(e.id,'p');qI+=q;}});
+    EXT_BASE.forEach(e=>{const q=qe[e.id]||0;if(q>0){cext+=q*getP(e.id,'c');vext+=q*getP(e.id,'p');qE+=q;}});
   });
   // Portátiles en proyecto
   let cpt=0,vpt=0,qPT=0;
@@ -2112,7 +2198,7 @@ function calcEco(){
   // Companions: se calculan según la cantidad de equipo de techo seleccionado
   EQI_BASE.tc.forEach(eq=>{
     if(!eq.companion)return;
-    const qtc=S.ambientes.reduce((s,a)=>s+(a.qi[eq.id]||0),0);
+    const qtc=S.ambientes.reduce((s,a)=>s+(ambQi(a)[eq.id]||0),0);
     if(qtc>0){cacc+=qtc*getP(eq.companion,'c');vacc+=qtc*getP(eq.companion,'p');}
   });
   // Opcionales: cantidad manual en S.qa
@@ -2145,7 +2231,7 @@ function calcEco(){
 
   // Merged quantities across all ambientes for detail table
   const mQi={},mQe={};
-  S.ambientes.forEach(amb=>{allEqs().forEach(e=>{mQi[e.id]=(mQi[e.id]||0)+(amb.qi[e.id]||0);});EXT_BASE.forEach(e=>{mQe[e.id]=(mQe[e.id]||0)+(amb.qe[e.id]||0);});});
+  S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{mQi[e.id]=(mQi[e.id]||0)+(qi[e.id]||0);});EXT_BASE.forEach(e=>{mQe[e.id]=(mQe[e.id]||0)+(qe[e.id]||0);});});
 
   let rows='';
   rows+=`<tr class="sec"><td colspan="6">EQUIPOS DE INYECCIÓN</td></tr>`;
@@ -2284,9 +2370,9 @@ function renderPpto(){
   // Save current ambiente state before rendering
   saveAmbState();
 
-  // Aggregate equipment across all ambientes
+  // Aggregate equipment across all ambientes (active option per ambiente)
   const rQi={},rQe={};
-  S.ambientes.forEach(amb=>{allEqs().forEach(e=>{rQi[e.id]=(rQi[e.id]||0)+(amb.qi[e.id]||0);});EXT_BASE.forEach(e=>{rQe[e.id]=(rQe[e.id]||0)+(amb.qe[e.id]||0);});});
+  S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{rQi[e.id]=(rQi[e.id]||0)+(qi[e.id]||0);});EXT_BASE.forEach(e=>{rQe[e.id]=(rQe[e.id]||0)+(qe[e.id]||0);});});
   // Companions automáticos (rejillas de techo)
   const rQaComp={};
   EQI_BASE.tc.forEach(eq=>{if(eq.companion&&(rQi[eq.id]||0)>0)rQaComp[eq.companion]=(rQaComp[eq.companion]||0)+(rQi[eq.id]||0);});
@@ -2348,8 +2434,8 @@ function renderPpto(){
       const adl=a.d_l||'—',ada=a.d_a||'—',adat=a.d_at||'—';
       const adac=a.d_ac||adat;
       const aRen=parseFloat(a.ren_val)||0;
-      const aTiI=allEqs().reduce((s,e)=>s+(a.qi[e.id]||0)*e.q,0);
-      const aTiE=EXT_BASE.reduce((s,e)=>s+(a.qe[e.id]||0)*e.q,0);
+      const aTiI=allEqs().reduce((s,e)=>s+(ambQi(a)[e.id]||0)*e.q,0);
+      const aTiE=EXT_BASE.reduce((s,e)=>s+(ambQe(a)[e.id]||0)*e.q,0);
       const aExtReq=aTiI*a.pE/100;
       const altNota=(a.d_ac&&a.d_ac!=a.d_at&&a.d_at)?` Altura de cálculo adoptada: <strong>${adac} m</strong> sobre altura total de ${adat} m.`:'';
       // Mostrar dimensiones según el origen del dato
@@ -2498,22 +2584,31 @@ function renderPpto(){
   const conv=v=>arsMode?Math.round(v*cotiz):v;
   const fv=v=>conv(v).toLocaleString('es-AR');
   const _tblHead=()=>`<table class="pp-tabla"><thead><tr><th>Producto / Servicio</th><th style="text-align:center;width:55px;">Cant.</th><th style="text-align:right;width:115px;">Precio Unit.</th><th style="text-align:right;width:115px;">Subtotal</th></tr></thead><tbody>`;
-  const ambsConEq=S.ambientes.filter(amb=>allEqs().some(e=>(amb.qi[e.id]||0)>0)||EXT_BASE.some(e=>(amb.qe[e.id]||0)>0));
+  const ambsConEq=S.ambientes.filter(amb=>{ensureOpciones(amb);return amb.opciones.some(op=>allEqs().some(e=>(op.qi&&op.qi[e.id]||0)>0)||EXT_BASE.some(e=>(op.qe&&op.qe[e.id]||0)>0));});
   const multiAmb=ambsConEq.length>1;
   if(arsMode){
     const fechaCot=new Date().toLocaleDateString('es-AR');
     h+=`<p class="pp-ars-note">Valores expresados en Pesos Argentinos · Cotización USD billete venta BNA: $${cotiz.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})} — ${fechaCot}</p>`;
   }
   ambsConEq.forEach((amb,ai)=>{
-    let vAmb=0; const rowsAmb=[];
-    allEqs().forEach(e=>{const q=amb.qi[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vAmb+=s;rowsAmb.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
-    EXT_BASE.forEach(e=>{const q=amb.qe[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vAmb+=s;rowsAmb.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
-    if(rowsAmb.length===0)return;
+    ensureOpciones(amb);
     const ambNom=amb.nombre||('Ambiente '+(ai+1));
-    if(multiAmb)h+=`<div class="pp-amb-sep">${ambNom}</div>`;
-    h+=_tblHead()+rowsAmb.join('');
-    if(multiAmb)h+=`<tr style="background:#f8f8f8;font-weight:700;"><td colspan="3" style="text-align:right;font-size:11px;padding-right:8px;">Subtotal ${ambNom}</td><td style="text-align:right;">${sym} ${fv(vAmb)}</td></tr>`;
-    h+=`</tbody></table>`;
+    const multiOp=amb.opciones.length>1;
+    if(multiAmb||multiOp) h+=`<div class="pp-amb-sep">${ambNom}</div>`;
+    amb.opciones.forEach((op,oi)=>{
+      const qi=op.qi||{}, qe=op.qe||{};
+      const rowsOp=[];
+      let vOp=0;
+      allEqs().forEach(e=>{const q=qi[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
+      EXT_BASE.forEach(e=>{const q=qe[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
+      if(rowsOp.length===0)return;
+      const opNom=op.nombre||('Opción '+(oi+1));
+      if(multiOp) h+=`<div style="font-size:10px;font-weight:700;color:#b59b20;text-transform:uppercase;letter-spacing:.5px;padding:6px 0 4px;margin-top:4px;">▸ ${opNom}</div>`;
+      h+=_tblHead()+rowsOp.join('');
+      if(multiOp) h+=`<tr style="background:#fffbee;font-weight:700;"><td colspan="3" style="text-align:right;font-size:11px;padding-right:8px;color:#b59b20;">Subtotal ${opNom}</td><td style="text-align:right;color:#b59b20;">${sym} ${fv(vOp)}</td></tr>`;
+      else if(multiAmb) h+=`<tr style="background:#f8f8f8;font-weight:700;"><td colspan="3" style="text-align:right;font-size:11px;padding-right:8px;">Subtotal ${ambNom}</td><td style="text-align:right;">${sym} ${fv(vOp)}</td></tr>`;
+      h+=`</tbody></table>`;
+    });
   });
   // Accesorios, portátiles, ítems libres y servicios
   const accRows=[];
