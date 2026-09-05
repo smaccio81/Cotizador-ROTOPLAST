@@ -2412,6 +2412,9 @@ function renderPpto(){
   // Save current ambiente state before rendering
   saveAmbState();
 
+  // ¿Algún ambiente tiene múltiples opciones?
+  const anyMultiOp=S.ambientes.some(amb=>{ensureOpciones(amb);return amb.opciones.length>1;});
+
   // Aggregate equipment across all ambientes (active option per ambiente)
   const rQi={},rQe={};
   S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{rQi[e.id]=(rQi[e.id]||0)+(qi[e.id]||0);});EXT_BASE.forEach(e=>{rQe[e.id]=(rQe[e.id]||0)+(qe[e.id]||0);});});
@@ -2530,15 +2533,22 @@ function renderPpto(){
       ${altNota?`<p style="font-size:10px;color:#999;font-style:italic;margin-top:4px;margin-bottom:10px;">${altNota}</p>`:''}`;
     });
 
-  // Consumo kWh en presupuesto
-  if(S.kwhTot>0){
-    h+=`<div class="pp-sec">Consumo Eléctrico del Sistema</div>`;
-    h+=`<div class="pp-kwh-grid">
-      <div class="pp-kwh-card"><div class="pkl">Consumo Inyección</div><div class="pkv">${(S.kwhIny||0).toFixed(2)} kWh</div></div>
-      <div class="pp-kwh-card"><div class="pkl">Consumo Extracción</div><div class="pkv">${(S.kwhExt||0).toFixed(2)} kWh</div></div>
-      <div class="pp-kwh-card" style="border-color:var(--v);background:#EBF2F8;"><div class="pkl">Consumo Total</div><div class="pkv" style="color:var(--v);">${(S.kwhTot||0).toFixed(2)} kWh</div></div>
-    </div>`;
   }
+
+  // Consumo eléctrico — fuera de if(opT), siempre visible si hay consumo
+  {
+    let _kwhIny=0,_kwhExt=0;
+    S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{_kwhIny+=(qi[e.id]||0)*(e.kw||0);});EXT_BASE.forEach(e=>{_kwhExt+=(qe[e.id]||0)*(e.kw||0);});});
+    const _kwhTot=_kwhIny+_kwhExt;
+    if(_kwhTot>0){
+      const _opLabel=anyMultiOp?` <span style="font-weight:400;font-size:10px;color:#888;">(opción activa)</span>`:'';
+      h+=`<div class="pp-sec">Consumo Eléctrico del Sistema${_opLabel}</div>`;
+      h+=`<div class="pp-kwh-grid">
+        <div class="pp-kwh-card"><div class="pkl">Consumo Inyección</div><div class="pkv">${_kwhIny.toFixed(2)} kWh</div></div>
+        <div class="pp-kwh-card"><div class="pkl">Consumo Extracción</div><div class="pkv">${_kwhExt.toFixed(2)} kWh</div></div>
+        <div class="pp-kwh-card" style="border-color:var(--v);background:#EBF2F8;"><div class="pkl">Consumo Total</div><div class="pkv" style="color:var(--v);">${_kwhTot.toFixed(2)} kWh</div></div>
+      </div>`;
+    }
   }
 
   // FICHAS — layout horizontal (Opción 1)
@@ -2684,7 +2694,6 @@ function renderPpto(){
     });
   });
   // Accesorios, portátiles, ítems libres y servicios
-  const anyMultiOp=S.ambientes.some(amb=>{ensureOpciones(amb);return amb.opciones.length>1;});
   const accRows=[];
   if(!anyMultiOp){
     Object.entries(rQaComp).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incluido c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
