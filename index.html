@@ -1130,6 +1130,26 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
         </div>
       </div>
 
+      <!-- VIÁTICOS Y TRASLADO -->
+      <div class="comrow" style="background:#f0f7ff;border-color:#b3d0f0;">
+        <label style="width:100%;"><input type="checkbox" id="chk_viat" onchange="togViat()">Viáticos y traslado <span style="font-size:10px;color:#aaa;font-weight:400;">(se suma al costo interno del proyecto)</span></label>
+        <div id="viat_box" style="display:none;width:100%;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:10px;">
+            <div class="fld"><label>Km recorridos</label><input type="number" id="viat_km" value="0" min="0" step="1" oninput="calcEco()" style="font-size:15px;font-weight:700;"></div>
+            <div class="fld"><label>USD / km</label><input type="number" id="viat_tkm" value="0.12" min="0" step="0.01" oninput="calcEco()" style="font-size:15px;font-weight:700;"></div>
+            <div class="fld"><label>Días en obra</label><input type="number" id="viat_dias" value="0" min="0" step="1" oninput="calcEco()" style="font-size:15px;font-weight:700;"></div>
+            <div class="fld"><label>USD / día</label><input type="number" id="viat_tdia" value="50" min="0" step="1" oninput="calcEco()" style="font-size:15px;font-weight:700;"></div>
+          </div>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:600;">
+              <input type="checkbox" id="chk_viat_show" onchange="calcEco()" style="width:15px;height:15px;accent-color:var(--v);">
+              Mostrar al cliente en el presupuesto
+            </label>
+            <span style="font-size:10px;color:#aaa;">Si no, los viáticos se absorben internamente en el margen</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Resumen capturable -->
       <div id="resumen_interno_cap">
         <div class="ri-tit">📊 Resumen Interno — <span id="ri_nombre">Proyecto</span></div>
@@ -1145,6 +1165,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
           <div class="ri-card"><div class="rl">Costo Total</div><div class="rv" id="ri_ctot">—</div></div>
           <div class="ri-card r" id="ri_com_card" style="display:none;"><div class="rl">Comisión (interno)</div><div class="rv" id="ri_com">—</div></div>
           <div class="ri-card r" id="ri_desc_card" style="display:none;"><div class="rl">Descuento cliente</div><div class="rv" id="ri_desc">—</div></div>
+          <div class="ri-card" id="ri_viat_card" style="display:none;"><div class="rl">Viáticos / Traslado</div><div class="rv" id="ri_viat">—</div></div>
           <div class="ri-card v"><div class="rl">Precio de Venta Neto</div><div class="rv" id="ri_venta">—</div></div>
           <div class="ri-card"><div class="rl">Margen Neto</div><div class="rv" id="ri_margen">—</div></div>
         </div>
@@ -1270,6 +1291,7 @@ const IMG_SRC = {
   'exa100_touch':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_touch':'Equipos/Extractores/EXTRACTOR 80 f.png',
   'exa160_std':'Equipos/Extractores/EXTRACTOR 160 f.png','exa140_std':'Equipos/Extractores/EXTRACTOR 140 f.png',
   'exa100_std':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_std':'Equipos/Extractores/EXTRACTOR 80 f.png',
+  'roto59':'Equipos/Portatil/Portatil 52.png','roto58':'Equipos/Portatil/Portatil 52.png',
   'roto55':'Equipos/Portatil/Portatil 55.png','roto52':'Equipos/Portatil/Portatil 52.png',
   'roto47':'Equipos/Portatil/Portatil 47.png','roto46':'Equipos/Portatil/Portatil 46.png',
   'roto42':'Equipos/Portatil/Portatil 42.png','roto38':'Equipos/Portatil/Portatil 38.png',
@@ -2165,6 +2187,21 @@ function togDesc(){
   document.getElementById('ri_desc_card').style.display=S.desc?'block':'none';
   calcEco();
 }
+function togViat(){
+  S.viat=document.getElementById('chk_viat').checked;
+  document.getElementById('viat_box').style.display=S.viat?'block':'none';
+  document.getElementById('ri_viat_card').style.display=S.viat?'block':'none';
+  calcEco();
+}
+function getViatMonto(){
+  if(!S.viat)return 0;
+  const km=parseFloat(document.getElementById('viat_km').value)||0;
+  const tkm=parseFloat(document.getElementById('viat_tkm').value)||0;
+  const dias=parseFloat(document.getElementById('viat_dias').value)||0;
+  const tdia=parseFloat(document.getElementById('viat_tdia').value)||0;
+  return km*tkm + dias*tdia;
+}
+function viatMostrar(){return S.viat&&document.getElementById('chk_viat_show').checked;}
 function getDescMonto(ventaTotal){
   if(!S.desc)return 0;
   const tipo=document.getElementById('desc_tipo').value;
@@ -2208,8 +2245,10 @@ function calcEco(){
   ceq+=cacc;veq+=vacc;
 
   const cMoI=moIny?qI*moIV:0, cMoE=moExt?qE*moEV:0, cMo=cMoI+cMoE;
-  const ctot=ceq+cext+cMo;
-  const vtotBruto=veq+vext+cMo;
+  // VIÁTICOS: siempre suman al costo; si "mostrar", también al precio de venta
+  const cViat=getViatMonto();
+  const ctot=ceq+cext+cMo+cViat;
+  const vtotBruto=veq+vext+cMo+(viatMostrar()?cViat:0);
   // DESCUENTO: afecta precio de venta (cliente lo ve)
   const descMonto=getDescMonto(vtotBruto);
   const vtot=vtotBruto-descMonto;
@@ -2228,6 +2267,7 @@ function calcEco(){
   document.getElementById('ri_margen').textContent=f(margen)+' ('+mpct+'%)';
   if(S.com)document.getElementById('ri_com').textContent=f(com);
   if(S.desc)document.getElementById('ri_desc').textContent=f(descMonto);
+  if(S.viat&&cViat>0){const vd=document.getElementById('ri_viat');if(vd)vd.textContent=f(cViat)+(viatMostrar()?' (al cliente)':' (absorbido)');}
 
   // Merged quantities across all ambientes for detail table
   const mQi={},mQe={};
@@ -2388,8 +2428,10 @@ function renderPpto(){
   Object.entries(rQaComp).forEach(([id,q])=>{vacc+=q*getP(id,'p');});
   Object.entries(rQaOpt).forEach(([id,q])=>{vacc+=q*getP(id,'p');});
   const cMoI=moIny?qI*moIV:0, cMoE=moExt?qE*moEV:0;
+  // Viáticos: si "mostrar al cliente", se suma al precio de venta del ppto
+  const cViatPpto=viatMostrar()?getViatMonto():0;
   // Descuento afecta precio de venta (aparece en ppto)
-  const vtotBruto=veq+vext+vacc+cMoI+cMoE;
+  const vtotBruto=veq+vext+vacc+cMoI+cMoE+cViatPpto;
   // Recalculate desc for ppto (S.desc state)
   let descMontoPpto=0;
   if(S.desc){
@@ -2619,6 +2661,17 @@ function renderPpto(){
   if(qE>0&&moExt){const s=qE*moEV;accRows.push(`<tr><td>Instalación Extractor - Mano de Obra Básica</td><td style="text-align:center;">${qE}</td><td style="text-align:right;">${sym} ${fv(moEV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
   // Ítems libres
   (S.itemsLibres||[]).forEach(it=>{if(!it.desc||!(it.qty>0))return;const s=it.qty*it.precio;accRows.push(`<tr><td>${it.desc}</td><td style="text-align:center;">${it.qty}</td><td style="text-align:right;">${sym} ${fv(it.precio)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+  // Viáticos (solo si "mostrar al cliente")
+  if(viatMostrar()&&cViatPpto>0){
+    const km=parseFloat(document.getElementById('viat_km').value)||0;
+    const tkm=parseFloat(document.getElementById('viat_tkm').value)||0;
+    const dias=parseFloat(document.getElementById('viat_dias').value)||0;
+    const tdia=parseFloat(document.getElementById('viat_tdia').value)||0;
+    let vdetalle=[];
+    if(km>0&&tkm>0) vdetalle.push(`${km} km × ${sym} ${fv(tkm)}/km`);
+    if(dias>0&&tdia>0) vdetalle.push(`${dias} día${dias>1?'s':''} × ${sym} ${fv(tdia)}/día`);
+    accRows.push(`<tr><td>Traslado y Viáticos <span style="color:#aaa;font-size:10px;">${vdetalle.join(' + ')}</span></td><td style="text-align:center;">—</td><td style="text-align:right;">—</td><td style="text-align:right;">${sym} ${fv(cViatPpto)}</td></tr>`);
+  }
   if(accRows.length>0){
     h+=`<div class="pp-amb-sep">Accesorios y Servicios</div>`;
     h+=_tblHead()+accRows.join('')+`</tbody></table>`;
