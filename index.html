@@ -1040,7 +1040,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div id="tab_si" style="display:none;"></div>
       <div id="tab_po" style="display:none;"></div>
       <div class="cb" style="margin-top:12px;">
-        <h3>Inyección Instalada</h3>
+        <h3>Inyección Instalada <span id="st_op_lbl" style="font-size:9px;font-weight:600;color:var(--am);margin-left:6px;text-transform:none;letter-spacing:0;"></span></h3>
         <div class="cr"><span class="cl">Caudal instalado</span><span class="cv g" id="st_ii">0 m³/h</span></div>
         <div class="cr"><span class="cl">Caudal requerido</span><span class="cv" id="st_ir">— m³/h</span></div>
         <div class="cr"><span class="cl">Estado</span><span class="cv" id="st_io">—</span></div>
@@ -2066,6 +2066,8 @@ function setQ(tipo,id,val){
 function updEstados(){
   const ti=totalIny(),ri=S.vol*S.ren;
   document.getElementById('st_ii').textContent=fn(ti)+' m³/h';
+  // Etiqueta de opción activa
+  const _a=S.ambientes[S.ambActivo];if(_a&&_a.opciones&&_a.opciones.length>1){const _op=_a.opciones[_a.opActivo||0];const _lbl=document.getElementById('st_op_lbl');if(_lbl)_lbl.textContent='('+(_op.nombre||'Opción '+(((_a.opActivo||0)+1)))+')';} else {const _lbl=document.getElementById('st_op_lbl');if(_lbl)_lbl.textContent='';}
   document.getElementById('st_ir').textContent=ri?fn(ri)+' m³/h':'— m³/h';
   if(ri)document.getElementById('st_io').innerHTML=ti>=ri?'<span style="color:#2563EB">✔ Correcto</span>':'<span style="color:#e74c3c">✘ Insuficiente</span>';
 
@@ -2538,9 +2540,18 @@ function renderPpto(){
   }
 
   // FICHAS — layout horizontal (Opción 1)
+  // Para fichas: mostrar todos los modelos que aparecen en CUALQUIER opción de cualquier ambiente
+  const rQiAll={},rQeAll={};
+  S.ambientes.forEach(amb=>{
+    ensureOpciones(amb);
+    amb.opciones.forEach(op=>{
+      allEqs().forEach(e=>{if((op.qi&&op.qi[e.id]||0)>0)rQiAll[e.id]=(rQiAll[e.id]||0)+(op.qi[e.id]||0);});
+      EXT_BASE.forEach(e=>{if((op.qe&&op.qe[e.id]||0)>0)rQeAll[e.id]=(rQeAll[e.id]||0)+(op.qe[e.id]||0);});
+    });
+  });
   if(opF){
-    const fi=allEqs().map(e=>({...e,qty:(rQi[e.id]||0)+(S.qpt_proj[e.id]||0)})).filter(e=>e.qty>0);
-    const fe=EXT_BASE.filter(e=>(rQe[e.id]||0)>0);
+    const fi=allEqs().map(e=>({...e,qty:(rQiAll[e.id]||0)+(S.qpt_proj[e.id]||0)})).filter(e=>e.qty>0);
+    const fe=EXT_BASE.filter(e=>(rQeAll[e.id]||0)>0);
     const todas=[...fi.map(e=>({...e,tp:'iny'})),...fe.map(e=>({...e,qty:rQe[e.id],tp:'ext'}))];
     if(todas.length>0){
       h+=`<div class="pp-sec">Equipos Propuestos</div>`;
