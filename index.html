@@ -1451,13 +1451,13 @@ const ACC_BASE = [
   {id:'acc_rej110',n:'Conj. Grande Plast. s/SW. ROTO 110 Techo',           companion:true, c:251,p:389},
   {id:'acc_rej90', n:'Conj. Grande p/ Duto ROTO 90 Techo',                 companion:true, c:112,p:174},
   // Conductos opcionales (precio por metro)
-  {id:'acc_duc150',n:'Conducto de bajada x metro Ø130 cm (ROTO 150)',      optional:true,  c:0,  p:350},
-  {id:'acc_duc110',n:'Conducto de bajada x metro Ø110 cm (ROTO 110)',      optional:true,  c:0,  p:350},
-  {id:'acc_duc90', n:'Conducto de bajada x metro Ø68 cm (ROTO 90)',        optional:true,  c:0,  p:250},
+  {id:'acc_duc150',n:'Conducto de bajada x metro Ø130 cm (ROTO 150)',      optional:true, forEquip:'roto150techo',   c:0, p:350},
+  {id:'acc_duc110',n:'Conducto de bajada x metro Ø110 cm (ROTO 110)',      optional:true, forEquip:'roto110techo220', c:0, p:350},
+  {id:'acc_duc90', n:'Conducto de bajada x metro Ø68 cm (ROTO 90)',        optional:true, forEquip:'roto90techo',     c:0, p:250},
   // Estructuras opcionales
-  {id:'acc_est150',n:'Estructura anclaje ROTO 150 Techo (base+adaptador)', optional:true,  c:0,  p:550},
-  {id:'acc_est110',n:'Estructura anclaje ROTO 110 Techo (base+adaptador)', optional:true,  c:0,  p:400},
-  {id:'acc_est90', n:'Estructura anclaje ROTO 90 Techo (base+adaptador)',  optional:true,  c:0,  p:250},
+  {id:'acc_est150',n:'Estructura anclaje ROTO 150 Techo (base+adaptador)', optional:true, forEquip:'roto150techo',   c:0, p:550},
+  {id:'acc_est110',n:'Estructura anclaje ROTO 110 Techo (base+adaptador)', optional:true, forEquip:'roto110techo220', c:0, p:400},
+  {id:'acc_est90', n:'Estructura anclaje ROTO 90 Techo (base+adaptador)',  optional:true, forEquip:'roto90techo',     c:0, p:250},
 ];
 
 // Precios editables en memoria
@@ -2658,6 +2658,7 @@ function renderPpto(){
       EXT_BASE.forEach(e=>{const q=qe[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
       if(multiOp){
         EQI_BASE.tc.forEach(eq=>{if(!eq.companion)return;const q=qi[eq.id]||0;if(q<=0)return;const acc=ACC_BASE.find(a=>a.id===eq.companion);if(!acc)return;const pp=getP(eq.companion,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incl. c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+        ACC_BASE.filter(a=>a.optional&&a.forEquip&&(S.qa[a.id]||0)>0).forEach(a=>{if(!(qi[a.forEquip]||0))return;const q=S.qa[a.id];const pp=getP(a.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${a.n}</td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
         let qIop=0;allEqs().forEach(e=>{qIop+=(qi[e.id]||0);});
         let qEop=0;EXT_BASE.forEach(e=>{qEop+=(qe[e.id]||0);});
         if(qIop>0&&moIny){const s=qIop*moIV;vOp+=s;rowsOp.push(`<tr><td>Instalación Equipo Inyector - M.O. Básica</td><td style="text-align:center;">${qIop}</td><td style="text-align:right;">${sym} ${fv(moIV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
@@ -2665,7 +2666,17 @@ function renderPpto(){
       }
       if(rowsOp.length===0)return;
       const opNom=op.nombre||('Opción '+(oi+1));
-      if(multiOp) h+=`<div style="font-size:10px;font-weight:700;color:#b59b20;text-transform:uppercase;letter-spacing:.5px;padding:6px 0 4px;margin-top:4px;">▸ ${opNom}</div>`;
+      if(multiOp){
+        const aTiIOp=allEqs().reduce((s,e)=>s+(qi[e.id]||0)*e.q,0);
+        const aTiEOp=EXT_BASE.reduce((s,e)=>s+(qe[e.id]||0)*e.q,0);
+        const kwhOp=(allEqs().reduce((s,e)=>s+(qi[e.id]||0)*(e.kw||0),0)+EXT_BASE.reduce((s,e)=>s+(qe[e.id]||0)*(e.kw||0),0));
+        let capParts=[];
+        if(aTiIOp>0)capParts.push(`Iny. ${fn(aTiIOp)} m³/h`);
+        if(aTiEOp>0)capParts.push(`Ext. ${fn(aTiEOp)} m³/h`);
+        if(kwhOp>0)capParts.push(`${kwhOp.toFixed(2)} kWh`);
+        h+=`<div style="font-size:10px;font-weight:700;color:#b59b20;text-transform:uppercase;letter-spacing:.5px;padding:6px 0 2px;margin-top:4px;">▸ ${opNom}</div>`;
+        if(capParts.length)h+=`<div style="font-size:10px;color:#555;background:#f7f9fc;padding:3px 8px;border-left:3px solid #c8d8e8;margin-bottom:4px;">Capacidad instalada: ${capParts.join(' · ')}</div>`;
+      }
       h+=_tblHead()+rowsOp.join('');
       if(multiOp) h+=`<tr style="background:#fffbee;font-weight:700;"><td colspan="3" style="text-align:right;font-size:11px;padding-right:8px;color:#b59b20;">Subtotal ${opNom}</td><td style="text-align:right;color:#b59b20;">${sym} ${fv(vOp)}</td></tr>`;
       else if(multiAmb) h+=`<tr style="background:#f8f8f8;font-weight:700;"><td colspan="3" style="text-align:right;font-size:11px;padding-right:8px;">Subtotal ${ambNom}</td><td style="text-align:right;">${sym} ${fv(vOp)}</td></tr>`;
@@ -2678,7 +2689,7 @@ function renderPpto(){
   if(!anyMultiOp){
     Object.entries(rQaComp).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incluido c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
   }
-  Object.entries(rQaOpt).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n}</td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+  Object.entries(rQaOpt).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;if(anyMultiOp&&acc.forEquip)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n}</td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
   EQI_BASE.po.forEach(e=>{const q=S.qpt_proj[e.id]||0;if(q>0){const pp=PROJ_PT_PRICES[e.id]?.p||e.p;const s=q*pp;accRows.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
   if(!anyMultiOp){
     if(qI>0&&moIny){const s=qI*moIV;accRows.push(`<tr><td>Instalación Equipo Inyector - Mano de Obra Básica</td><td style="text-align:center;">${qI}</td><td style="text-align:right;">${sym} ${fv(moIV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
