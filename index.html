@@ -1291,7 +1291,7 @@ const IMG_SRC = {
   'exa100_touch':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_touch':'Equipos/Extractores/EXTRACTOR 80 f.png',
   'exa160_std':'Equipos/Extractores/EXTRACTOR 160 f.png','exa140_std':'Equipos/Extractores/EXTRACTOR 140 f.png',
   'exa100_std':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_std':'Equipos/Extractores/EXTRACTOR 80 f.png',
-  'roto59':'Equipos/Portatil/Portatil 52.png','roto58':'Equipos/Portatil/Portatil 52.png',
+  'roto59':'Equipos/Portatil/Portatil 59.png','roto58':'Equipos/Portatil/Portatil 58.png',
   'roto55':'Equipos/Portatil/Portatil 55.png','roto52':'Equipos/Portatil/Portatil 52.png',
   'roto47':'Equipos/Portatil/Portatil 47.png','roto46':'Equipos/Portatil/Portatil 46.png',
   'roto42':'Equipos/Portatil/Portatil 42.png','roto38':'Equipos/Portatil/Portatil 38.png',
@@ -2481,6 +2481,8 @@ function renderPpto(){
       const aTiI=allEqs().reduce((s,e)=>s+(ambQi(a)[e.id]||0)*e.q,0);
       const aTiE=EXT_BASE.reduce((s,e)=>s+(ambQe(a)[e.id]||0)*e.q,0);
       const aExtReq=aTiI*a.pE/100;
+      ensureOpciones(a);
+      const hasMultiOpA=a.opciones.length>1;
       const altNota=(a.d_ac&&a.d_ac!=a.d_at&&a.d_at)?` Altura de cálculo adoptada: <strong>${adac} m</strong> sobre altura total de ${adat} m.`:'';
       // Mostrar dimensiones según el origen del dato
       let dimRow='';
@@ -2507,17 +2509,17 @@ function renderPpto(){
           <tr><td class="hc">Renovaciones</td><td>${aRen} r/h</td><td class="hc">Altura Cálculo</td><td><strong>${adac} m</strong></td><td class="hc">Caudal Diseño</td><td colspan="3"><strong>${fn(a.vol*aRen)} m³/h</strong></td></tr>
         </tbody>
       </table>
-      <table class="pp-esp" style="margin-bottom:${ai<ambsConVol.length-1?'14':'0'}px;">
-        <thead><tr><th colspan="4">Caudales de Diseño</th><th colspan="4">Capacidad Instalada</th></tr></thead>
+      ${hasMultiOpA?'':`<table class="pp-esp" style="margin-bottom:${ai<ambsConVol.length-1?'14':'0'}px;">
+        <thead><tr><th colspan="8">Capacidad Instalada</th></tr></thead>
         <tbody><tr>
-          <td class="hc">Iny. requerida</td><td><strong>${fn(a.vol*aRen)} m³/h</strong></td>
-          <td class="hc">Ext. (${a.pE}% inst.)</td><td><strong>${fn(aExtReq)} m³/h</strong></td>
           <td class="hc">Iny. instalada</td><td><strong>${fn(aTiI)} m³/h</strong></td>
           <td class="hc">Ext. instalada</td><td><strong>${fn(aTiE)} m³/h</strong></td>
+          <td class="hc">Caudal requerido</td><td><strong>${fn(a.vol*aRen)} m³/h</strong></td>
+          <td class="hc">Ext. requerida</td><td><strong>${fn(aExtReq)} m³/h</strong></td>
         </tr></tbody>
-      </table>
+      </table>`}
       ${(()=>{
-        if(!document.getElementById('op_renovmin').checked)return '';
+        if(hasMultiOpA||!document.getElementById('op_renovmin').checked)return '';
         const caud=aTiI>0?aTiI:a.vol*aRen;
         if(!(caud>0&&a.vol>0))return '';
         const mins=60*a.vol/caud;
@@ -2654,6 +2656,13 @@ function renderPpto(){
       let vOp=0;
       allEqs().forEach(e=>{const q=qi[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
       EXT_BASE.forEach(e=>{const q=qe[e.id]||0;if(q>0){const pp=getP(e.id,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
+      if(multiOp){
+        EQI_BASE.tc.forEach(eq=>{if(!eq.companion)return;const q=qi[eq.id]||0;if(q<=0)return;const acc=ACC_BASE.find(a=>a.id===eq.companion);if(!acc)return;const pp=getP(eq.companion,'p');const s=q*pp;vOp+=s;rowsOp.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incl. c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+        let qIop=0;allEqs().forEach(e=>{qIop+=(qi[e.id]||0);});
+        let qEop=0;EXT_BASE.forEach(e=>{qEop+=(qe[e.id]||0);});
+        if(qIop>0&&moIny){const s=qIop*moIV;vOp+=s;rowsOp.push(`<tr><td>Instalación Equipo Inyector - M.O. Básica</td><td style="text-align:center;">${qIop}</td><td style="text-align:right;">${sym} ${fv(moIV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
+        if(qEop>0&&moExt){const s=qEop*moEV;vOp+=s;rowsOp.push(`<tr><td>Instalación Extractor - M.O. Básica</td><td style="text-align:center;">${qEop}</td><td style="text-align:right;">${sym} ${fv(moEV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
+      }
       if(rowsOp.length===0)return;
       const opNom=op.nombre||('Opción '+(oi+1));
       if(multiOp) h+=`<div style="font-size:10px;font-weight:700;color:#b59b20;text-transform:uppercase;letter-spacing:.5px;padding:6px 0 4px;margin-top:4px;">▸ ${opNom}</div>`;
@@ -2664,12 +2673,17 @@ function renderPpto(){
     });
   });
   // Accesorios, portátiles, ítems libres y servicios
+  const anyMultiOp=S.ambientes.some(amb=>{ensureOpciones(amb);return amb.opciones.length>1;});
   const accRows=[];
-  Object.entries(rQaComp).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incluido c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+  if(!anyMultiOp){
+    Object.entries(rQaComp).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n} <span style="color:#aaa;font-size:10px;">(incluido c/ equipo de techo)</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
+  }
   Object.entries(rQaOpt).forEach(([id,q])=>{const acc=ACC_BASE.find(a=>a.id===id);if(!acc)return;const pp=getP(id,'p');const s=q*pp;accRows.push(`<tr><td>${acc.n}</td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
   EQI_BASE.po.forEach(e=>{const q=S.qpt_proj[e.id]||0;if(q>0){const pp=PROJ_PT_PRICES[e.id]?.p||e.p;const s=q*pp;accRows.push(`<tr><td>${e.n} <span style="color:#aaa;font-size:10px;">${e.t}</span></td><td style="text-align:center;">${q}</td><td style="text-align:right;">${sym} ${fv(pp)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}});
-  if(qI>0&&moIny){const s=qI*moIV;accRows.push(`<tr><td>Instalación Equipo Inyector - Mano de Obra Básica</td><td style="text-align:center;">${qI}</td><td style="text-align:right;">${sym} ${fv(moIV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
-  if(qE>0&&moExt){const s=qE*moEV;accRows.push(`<tr><td>Instalación Extractor - Mano de Obra Básica</td><td style="text-align:center;">${qE}</td><td style="text-align:right;">${sym} ${fv(moEV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
+  if(!anyMultiOp){
+    if(qI>0&&moIny){const s=qI*moIV;accRows.push(`<tr><td>Instalación Equipo Inyector - Mano de Obra Básica</td><td style="text-align:center;">${qI}</td><td style="text-align:right;">${sym} ${fv(moIV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
+    if(qE>0&&moExt){const s=qE*moEV;accRows.push(`<tr><td>Instalación Extractor - Mano de Obra Básica</td><td style="text-align:center;">${qE}</td><td style="text-align:right;">${sym} ${fv(moEV)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);}
+  }
   // Ítems libres
   (S.itemsLibres||[]).forEach(it=>{if(!it.desc||!(it.qty>0))return;const s=it.qty*it.precio;accRows.push(`<tr><td>${it.desc}</td><td style="text-align:center;">${it.qty}</td><td style="text-align:right;">${sym} ${fv(it.precio)}</td><td style="text-align:right;">${sym} ${fv(s)}</td></tr>`);});
   // Viáticos (solo si "mostrar al cliente")
@@ -2684,27 +2698,36 @@ function renderPpto(){
     accRows.push(`<tr><td>Traslado y Viáticos <span style="color:#aaa;font-size:10px;">${vdetalle.join(' + ')}</span></td><td style="text-align:center;">—</td><td style="text-align:right;">—</td><td style="text-align:right;">${sym} ${fv(cViatPpto)}</td></tr>`);
   }
   if(accRows.length>0){
-    h+=`<div class="pp-amb-sep">Accesorios y Servicios</div>`;
+    h+=`<div class="pp-amb-sep">${anyMultiOp?'Accesorios y Servicios (comunes a todas las opciones)':'Accesorios y Servicios'}</div>`;
     h+=_tblHead()+accRows.join('')+`</tbody></table>`;
   }
   // Totalizador final
-  const ivaAmt=S.iva?total*0.105:0;
-  const totalFinal=total+ivaAmt;
-  h+=_tblHead();
-  if(S.desc&&descMontoPpto>0){
-    const dtipo=document.getElementById('desc_tipo').value;
-    const dval=document.getElementById('desc_val').value;
-    h+=`<tr><td style="color:#e74c3c;font-weight:600;">Descuento${dtipo==='pct'?' ('+dval+'%)':' (monto fijo)'}</td><td style="text-align:center;">—</td><td style="text-align:right;">—</td><td style="text-align:right;color:#e74c3c;font-weight:700;">− ${sym} ${fv(descMontoPpto)}</td></tr>`;
-  }
-  if(S.iva){
-    h+=`<tr><td colspan="3" style="text-align:right;font-weight:600;color:#b45309;">SUBTOTAL</td><td style="text-align:right;font-weight:600;color:#b45309;">${sym} ${fv(total)}</td></tr>`;
-    h+=`<tr class="pp-iva-row"><td colspan="3" style="text-align:right;">IVA 10,5%</td><td style="text-align:right;">${sym} ${fv(ivaAmt)}</td></tr>`;
-  }
-  h+=`<tr class="tot"><td colspan="3">TOTAL${S.iva?' + IVA':''}</td><td style="text-align:right;">${sym} ${fv(totalFinal)}</td></tr></tbody></table>`;
-  if(arsMode){
-    h+=`<p class="pp-nota">Valores en Pesos Argentinos. Cotización USD billete venta BNA: $${cotiz.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}${S.iva?' · Incluye IVA 10,5%.':' · No incluye IVA 10,5%.'}</p>`;
+  if(anyMultiOp){
+    h+=`<p style="font-size:11px;color:#888;font-style:italic;text-align:center;margin:10px 0 4px;">El total varía según la opción seleccionada — ver subtotal de cada opción arriba.</p>`;
+    if(arsMode){
+      h+=`<p class="pp-nota">Valores en Pesos Argentinos. Cotización USD billete venta BNA: $${cotiz.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}${S.iva?' · Incluye IVA 10,5%.':' · No incluye IVA 10,5%.'}</p>`;
+    }else{
+      h+=`<p class="pp-nota">Todos los valores se expresan en Dólares Americanos.${S.iva?' Incluye IVA 10,5%.':' No incluye IVA 10,5%.'} Tasa de cotización: Venta Banco Nación Argentina vigente al día de pago.</p>`;
+    }
   }else{
-    h+=`<p class="pp-nota">Todos los valores se expresan en Dólares Americanos.${S.iva?' Incluye IVA 10,5%.':' No incluye IVA 10,5%.'} Tasa de cotización: Venta Banco Nación Argentina vigente al día de pago.</p>`;
+    const ivaAmt=S.iva?total*0.105:0;
+    const totalFinal=total+ivaAmt;
+    h+=_tblHead();
+    if(S.desc&&descMontoPpto>0){
+      const dtipo=document.getElementById('desc_tipo').value;
+      const dval=document.getElementById('desc_val').value;
+      h+=`<tr><td style="color:#e74c3c;font-weight:600;">Descuento${dtipo==='pct'?' ('+dval+'%)':' (monto fijo)'}</td><td style="text-align:center;">—</td><td style="text-align:right;">—</td><td style="text-align:right;color:#e74c3c;font-weight:700;">− ${sym} ${fv(descMontoPpto)}</td></tr>`;
+    }
+    if(S.iva){
+      h+=`<tr><td colspan="3" style="text-align:right;font-weight:600;color:#b45309;">SUBTOTAL</td><td style="text-align:right;font-weight:600;color:#b45309;">${sym} ${fv(total)}</td></tr>`;
+      h+=`<tr class="pp-iva-row"><td colspan="3" style="text-align:right;">IVA 10,5%</td><td style="text-align:right;">${sym} ${fv(ivaAmt)}</td></tr>`;
+    }
+    h+=`<tr class="tot"><td colspan="3">TOTAL${S.iva?' + IVA':''}</td><td style="text-align:right;">${sym} ${fv(totalFinal)}</td></tr></tbody></table>`;
+    if(arsMode){
+      h+=`<p class="pp-nota">Valores en Pesos Argentinos. Cotización USD billete venta BNA: $${cotiz.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}${S.iva?' · Incluye IVA 10,5%.':' · No incluye IVA 10,5%.'}</p>`;
+    }else{
+      h+=`<p class="pp-nota">Todos los valores se expresan en Dólares Americanos.${S.iva?' Incluye IVA 10,5%.':' No incluye IVA 10,5%.'} Tasa de cotización: Venta Banco Nación Argentina vigente al día de pago.</p>`;
+    }
   }
 
   // SECCIONES OPCIONALES TÉCNICO-COMERCIALES
