@@ -183,7 +183,8 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 
 .pp-body{padding:16px 28px;}
 .pp-fecha{text-align:right;font-size:11px;color:#999;margin-bottom:6px;}
-.pp-tit{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:var(--n);border-bottom:3px solid var(--n);padding-bottom:6px;margin-bottom:12px;}
+.pp-tit{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:var(--n);border-bottom:3px solid var(--n);padding-bottom:6px;margin-bottom:4px;}
+.pp-nro{font-size:13px;font-weight:700;color:var(--v);letter-spacing:.5px;margin-bottom:10px;}
 .pp-dest{font-size:13px;font-weight:700;margin-bottom:14px;}
 .pp-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--n);border-left:4px solid var(--v);padding-left:9px;margin:16px 0 10px;}
 .pp-intro{font-size:12px;line-height:1.8;color:#333;margin-bottom:10px;}
@@ -2454,7 +2455,8 @@ function renderPpto(){
   h+=`<div class="pp-body">`;
   h+=`<div class="pp-fecha">*${loc}, ${fechaFmt}</div>`;
   h+=`<div class="pp-tit">PRESUPUESTO</div>`;
-  h+=`<div class="pp-dest">SR A/C ${nom}${ref?' &nbsp;—&nbsp; Ref.: '+ref:''}</div>`;
+  if(ref)h+=`<div class="pp-nro">N° ${ref}</div>`;
+  h+=`<div class="pp-dest">SR A/C ${nom}</div>`;
 
   // INTRO
   if(opI){
@@ -3031,7 +3033,8 @@ function openPrintWindow(content){
       --v:#2563EB;--n:#0D1B2E;--r:#e74c3c;--am:#F5C400;
     }
     .pp-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0D1B2E;border-left:4px solid #2563EB;padding-left:9px;margin:14px 0 8px;page-break-after:avoid;break-after:avoid;}
-    .pp-tit{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#0D1B2E;border-bottom:3px solid #0D1B2E;padding-bottom:6px;margin-bottom:10px;}
+    .pp-tit{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#0D1B2E;border-bottom:3px solid #0D1B2E;padding-bottom:6px;margin-bottom:4px;}
+    .pp-nro{font-size:13px;font-weight:700;color:#2563EB;letter-spacing:.5px;margin-bottom:10px;}
     .pp-dest{font-size:13px;font-weight:700;margin-bottom:12px;}
     .pp-fecha{text-align:right;font-size:11px;color:#999;margin-bottom:6px;}
     .pp-intro{font-size:12px;line-height:1.8;color:#333;margin-bottom:10px;}
@@ -3167,7 +3170,8 @@ function genPptoPt(){
   h+=`<div class="pp-body">
     <div class="pp-fecha">*${loc}, ${fechaFmt}</div>
     <div class="pp-tit">PRESUPUESTO</div>
-    <div class="pp-dest">SR A/C ${nom}${ref?' &nbsp;—&nbsp; Ref.: '+ref:''}</div>
+    ${ref?`<div class="pp-nro">N° ${ref}</div>`:''}
+    <div class="pp-dest">SR A/C ${nom}</div>
     <div class="pp-sec">Climatizadores Evaporativos Portátiles Rotoplast</div>`;
 
     // ARS / IVA
