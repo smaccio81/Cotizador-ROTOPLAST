@@ -262,6 +262,18 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 
 .esq-img{width:100%;max-height:280px;object-fit:contain;border:1px solid var(--br);border-radius:6px;}
 
+/* ===== LISTA PORTÁTILES ===== */
+.lpt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.lpt-card{border:1.5px solid var(--br);border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fff;position:relative;transition:border-color .15s,opacity .15s;}
+.lpt-card:hover{border-color:var(--v);}
+.lpt-card.off{opacity:.4;}
+.lpt-card img{width:100%;height:90px;object-fit:contain;}
+.lpt-card .ln{font-size:12px;font-weight:700;color:var(--n);margin-top:6px;}
+.lpt-card .lq{font-size:10px;color:#888;margin-top:2px;}
+.lpt-card .lp{font-size:13px;font-weight:800;color:var(--v);margin-top:3px;}
+.lpt-card input[type=checkbox]{position:absolute;top:8px;left:8px;transform:scale(1.2);cursor:pointer;}
+#lpt_print{display:none;}
+
 @media print{
   @page{
     margin:0;
@@ -342,6 +354,10 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   .print-portatil #dP{display:none!important;}
   /* When printing project: hide portátil */
   .print-proyecto #dPT{display:none!important;}
+  /* When printing lista portátiles: hide app, show only el catálogo */
+  .print-listapt .app-shell{display:none!important;}
+  .print-listapt #lpt_print{display:block!important;}
+  .print-listapt .lpt-pficha{page-break-inside:avoid;break-inside:avoid;}
   .app-main{margin-left:0!important;}
   .app-shell{display:block;}
 }
@@ -589,6 +605,9 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <button class="sb-item" onclick="abrirPrecios()">
       <span class="si-icon">&#128176;</span><span class="si-text">Precios</span>
     </button>
+    <button class="sb-item" id="sbi_portatiles" onclick="goSection('portatiles')">
+      <span class="si-icon">&#128722;</span><span class="si-text">Lista Portátiles</span>
+    </button>
   </div>
   <div class="sb-bottom">
     <div class="sb-mode-toggle">
@@ -686,6 +705,37 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <button class="btn btn-o" style="font-size:10px;" onclick="hideClientHist()">&#8592; Volver</button>
     </div>
     <div class="pb" id="cli_hist_body"></div>
+  </div>
+</div>
+
+<!-- SECCIÓN LISTA PORTÁTILES -->
+<div class="sec" id="sec_portatiles">
+  <div class="panel">
+    <div class="ph"><div class="ic">&#128722;</div><h2>Lista de Precios — Portátiles</h2></div>
+    <div class="pb">
+      <div class="alrt alrt-i" style="margin-bottom:12px;">Seleccioná los modelos a incluir. Precios finales con IVA 10,5% incluido, en base a la lista vigente.</div>
+      <div class="lpt-grid" id="lpt_grid"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><div class="ic">&#9881;</div><h2>Configuración</h2></div>
+    <div class="pb">
+      <div class="bna-row" style="margin-bottom:12px;">
+        <span style="font-size:11px;font-weight:600;color:#555;">Cotización BNA: $</span>
+        <input type="number" id="lpt_bna" class="bna-val" style="width:100px;" placeholder="0,00"
+          oninput="S.cotizBNA=parseFloat(this.value)||0;const m=document.getElementById('cotiz_bna');if(m)m.value=this.value;const p=document.getElementById('pt_cotiz_bna');if(p)p.value=this.value;">
+        <button class="btn btn-v" style="font-size:11px;padding:5px 11px;" onclick="fetchBNA().then(()=>{const v=document.getElementById('cotiz_bna').value;if(v){document.getElementById('lpt_bna').value=v;const p=document.getElementById('pt_cotiz_bna');if(p)p.value=v;}})">🔄 Consultar BNA</button>
+        <span style="font-size:10px;color:#aaa;">Necesaria para la imagen de WhatsApp (precios en pesos)</span>
+      </div>
+      <div class="fg2" style="max-width:420px;">
+        <div class="fld"><label>Recargo 3 cuotas (%)</label><input type="number" id="lpt_r3" value="15" min="0" oninput="lptSaveRecargos()"></div>
+        <div class="fld"><label>Recargo 6 cuotas (%)</label><input type="number" id="lpt_r6" value="30" min="0" oninput="lptSaveRecargos()"></div>
+      </div>
+      <div class="acts" style="margin-top:14px;">
+        <button class="btn btn-v" onclick="lptCatalogoA4()">📄 Catálogo A4 (imprimir)</button>
+        <button class="btn btn-am" onclick="lptImagenWsp()">🖼 Imagen para WhatsApp (PNG)</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1274,6 +1324,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 </div><!-- /app-main -->
 </div><!-- /app-shell -->
 
+<!-- LISTA PORTÁTILES: catálogo A4 (solo se ve al imprimir con body.print-listapt) -->
+<div id="lpt_print"></div>
+<!-- LISTA PORTÁTILES: imagen WhatsApp (offscreen, se exporta con html2canvas) -->
+<div id="lpt_wsp" style="position:absolute;left:-9999px;top:0;width:900px;"></div>
+
 <script>
 const IMG_SRC = {
   'roto190':'Equipos/Pared/ROTO 190 f.png','roto180':'Equipos/Pared/ROTO 180.png',
@@ -1686,6 +1741,9 @@ function goStep(n){
   // Ocultar sec_clientes
   const sc=document.getElementById('sec_clientes');
   if(sc) sc.classList.remove('active');
+  // Ocultar sec_portatiles
+  const spt=document.getElementById('sec_portatiles');
+  if(spt) spt.classList.remove('active');
   // Ocultar todos los steps
   [1,2,3,4,5].forEach(i=>{
     const s=document.getElementById('step'+i);
@@ -3611,12 +3669,157 @@ function _setSidebarActive(id){
 function goSection(s){
   if(s==='clientes'){
     [1,2,3,4,5].forEach(n=>{const e=document.getElementById('step'+n);if(e)e.classList.remove('active');});
+    const spt=document.getElementById('sec_portatiles');
+    if(spt) spt.classList.remove('active');
     const sc=document.getElementById('sec_clientes');
     if(sc) sc.classList.add('active');
     _setSidebarActive('sbi_clientes');
     loadClients();
+  } else if(s==='portatiles'){
+    if(S.modo!=='p') setMode('p');
+    [1,2,3,4,5].forEach(n=>{const e=document.getElementById('step'+n);if(e)e.classList.remove('active');});
+    const sc=document.getElementById('sec_clientes');
+    if(sc) sc.classList.remove('active');
+    const spt=document.getElementById('sec_portatiles');
+    if(spt) spt.classList.add('active');
+    _setSidebarActive('sbi_portatiles');
+    renderListaPt();
   }
   toggleMobileSb(false);
+}
+
+// ====== LISTA PORTÁTILES (lista de precios) ======
+const LPT_LS_KEY='sc_lpt_recargos';
+const LPT_SEL={};
+function lptLoadRecargos(){
+  try{
+    const d=JSON.parse(localStorage.getItem(LPT_LS_KEY)||'{}');
+    if(d.r3!=null)document.getElementById('lpt_r3').value=d.r3;
+    if(d.r6!=null)document.getElementById('lpt_r6').value=d.r6;
+  }catch(e){}
+}
+function lptSaveRecargos(){
+  try{
+    localStorage.setItem(LPT_LS_KEY,JSON.stringify({
+      r3:parseFloat(document.getElementById('lpt_r3').value)||0,
+      r6:parseFloat(document.getElementById('lpt_r6').value)||0
+    }));
+  }catch(e){}
+}
+function lptUsdFinal(id){return getP(id,'p')*1.105;} // precio final c/ IVA 10,5%
+function lptFmt(n){return n.toLocaleString('es-AR',{maximumFractionDigits:0});}
+function lptSel(){return EQI_BASE.po.filter(e=>LPT_SEL[e.id]!==false);}
+function lptToggle(id){
+  LPT_SEL[id]=LPT_SEL[id]===false;
+  renderListaPt();
+}
+function renderListaPt(){
+  lptLoadRecargos();
+  const bna=document.getElementById('lpt_bna');
+  if(bna&&S.cotizBNA>0)bna.value=S.cotizBNA;
+  document.getElementById('lpt_grid').innerHTML=EQI_BASE.po.map(e=>{
+    const on=LPT_SEL[e.id]!==false;
+    return `<div class="lpt-card${on?'':' off'}" onclick="lptToggle('${e.id}')">
+      <input type="checkbox" ${on?'checked':''} onclick="event.stopPropagation();lptToggle('${e.id}')">
+      <img src="${getImg(e.id)}" alt="${e.n}">
+      <div class="ln">${e.n}</div>
+      <div class="lq">${lptFmt(e.q)} m³/h · flecha ${e.fa||'—'}</div>
+      <div class="lp">USD ${lptFmt(lptUsdFinal(e.id))}</div>
+    </div>`;
+  }).join('');
+}
+function lptFechaHoy(){
+  return new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+}
+const LPT_LEYENDA='Precios finales con IVA incluido, expresados en USD. Pesificación: cotización billete venta BNA del día de pago.';
+function lptCatalogoA4(){
+  const items=lptSel();
+  if(!items.length){alert('Seleccioná al menos un modelo');return;}
+  const fichas=items.map(e=>{
+    const dims=(e.dh&&e.dl&&e.dp)?`${e.dh}×${e.dl}×${e.dp} mm`:null;
+    const specs=[
+      `Caudal: <b>${lptFmt(e.q)} m³/h</b>`,
+      e.fa?`Alcance flecha de aire: <b>${e.fa}</b>`:null,
+      e.kw?`Consumo: <b>${e.kw} kW</b>`:null,
+      dims?`Dimensiones: <b>${dims}</b>`:null,
+      e.kg?`Peso: <b>${e.kg} kg</b>`:null
+    ].filter(Boolean).map(s=>`<div style="font-size:11px;color:#444;margin-bottom:2px;">${s}</div>`).join('');
+    return `<div class="lpt-pficha" style="display:inline-block;width:48.5%;vertical-align:top;box-sizing:border-box;border:1px solid #DCE3EA;border-radius:8px;padding:12px;margin:0 0.5% 12px;text-align:center;">
+      <img src="${getImg(e.id)}" alt="${e.n}" style="max-height:180px;max-width:100%;object-fit:contain;">
+      <div style="font-size:14px;font-weight:800;color:var(--n);margin:8px 0 6px;text-transform:uppercase;">${e.n}</div>
+      <div style="text-align:left;display:inline-block;">${specs}</div>
+      <div style="font-size:19px;font-weight:800;color:var(--v);margin-top:8px;">USD ${lptFmt(lptUsdFinal(e.id))}</div>
+      <div style="font-size:9px;color:#999;">final c/ IVA incluido</div>
+    </div>`;
+  }).join('');
+  document.getElementById('lpt_print').innerHTML=`
+    <div style="font-family:Montserrat,Arial,sans-serif;padding:24px 28px;">
+      <div style="border-bottom:3px solid var(--n);padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--n);letter-spacing:.5px;">LISTA DE PRECIOS — EVAPORATIVOS PORTÁTILES</div>
+          <div style="font-size:11px;color:#666;margin-top:3px;">Simple Clima — Sistemas de Climatización · Corrientes</div>
+        </div>
+        <div style="font-size:11px;color:#666;">${lptFechaHoy()}</div>
+      </div>
+      <div style="font-size:0;">${fichas}</div>
+      <div style="border-top:1px solid #DCE3EA;margin-top:6px;padding-top:8px;font-size:9.5px;color:#777;line-height:1.5;">
+        ${LPT_LEYENDA}<br>
+        Simple Clima — Sistemas de Climatización · Corrientes · Lista sujeta a modificación sin previo aviso.
+      </div>
+    </div>`;
+  document.body.classList.add('print-listapt');
+  const done=()=>{document.body.classList.remove('print-listapt');window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>{window.print();setTimeout(done,500);},100);
+}
+async function lptImagenWsp(){
+  if(!(S.cotizBNA>0)){alert('Consultá la cotización BNA primero');return;}
+  const items=lptSel();
+  if(!items.length){alert('Seleccioná al menos un modelo');return;}
+  const r3=parseFloat(document.getElementById('lpt_r3').value)||0;
+  const r6=parseFloat(document.getElementById('lpt_r6').value)||0;
+  const rd=x=>Math.round(x/1000)*1000;
+  const logoSvg='<svg viewBox="0 0 230 142" style="width:110px;height:68px;" aria-label="Simple Clima"><rect x="6" y="6" width="218" height="130" fill="none" stroke="#fff" stroke-width="10"/><text x="115" y="68" text-anchor="middle" fill="#fff" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="44">SIMPLE</text><text x="122" y="114" text-anchor="middle" fill="#fff" font-family="Montserrat,Arial,sans-serif" font-weight="300" font-size="34" letter-spacing="13">CLIMA</text></svg>';
+  const rows=items.map(e=>{
+    const ars=lptUsdFinal(e.id)*S.cotizBNA;
+    const cont=rd(ars);
+    const c3=rd(ars*(1+r3/100)/3);
+    const c6=rd(ars*(1+r6/100)/6);
+    return `<div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.06);border-radius:10px;padding:12px 16px;margin-bottom:10px;">
+      <div style="background:#fff;border-radius:8px;width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><img src="${getImg(e.id)}" alt="${e.n}" style="max-width:100px;max-height:100px;object-fit:contain;"></div>
+      <div style="flex:1;">
+        <div style="font-size:17px;font-weight:800;color:#fff;text-transform:uppercase;">${e.n}</div>
+        <div style="font-size:12px;color:#B9CBDC;margin-top:2px;">${lptFmt(e.q)} m³/h · flecha ${e.fa||'—'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:18px;font-weight:800;color:#E4B94E;">CONTADO $${lptFmt(cont)}</div>
+        <div style="font-size:12px;color:#DCE8F2;margin-top:3px;">3 CUOTAS de $${lptFmt(c3)}</div>
+        <div style="font-size:12px;color:#DCE8F2;">6 CUOTAS de $${lptFmt(c6)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const el=document.getElementById('lpt_wsp');
+  el.innerHTML=`<div style="font-family:Montserrat,Arial,sans-serif;background:var(--n);padding:28px 26px;box-sizing:border-box;width:900px;">
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:18px;">
+      ${logoSvg}
+      <div>
+        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:1px;">PORTÁTILES EVAPORATIVOS</div>
+        <div style="font-size:13px;color:#B9CBDC;">${lptFechaHoy()}</div>
+      </div>
+    </div>
+    ${rows}
+    <div style="border-top:1px solid rgba(255,255,255,.2);margin-top:14px;padding-top:10px;font-size:11px;color:#B9CBDC;text-align:center;">
+      Precios finales con IVA · Cotización BNA $${lptFmt(S.cotizBNA)} del ${new Date().toLocaleDateString('es-AR')} · Financiación con recargo · Simple Clima
+    </div>
+  </div>`;
+  try{
+    const canvas=await html2canvas(el,{scale:2,backgroundColor:'#2A4763',useCORS:true});
+    const link=document.createElement('a');
+    link.download='portatiles_simple_clima.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('🖼 Imagen generada');
+  }catch(e){alert('Error al generar imagen: '+e.message);}
 }
 function toggleMobileSb(force){
   const sb=document.getElementById('sidebar');
