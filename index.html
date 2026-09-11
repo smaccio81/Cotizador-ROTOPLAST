@@ -2724,6 +2724,7 @@ function renderPpto(){
     h+=_tblHead()+accRows.join('')+`</tbody></table>`;
   }
   // Totalizador final
+  let _pptoTotalFinal=0; // disponible fuera del else para la forma de pago
   if(anyMultiOp){
     h+=`<p style="font-size:11px;color:#888;font-style:italic;text-align:center;margin:10px 0 4px;">El total varía según la opción seleccionada — ver subtotal de cada opción arriba.</p>`;
     if(arsMode){
@@ -2734,6 +2735,7 @@ function renderPpto(){
   }else{
     const ivaAmt=S.iva?total*0.105:0;
     const totalFinal=total+ivaAmt;
+    _pptoTotalFinal=totalFinal;
     h+=_tblHead();
     if(S.desc&&descMontoPpto>0){
       const dtipo=document.getElementById('desc_tipo').value;
@@ -2828,11 +2830,16 @@ function renderPpto(){
     const antPct=_nv('pago_ant_pct',30);
     const nCh=Math.max(1,Math.round(_nv('pago_cheques',3)));
     const interv=_nv('pago_dias',30);
-    const antMonto=Math.round(totalFinal*antPct/100);
-    const cuota=Math.round((totalFinal-antMonto)/nCh);
     const dias=Array.from({length:nCh},(_,i)=>(i+1)*interv);
     const diasTxt=dias.map(d=>_fa(d)).join(', ');
-    pagoHtml=`<p>Anticipo del ${_fa(antPct)}% (${sym} ${fv(antMonto)}) a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} de ${sym} ${fv(cuota)} cada uno, a ${diasTxt} días.</p>`;
+    if(_pptoTotalFinal>0){
+      const antMonto=Math.round(_pptoTotalFinal*antPct/100);
+      const cuota=Math.round((_pptoTotalFinal-antMonto)/nCh);
+      pagoHtml=`<p>Anticipo del ${_fa(antPct)}% (${sym} ${fv(antMonto)}) a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} de ${sym} ${fv(cuota)} cada uno, a ${diasTxt} días.</p>`;
+    } else {
+      // Multi-opción: no hay un total único, se informan solo porcentajes y plazos
+      pagoHtml=`<p>Anticipo del ${_fa(antPct)}% a la Orden de Compra.<br>Saldo: ${nCh} cheque${nCh===1?'':'s'} iguales a ${diasTxt} días (montos según la opción seleccionada).</p>`;
+    }
   } else {
     pagoHtml=`<p>50% Anticipo a la Orden de Compra<br>50% Restante contra entrega de equipos e instalación.</p>`;
   }
