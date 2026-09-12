@@ -734,6 +734,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div class="acts" style="margin-top:14px;">
         <button class="btn btn-v" onclick="lptCatalogoA4()">📄 Catálogo A4 (imprimir)</button>
         <button class="btn btn-am" onclick="lptImagenWsp()">🖼 Imagen para WhatsApp (PNG)</button>
+        <button class="btn btn-n" onclick="lptImagenWsp(true)">🖼 Imagen Vendedores (USD neto)</button>
       </div>
     </div>
   </div>
@@ -3772,8 +3773,9 @@ function lptCatalogoA4(){
   window.addEventListener('afterprint',done);
   setTimeout(()=>{window.print();setTimeout(done,500);},100);
 }
-async function lptImagenWsp(){
-  if(!(S.cotizBNA>0)){alert('Consultá la cotización BNA primero');return;}
+async function lptImagenWsp(vend){
+  // vend=true: versión para vendedores — precios NETOS en USD (sin IVA), sin financiación
+  if(!vend&&!(S.cotizBNA>0)){alert('Consultá la cotización BNA primero');return;}
   const items=lptSel();
   if(!items.length){alert('Seleccioná al menos un modelo');return;}
   const r3=parseFloat(document.getElementById('lpt_r3').value)||0;
@@ -3781,10 +3783,20 @@ async function lptImagenWsp(){
   const rd=x=>Math.round(x/1000)*1000;
   const logoSvg='<svg viewBox="0 0 230 142" style="width:110px;height:68px;" aria-label="Simple Clima"><rect x="6" y="6" width="218" height="130" fill="none" stroke="#fff" stroke-width="10"/><text x="115" y="68" text-anchor="middle" fill="#fff" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="44">SIMPLE</text><text x="122" y="114" text-anchor="middle" fill="#fff" font-family="Montserrat,Arial,sans-serif" font-weight="300" font-size="34" letter-spacing="13">CLIMA</text></svg>';
   const rows=items.map(e=>{
-    const ars=lptUsdFinal(e.id)*S.cotizBNA;
-    const cont=rd(ars);
-    const c3=rd(ars*(1+r3/100)/3);
-    const c6=rd(ars*(1+r6/100)/6);
+    let priceHtml;
+    if(vend){
+      const neto=getP(e.id,'p');
+      priceHtml=`<div style="font-size:20px;font-weight:800;color:#E4B94E;">USD ${lptFmt(neto)}</div>
+        <div style="font-size:11px;color:#B9CBDC;margin-top:3px;">neto sin IVA</div>`;
+    } else {
+      const ars=lptUsdFinal(e.id)*S.cotizBNA;
+      const cont=rd(ars);
+      const c3=rd(ars*(1+r3/100)/3);
+      const c6=rd(ars*(1+r6/100)/6);
+      priceHtml=`<div style="font-size:18px;font-weight:800;color:#E4B94E;">CONTADO $${lptFmt(cont)}</div>
+        <div style="font-size:12px;color:#DCE8F2;margin-top:3px;">3 CUOTAS de $${lptFmt(c3)}</div>
+        <div style="font-size:12px;color:#DCE8F2;">6 CUOTAS de $${lptFmt(c6)}</div>`;
+    }
     return `<div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.06);border-radius:10px;padding:12px 16px;margin-bottom:10px;">
       <div style="background:#fff;border-radius:8px;width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><img src="${getImg(e.id)}" alt="${e.n}" style="max-width:100px;max-height:100px;object-fit:contain;"></div>
       <div style="flex:1;">
@@ -3792,9 +3804,7 @@ async function lptImagenWsp(){
         <div style="font-size:12px;color:#B9CBDC;margin-top:2px;">${lptFmt(e.q)} m³/h · flecha ${e.fa||'—'}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:18px;font-weight:800;color:#E4B94E;">CONTADO $${lptFmt(cont)}</div>
-        <div style="font-size:12px;color:#DCE8F2;margin-top:3px;">3 CUOTAS de $${lptFmt(c3)}</div>
-        <div style="font-size:12px;color:#DCE8F2;">6 CUOTAS de $${lptFmt(c6)}</div>
+        ${priceHtml}
       </div>
     </div>`;
   }).join('');
@@ -3803,19 +3813,21 @@ async function lptImagenWsp(){
     <div style="display:flex;align-items:center;gap:20px;margin-bottom:18px;">
       ${logoSvg}
       <div>
-        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:1px;">PORTÁTILES EVAPORATIVOS</div>
+        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:1px;">PORTÁTILES EVAPORATIVOS${vend?' · LISTA VENDEDORES':''}</div>
         <div style="font-size:13px;color:#B9CBDC;">${lptFechaHoy()}</div>
       </div>
     </div>
     ${rows}
     <div style="border-top:1px solid rgba(255,255,255,.2);margin-top:14px;padding-top:10px;font-size:11px;color:#B9CBDC;text-align:center;">
-      Precios finales con IVA · Cotización BNA $${lptFmt(S.cotizBNA)} del ${new Date().toLocaleDateString('es-AR')} · Financiación con recargo · Simple Clima
+      ${vend
+        ?`Precios de venta netos — NO incluyen IVA 10,5% · Valores en USD · Pesificación: BNA billete venta del día de pago · Uso interno Simple Clima`
+        :`Precios finales con IVA · Cotización BNA $${lptFmt(S.cotizBNA)} del ${new Date().toLocaleDateString('es-AR')} · Financiación con recargo · Simple Clima`}
     </div>
   </div>`;
   try{
     const canvas=await html2canvas(el,{scale:2,backgroundColor:'#2A4763',useCORS:true});
     const link=document.createElement('a');
-    link.download='portatiles_simple_clima.png';
+    link.download=vend?'portatiles_vendedores_neto.png':'portatiles_simple_clima.png';
     link.href=canvas.toDataURL('image/png');
     link.click();
     showToast('🖼 Imagen generada');
