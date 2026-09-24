@@ -2615,17 +2615,48 @@ function renderPpto(){
 
   }
 
-  // Consumo eléctrico — fuera de if(opT), siempre visible si hay consumo
+  // Consumo eléctrico — fuera de if(opT), siempre visible si hay consumo.
+  // Con opciones alternativas muestra TODAS las opciones, no solo la activa.
+  function _filasPorOpcion(calc){
+    const rows=[];
+    S.ambientes.forEach((amb,ai)=>{
+      ensureOpciones(amb);
+      const multi=amb.opciones.length>1;
+      const ambNom=amb.nombre||('Ambiente '+(ai+1));
+      amb.opciones.forEach((op,oi)=>{
+        const data=calc(op,amb);
+        if(!data)return;
+        let label;
+        if(multi&&S.ambientes.length>1)label=ambNom+' — '+(op.nombre||('Opción '+(oi+1)));
+        else if(multi)label=op.nombre||('Opción '+(oi+1));
+        else label=S.ambientes.length>1?ambNom:'Sistema';
+        rows.push({label,...data});
+      });
+    });
+    return rows;
+  }
   {
-    let _kwhIny=0,_kwhExt=0;
-    S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{_kwhIny+=(qi[e.id]||0)*(e.kw||0);});EXT_BASE.forEach(e=>{_kwhExt+=(qe[e.id]||0)*(e.kw||0);});});
-    const _kwhTot=_kwhIny+_kwhExt;
-    if(_kwhTot>0){
-      const _opLabel=anyMultiOp?` <span style="font-weight:400;font-size:10px;color:#888;">(según ${_opActivaNames})</span>`:'';
-      h+=`<div class="pp-sec">Consumo Eléctrico del Sistema${_opLabel}</div>`;
+    const _kwhRows=_filasPorOpcion((op)=>{
+      let iny=0,ext=0;
+      allEqs().forEach(e=>{iny+=((op.qi&&op.qi[e.id])||0)*(e.kw||0);});
+      EXT_BASE.forEach(e=>{ext+=((op.qe&&op.qe[e.id])||0)*(e.kw||0);});
+      return iny+ext>0?{iny,ext}:null;
+    });
+    if(anyMultiOp&&_kwhRows.length>1){
+      h+=`<div class="pp-sec">Consumo Eléctrico del Sistema</div>`;
+      h+=`<table class="pp-tabla"><thead><tr><th>Alternativa</th><th style="text-align:right;">Inyección</th><th style="text-align:right;">Extracción</th><th style="text-align:right;">Total</th></tr></thead><tbody>`;
+      _kwhRows.forEach(r=>{
+        h+=`<tr><td>${r.label}</td><td style="text-align:right;">${r.iny.toFixed(2)} kWh</td><td style="text-align:right;">${r.ext.toFixed(2)} kWh</td><td style="text-align:right;font-weight:700;">${(r.iny+r.ext).toFixed(2)} kWh</td></tr>`;
+      });
+      h+=`</tbody></table>`;
+    } else if(_kwhRows.length>=1){
+      // Sin opciones alternativas: total agregado del sistema (todos los ambientes)
+      const r=_kwhRows.reduce((t,x)=>({iny:t.iny+x.iny,ext:t.ext+x.ext}),{iny:0,ext:0});
+      const _kwhTot=r.iny+r.ext;
+      h+=`<div class="pp-sec">Consumo Eléctrico del Sistema</div>`;
       h+=`<div class="pp-kwh-grid">
-        <div class="pp-kwh-card"><div class="pkl">Consumo Inyección</div><div class="pkv">${_kwhIny.toFixed(2)} kWh</div></div>
-        <div class="pp-kwh-card"><div class="pkl">Consumo Extracción</div><div class="pkv">${_kwhExt.toFixed(2)} kWh</div></div>
+        <div class="pp-kwh-card"><div class="pkl">Consumo Inyección</div><div class="pkv">${r.iny.toFixed(2)} kWh</div></div>
+        <div class="pp-kwh-card"><div class="pkl">Consumo Extracción</div><div class="pkv">${r.ext.toFixed(2)} kWh</div></div>
         <div class="pp-kwh-card" style="border-color:var(--v);background:#EBF2F8;"><div class="pkl">Consumo Total</div><div class="pkv" style="color:var(--v);">${_kwhTot.toFixed(2)} kWh</div></div>
       </div>`;
     }
@@ -2877,16 +2908,36 @@ function renderPpto(){
   }
 
   // CONSUMO DE AGUA ESTIMADO (por caudal de aire real de los equipos)
+  // Con opciones alternativas muestra TODAS las opciones, no solo la activa.
   if(document.getElementById('op_agua').checked){
     const coef=_nv('agua_lh',12); // L/h cada 10.000 m³/h de caudal
     const hd=_nv('agua_horas',8);
-    const lhTot=(_qAire/10000)*coef;
-    const lDia=lhTot*hd;
-    const duchas=(lDia/150).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
-    h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
-    h+=`<div class="pp-sec">Consumo de Agua${anyMultiOp?` <span style="font-weight:400;font-size:10px;color:#888;">(según ${_opActivaNames})</span>`:''}</div>`;
-    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en condiciones de máxima demanda (${qI} equipo${qI===1?'':'s'}, ${_fa(_qAire)} m³/h de caudal total) ≈ <strong>${_fa(lDia)} litros</strong> por jornada de ${_fa(hd)} horas de uso. Como referencia, equivale al agua de ${duchas} duchas en todo el día. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
-    h+=`</div>`;
+    const _duchasF=v=>(v/150).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    const _aguaRows=_filasPorOpcion((op)=>{
+      let q=0,n=0;
+      allEqs().forEach(e=>{const c2=(op.qi&&op.qi[e.id])||0;q+=c2*(e.q||0);n+=c2;});
+      return n>0?{n,q}:null;
+    });
+    if(anyMultiOp&&_aguaRows.length>1){
+      h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+      h+=`<div class="pp-sec">Consumo de Agua</div>`;
+      h+=`<table class="pp-tabla"><thead><tr><th>Alternativa</th><th style="text-align:right;">L/h máx.</th><th style="text-align:right;">Litros por jornada (${_fa(hd)} h)</th><th style="text-align:right;">Equiv. duchas/día</th></tr></thead><tbody>`;
+      _aguaRows.forEach(r=>{
+        const lh=(r.q/10000)*coef, ld=lh*hd;
+        h+=`<tr><td>${r.label} <span style="color:#aaa;font-size:10px;">(${r.n} equipo${r.n===1?'':'s'}, ${_fa(r.q)} m³/h)</span></td><td style="text-align:right;">${_fa(lh)}</td><td style="text-align:right;font-weight:700;">${_fa(ld)}</td><td style="text-align:right;">${_duchasF(ld)}</td></tr>`;
+      });
+      h+=`</tbody></table>`;
+      h+=`<p class="pp-nota">Consumo en condiciones de máxima demanda. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
+      h+=`</div>`;
+    } else if(_aguaRows.length>=1||qI>0){
+      const lhTot=(_qAire/10000)*coef;
+      const lDia=lhTot*hd;
+      const duchas=_duchasF(lDia);
+      h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
+      h+=`<div class="pp-sec">Consumo de Agua</div>`;
+      h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en condiciones de máxima demanda (${qI} equipo${qI===1?'':'s'}, ${_fa(_qAire)} m³/h de caudal total) ≈ <strong>${_fa(lDia)} litros</strong> por jornada de ${_fa(hd)} horas de uso. Como referencia, equivale al agua de ${duchas} duchas en todo el día. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
+      h+=`</div>`;
+    }
   }
 
   // PLAN DE MANTENIMIENTO
