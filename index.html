@@ -2878,7 +2878,7 @@ function renderPpto(){
     const duchas=(lDia/150).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
     h+=`<div style="page-break-inside:avoid;break-inside:avoid;">`;
     h+=`<div class="pp-sec">Consumo de Agua</div>`;
-    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en condiciones de máxima demanda (${qI} equipo${qI===1?'':'s'}, ${_fa(_qAire)} m³/h de caudal total) ≈ <strong>${_fa(lDia)} litros</strong> por día de uso. Como referencia, equivale a ${duchas} duchas diarias. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
+    h+=`<p style="font-size:12px;color:#333;line-height:1.8;">Consumo estimado: <strong>${_fa(lhTot)} L/h</strong> en condiciones de máxima demanda (${qI} equipo${qI===1?'':'s'}, ${_fa(_qAire)} m³/h de caudal total) ≈ <strong>${_fa(lDia)} litros</strong> por jornada de ${_fa(hd)} horas de uso. Como referencia, equivale al agua de ${duchas} duchas en todo el día. En la puesta en marcha se configura la purga (bleed-off) según la calidad del agua disponible, para proteger paneles y bomba.</p>`;
     h+=`</div>`;
   }
 
