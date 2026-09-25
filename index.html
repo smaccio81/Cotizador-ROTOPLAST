@@ -3140,6 +3140,11 @@ function openPrintWindow(content){
   // Get base64 images from TIMG
   const headerSrc = TIMG.enc_header || '';
   const footerSrc = TIMG.enc_footer || '';
+  // Nombre sugerido para "Guardar como PDF"
+  const _nom=(clienteNom('')||'').replace(/[\\/:*?"<>|]/g,'').trim();
+  const _ref=(document.getElementById('cl_r')||{}).value||'';
+  const _fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  const _docTitle=[_ref,_nom,_fecha].filter(Boolean).join(' — ');
   
   const printCSS = `
     @page { margin:0; size:A4; }
@@ -3248,6 +3253,7 @@ function openPrintWindow(content){
   const printDoc = [
     '<!DOCTYPE html><html><head>',
     '<meta charset="UTF-8">',
+    '<title>' + _docTitle + '</title>',
     '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">',
     '<style>' + printCSS + '</style>',
     '</head><body>',
