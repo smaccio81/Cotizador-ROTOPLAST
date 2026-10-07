@@ -1312,6 +1312,16 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       </div>
     </div>
   </div>
+  <div class="panel">
+    <div class="ph"><div class="ic">🖼️</div><h2>Imágenes del Proyecto</h2></div>
+    <div class="pb">
+      <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:10px;letter-spacing:.4px;">ESQUEMA / FOTO DE INSTALACIÓN</div>
+      <input type="file" id="pt_esq_f" accept="image/*" multiple style="display:none" onchange="loadEsq(event)">
+      <div id="pt_esq_gallery"></div>
+      <button class="btn btn-o" style="width:100%;justify-content:center;font-size:10px;padding:6px 10px;margin-top:8px;" onclick="document.getElementById('pt_esq_f').click()">📎 Agregar imagen</button>
+      <div style="font-size:10px;color:#aaa;margin-top:6px;">Las imágenes se comparten con el presupuesto principal y aparecen al final del PDF.</div>
+    </div>
+  </div>
   <div class="acts"><button class="btn btn-v" onclick="genPptoPt()">Ver Presupuesto →</button></div>
   <div id="pt_wrap" style="display:none;margin-top:16px;">
     <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;">
@@ -2176,13 +2186,8 @@ function updateEsqCaption(id,val){
   if(item)item.caption=val;
 }
 function renderEsqGallery(){
-  const el=document.getElementById('esq_gallery');
-  if(!el)return;
-  if(!S.esqUrls.length){
-    el.innerHTML='<div style="font-size:10px;color:#aaa;text-align:center;padding:14px 10px;border:2px dashed #e0e0e0;border-radius:6px;margin-bottom:8px;">Sin imágenes · Subí JPG/PNG o generá un esquema</div>';
-    return;
-  }
-  el.innerHTML=S.esqUrls.map((img,i)=>`
+  const empty='<div style="font-size:10px;color:#aaa;text-align:center;padding:14px 10px;border:2px dashed #e0e0e0;border-radius:6px;margin-bottom:8px;">Sin imágenes · Subí JPG/PNG o generá un esquema</div>';
+  const html=S.esqUrls.length?S.esqUrls.map((img)=>`
     <div style="border:1.5px solid var(--br);border-radius:6px;padding:8px;margin-bottom:8px;background:#fafafa;">
       <div style="position:relative;margin-bottom:7px;">
         <img src="${img.url}" style="width:100%;max-height:130px;object-fit:contain;border-radius:4px;display:block;background:#fff;">
@@ -2196,7 +2201,11 @@ function renderEsqGallery(){
                oninput="updateEsqCaption('${img.id}',this.value)"
                style="flex:1;border:1px solid #ddd;border-radius:4px;padding:3px 7px;font-size:10px;font-family:inherit;">
       </div>
-    </div>`).join('');
+    </div>`).join(''): empty;
+  const el=document.getElementById('esq_gallery');
+  if(el)el.innerHTML=html;
+  const el2=document.getElementById('pt_esq_gallery');
+  if(el2)el2.innerHTML=html;
 }
 
 // ====== ESQUEMA DE INSTALACIÓN ======
@@ -3373,6 +3382,17 @@ function genPptoPt(){
     h+=`<p class="pp-nota">Todos los valores se expresan en Dólares Americanos.${S.iva?' Incluye IVA 10,5%.':' No incluye IVA 10,5%.'}</p>`;
   }
 
+  // Imágenes esquemáticas
+  if(S.esqUrls&&S.esqUrls.length){
+    h+=`<div class="pp-sec">Esquema de Instalación</div>`;
+    S.esqUrls.forEach(img=>{
+      h+=`<div style="margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;">
+        <img src="${img.url}" style="width:100%;max-height:400px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+        ${img.caption?`<div style="font-size:10px;color:#666;text-align:center;margin-top:4px;font-style:italic;">${img.caption}</div>`:''}
+      </div>`;
+    });
+  }
+
   h+=`<div class="pp-conds">
     <div class="pp-cond"><h4>Condiciones de Pago</h4><p>50% Anticipo · 50% contra entrega.<br><strong>Validez:</strong> 15 días hábiles.<br><strong>Plazo de entrega:</strong> 45 días hábiles.</p></div>
     <div class="pp-cond"><h4>Garantía</h4><p>1 año contra defectos de fabricación, con instalación y mantenimiento correctos.</p></div>
@@ -3427,17 +3447,23 @@ async function saveCurrentBudget(){
   const name=prompt('Nombre del presupuesto:',def);if(name===null)return;
   const nm=name.trim()||def;
   saveAmbState();
-  // Numeración automática P-AAAA-NNN si el campo referencia está vacío
+  // Numeración automática P-AAAA-NNN / PP-AAAA-NNN si el campo referencia está vacío
   const refEl=document.getElementById('cl_r');
-  if(refEl&&!refEl.value.trim()){
-    try{
-      const all=await _cloudGetAll();
-      const yr=new Date().getFullYear();
+  const ptRefEl=document.getElementById('pt_r');
+  try{
+    const all=await _cloudGetAll();
+    const yr=new Date().getFullYear();
+    if(refEl&&!refEl.value.trim()){
       let max=0;
       all.forEach(b=>{const m=String(b.ref||'').match(/^P-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
       refEl.value='P-'+yr+'-'+String(max+1).padStart(3,'0');
-    }catch(e){}
-  }
+    }
+    if(ptRefEl&&!ptRefEl.value.trim()){
+      let max=0;
+      all.forEach(b=>{const m=String(b.ptRef||b.form?.pt_r||'').match(/^PP-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
+      ptRefEl.value='PP-'+yr+'-'+String(max+1).padStart(3,'0');
+    }
+  }catch(e){}
   const id='b'+Date.now();
   const snap={id,name:nm,clientName:clienteNom('—'),ref:document.getElementById('cl_r').value||'',
     savedAt:new Date().toISOString(),form:_collectForm(),_clienteId:S._clienteId||null,
