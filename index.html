@@ -1035,15 +1035,21 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
           <input type="number" id="pct_e_num" value="60" min="0" max="100" oninput="updExtPctNum()" class="pct-num-input">
           <span style="font-size:15px;font-weight:700;color:#aaa;">%</span>
         </div>
-        <div class="hint">Valor habitual: 60%. Ajustable libremente de 0% a 100% según el caso.</div>
+        <div class="hint">Ajustable libremente. Al elegir tipo de espacio aparece el valor recomendado.</div>
       </div>
     </div>
   </div>
   <div class="panel">
     <div class="ph"><div class="ic">🏢</div><h2>Tipo de Espacio</h2></div>
     <div class="pb">
-      <div class="alrt alrt-i">Seleccioná el tipo para obtener las renovaciones recomendadas. Podés ajustar manualmente.</div>
+      <div class="alrt alrt-i">Seleccioná el tipo para obtener renovaciones y % de extracción recomendados. Podés ajustar manualmente.</div>
       <div class="tg" id="tg"></div>
+      <div id="tipo_rec" style="display:none;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:11px;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span id="tipo_rec_txt" style="flex:1;color:#1d4ed8;font-weight:600;"></span>
+        <button onclick="usarRecPE()" style="font-size:10px;padding:3px 10px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:700;white-space:nowrap;">↺ Usar recomendado</button>
+      </div>
+      <div style="margin:12px 0 4px;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;">Condicionante estructural</div>
+      <div class="tg" id="cond_grid"></div>
       <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;">
         <div class="fld" style="flex:1;min-width:160px;">
           <label>Renovaciones por hora (r/h)</label>
@@ -1447,20 +1453,51 @@ function _saveBudgets_local(d){localStorage.setItem(BUDGET_KEY_LOCAL,JSON.string
 
 // ====== DATOS ======
 const TIPOS = [
-  {n:'Academias de Gimnástica',a:35,b:60},{n:'Área Fabril',a:25,b:30},
-  {n:'Auditorios',a:25,b:35},{n:'Bibliotecas',a:20,b:25},
-  {n:'Cines / Teatros',a:25,b:30},{n:'Comercios',a:30,b:40},
-  {n:'Corredores',a:10,b:20},{n:'Depósitos',a:15,b:25},
-  {n:'Discotecas / Clubes',a:35,b:40},{n:'Escritorios / Oficinas',a:20,b:30},
-  {n:'Fundiciones',a:10,b:25},{n:'Garajes',a:20,b:30},
-  {n:'Gimnasios',a:15,b:25},{n:'Iglesias / Templos',a:25,b:35},
-  {n:'Industria Textil',a:35,b:40},{n:'Lavanderías',a:30,b:60},
-  {n:'Panaderías / Confiterías',a:20,b:60},{n:'Restaurantes',a:30,b:40},
-  {n:'Residencias',a:20,b:30},{n:'Sala de Máquinas',a:25,b:35},
-  {n:'Salas de Aula',a:20,b:30},{n:'Salas de Conferencia',a:25,b:35},
-  {n:'Salas de Depósito',a:10,b:20},{n:'Supermercados',a:30,b:40},
-  {n:'Talleres Pequeños',a:15,b:25},{n:'Complejo Deportivo',a:30,b:40},
-  {n:'Personalizado',a:0,b:0,cx:true},
+  {n:'Academias de Gimnástica',      a:35,b:60,pE:70},
+  {n:'Área Fabril / Industria',      a:25,b:35,pE:65},
+  {n:'Auditorios',                   a:25,b:35,pE:60},
+  {n:'Bibliotecas',                  a:20,b:25,pE:50},
+  {n:'Canchas de Padel',             a:30,b:40,pE:70},
+  {n:'Cines / Teatros',              a:25,b:30,pE:60},
+  {n:'Cocinas industriales',         a:40,b:60,pE:90},
+  {n:'Comercios / Locales',          a:30,b:40,pE:60},
+  {n:'Complejo Deportivo',           a:30,b:40,pE:65},
+  {n:'Corredores',                   a:10,b:20,pE:50},
+  {n:'Depósitos industriales',       a:15,b:25,pE:60},
+  {n:'Discotecas / Clubes',          a:35,b:40,pE:70},
+  {n:'Distribuidora / Mayorista',    a:20,b:30,pE:60},
+  {n:'Escritorios / Oficinas',       a:20,b:30,pE:55},
+  {n:'Frigoríficos (cocción/faena)', a:30,b:50,pE:80},
+  {n:'Fundiciones',                  a:10,b:25,pE:70},
+  {n:'Garajes',                      a:20,b:30,pE:65},
+  {n:'Gimnasios (musculación)',      a:15,b:25,pE:65},
+  {n:'Gimnasios (spinning/cardio)', a:25,b:40,pE:80},
+  {n:'Hipermercado',                 a:30,b:40,pE:60},
+  {n:'Iglesias / Templos',           a:25,b:35,pE:60},
+  {n:'Industria alimentaria',        a:30,b:50,pE:75},
+  {n:'Industria gráfica',            a:25,b:35,pE:65},
+  {n:'Industria textil',             a:35,b:40,pE:65},
+  {n:'Lavanderías',                  a:30,b:60,pE:90},
+  {n:'Logística / Picking',          a:20,b:30,pE:60},
+  {n:'Panaderías / Confiterías',     a:20,b:60,pE:80},
+  {n:'Residencias',                  a:20,b:30,pE:55},
+  {n:'Restaurantes',                 a:30,b:40,pE:80},
+  {n:'Sala de Máquinas',             a:25,b:35,pE:70},
+  {n:'Salas de Aula',                a:20,b:30,pE:55},
+  {n:'Salas de Conferencia',         a:25,b:35,pE:60},
+  {n:'Supermercado ≤600 m²',        a:25,b:35,pE:60},
+  {n:'Supermercado >600 m²',        a:30,b:40,pE:60},
+  {n:'Talleres mecánicos',           a:20,b:30,pE:65},
+  {n:'Personalizado',                a:0, b:0, pE:60,cx:true},
+];
+const CONDICIONANTES = [
+  {id:'sin',       n:'Sin condicionante',                    dr:0},
+  {id:'chapa',     n:'Techo chapa traslúcida',               dr:5,  hint:'Alta carga térmica por radiación directa'},
+  {id:'lucarnas',  n:'Lucarnas / policarbonato',             dr:3,  hint:'Ingreso solar adicional por techo'},
+  {id:'premo',     n:'Naves hormigón premoldeado',           dr:2,  hint:'Masa térmica elevada, tarda en enfriarse'},
+  {id:'entrepiso', n:'Entrepisos con operarios',             dr:5,  hint:'Calor acumulado en zonas elevadas'},
+  {id:'vidriado',  n:'Paredes vidriadas al oeste',           dr:5,  hint:'Radiación solar intensa por la tarde'},
+  {id:'humedad',   n:'Zona humedad alta (Litoral/Misiones)', dr:3,  hint:'Menor eficiencia evaporativa — requiere más caudal'},
 ];
 
 // Equipos con precios editables en tiempo real
@@ -1731,7 +1768,7 @@ function delOp(idx){
   showToast('🗑 '+nom+' eliminada');
 }
 function clienteNom(fb){const r=(document.getElementById('cl_n')||{value:''}).value.trim();const p=(document.getElementById('cl_persona')||{value:''}).value.trim();return r||p||fb;}
-const S={vol:0,aT:0,aC:0,pE:60,ren:0,sectores:[],qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null};
+const S={vol:0,aT:0,aC:0,pE:60,ren:0,sectores:[],qi:{},qe:{},qa:{},com:false,pCom:5,desc:false,esqUrls:[],modo:'p',kwhIny:0,kwhExt:0,kwhTot:0,ecoData:null,descMonto:0,qpt_proj:{},dimSource:'lah',ambientes:[],ambActivo:0,itemsLibres:[],ars:false,cotizBNA:0,iva:false,_clienteId:null,tipoSel:null,condSel:'sin',tipoRecPE:null};
 
 // ====== MODE ======
 function setMode(m){
@@ -1825,6 +1862,8 @@ function saveAmbState(){
   a.vol=S.vol;a.aT=S.aT;a.aC=S.aC;
   a.ren_val=document.getElementById('ren').value;
   a.pE=S.pE;
+  a.tipoSel=S.tipoSel!=null?S.tipoSel:null;
+  a.condSel=S.condSel||'sin';
   a.sectores=JSON.parse(JSON.stringify(S.sectores||[]));
   saveOpState();
 }
@@ -1849,7 +1888,9 @@ function loadAmbState(idx){
   document.getElementById('rc_p').textContent=S.pE;
   document.getElementById('st_ep').textContent=S.pE;
   document.getElementById('ren').value=a.ren_val||'';
-  document.querySelectorAll('.tc').forEach(c=>c.classList.remove('sel'));
+  S.tipoSel=a.tipoSel!=null?a.tipoSel:null;
+  S.condSel=a.condSel||'sin';
+  _restoreTipoCondUI();
   ensureOpciones(a);
   loadOpEquip(a.opciones[a.opActivo||0]);
   renderOpTabs();
@@ -1875,7 +1916,8 @@ function addAmb(){
   S.ambActivo=newIdx;S.ambientes[newIdx].pE=60;
   document.getElementById('pct_e').value=60;const pn=document.getElementById('pct_e_num');if(pn)pn.value=60;S.pE=60;
   document.getElementById('rc_p').textContent=60;document.getElementById('st_ep').textContent=60;
-  document.querySelectorAll('.tc').forEach(c=>c.classList.remove('sel'));
+  S.tipoSel=null;S.condSel='sin';S.tipoRecPE=null;
+  _restoreTipoCondUI();
   calcCaudal();renderAmbTabs();showToast('✅ Ambiente '+(newIdx+1)+' agregado');
 }
 function delAmb(idx){
@@ -1895,18 +1937,67 @@ function renameCurrentAmb(){
 }
 
 // ====== TIPOS ======
+function _condDr(){return(CONDICIONANTES.find(c=>c.id===(S.condSel||'sin'))||{dr:0}).dr;}
+function _updTipoRec(t){
+  const recEl=document.getElementById('tipo_rec');
+  const recTxt=document.getElementById('tipo_rec_txt');
+  if(!recEl||!recTxt)return;
+  if(!t){recEl.style.display='none';return;}
+  const cdr=_condDr();
+  S.tipoRecPE=t.pE;
+  recEl.style.display='flex';
+  recTxt.textContent=`Recomendado para ${t.n}: ${t.pE}% extracción · ${Math.round((t.a+t.b)/2)+(cdr||0)} r/h${cdr?` (base ${Math.round((t.a+t.b)/2)} + ${cdr} por condicionante)`:''}`;
+}
 function renderTipos(){
-  document.getElementById('tg').innerHTML=TIPOS.map(t=>
-    `<div class="tc" onclick="selTipo(this,${t.a},${t.b},${!!t.cx})">
+  document.getElementById('tg').innerHTML=TIPOS.map((t,i)=>
+    `<div class="tc" data-tidx="${i}" onclick="selTipo(this,${i})">
       <div class="tn">${t.n}</div>
       <div class="tr">${t.cx?'—':t.a+'-'+t.b+' r/h'}</div>
     </div>`).join('');
+  const cg=document.getElementById('cond_grid');
+  if(cg)cg.innerHTML=CONDICIONANTES.map(c=>
+    `<div class="tc${c.id==='sin'?' sel':''}" data-cid="${c.id}" onclick="selCond('${c.id}',this)" title="${c.hint||''}">
+      <div class="tn">${c.n}</div>
+      <div class="tr">${c.dr>0?'+'+c.dr+' r/h':'—'}</div>
+    </div>`).join('');
 }
-function selTipo(el,a,b,cx){
-  document.querySelectorAll('.tc').forEach(c=>c.classList.remove('sel'));
+function selTipo(el,idx){
+  S.tipoSel=idx;
+  const t=TIPOS[idx];
+  document.querySelectorAll('#tg .tc').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
-  if(!cx){document.getElementById('ren').value=Math.round((a+b)/2);calcCaudal();}
+  const cdr=_condDr();
+  if(!t.cx){document.getElementById('ren').value=Math.round((t.a+t.b)/2)+cdr;calcCaudal();}
   else{document.getElementById('ren').value='';document.getElementById('ren').focus();}
+  _updTipoRec(t);
+}
+function selCond(id,el){
+  S.condSel=id;
+  document.querySelectorAll('#cond_grid .tc').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  if(S.tipoSel!=null){
+    const t=TIPOS[S.tipoSel];
+    if(t&&!t.cx){document.getElementById('ren').value=Math.round((t.a+t.b)/2)+_condDr();calcCaudal();}
+    _updTipoRec(t);
+  }
+}
+function usarRecPE(){
+  if(S.tipoRecPE==null)return;
+  const v=S.tipoRecPE;
+  document.getElementById('pct_e').value=v;
+  const pn=document.getElementById('pct_e_num');if(pn)pn.value=v;
+  S.pE=v;if(S.ambientes[S.ambActivo])S.ambientes[S.ambActivo].pE=v;
+  document.getElementById('rc_p').textContent=v;
+  const sep=document.getElementById('st_ep');if(sep)sep.textContent=v;
+  calcCaudal();
+}
+function _restoreTipoCondUI(){
+  document.querySelectorAll('#tg .tc').forEach((c,i)=>c.classList.toggle('sel',i===S.tipoSel));
+  document.querySelectorAll('#cond_grid .tc').forEach(c=>c.classList.toggle('sel',c.dataset.cid===(S.condSel||'sin')));
+  _updTipoRec(S.tipoSel!=null?TIPOS[S.tipoSel]:null);
+}
+// eslint-disable-next-line no-unused-vars (legacy signature kept for existing onclick attrs)
+function _selTipoLegacy(el,a,b,cx){
 }
 
 // ====== SECTORES ANEXOS ======
