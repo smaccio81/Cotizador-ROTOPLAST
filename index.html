@@ -711,7 +711,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 <!-- SECCIÓN LISTA PORTÁTILES -->
 <div class="sec" id="sec_portatiles">
   <div class="panel">
-    <div class="ph"><div class="ic">&#128722;</div><h2>Lista de Precios — Portátiles</h2></div>
+    <div class="ph"><div class="ic">&#128722;</div><h2>Lista de Precios — Portátiles y Ventiladores</h2></div>
     <div class="pb">
       <div class="alrt alrt-i" style="margin-bottom:12px;">Seleccioná los modelos a incluir. Precios finales con IVA 10,5% incluido, en base a la lista vigente.</div>
       <div class="lpt-grid" id="lpt_grid"></div>
@@ -1132,7 +1132,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 
   <!-- PORTÁTILES EN PROYECTO -->
   <div class="panel">
-    <div class="ph"><div class="ic">🏃</div><h2>Climatizadores Portátiles <span style="font-size:10px;color:#aaa;font-weight:400;text-transform:none;margin-left:6px;">(opcional)</span></h2></div>
+    <div class="ph"><div class="ic">🏃</div><h2>Portátiles: Climatizadores y Ventiladores <span style="font-size:10px;color:#aaa;font-weight:400;text-transform:none;margin-left:6px;">(opcional)</span></h2></div>
     <div class="pb">
       <div class="alrt alrt-i">Los portátiles se suman al proyecto como complemento o alternativa puntual. Podés modificar los precios directamente.</div>
       <div class="ptg" id="proj_pt_grid"></div>
@@ -1368,6 +1368,8 @@ const IMG_SRC = {
   'roto55':'Equipos/Portatil/Portatil 55.png','roto52':'Equipos/Portatil/Portatil 52.png',
   'roto47':'Equipos/Portatil/Portatil 47.png','roto46':'Equipos/Portatil/Portatil 46.png',
   'roto42':'Equipos/Portatil/Portatil 42.png','roto38':'Equipos/Portatil/Portatil 38.png',
+  'vent160':'Equipos/Ventilador Portatil/Ventilador Portatil.png','vent140':'Equipos/Ventilador Portatil/Ventilador Portatil.png',
+  'vent100':'Equipos/Ventilador Portatil/Ventilador Portatil.png','vent80':'Equipos/Ventilador Portatil/Ventilador Portatil.png',
 };
 function getImg(id){
   const p=IMG_SRC[id]||'';
@@ -1534,8 +1536,19 @@ const EQI_BASE = {
     {id:'roto46',n:'Portatil ROTO 46',t:'M/F 220V',v:220,q:7000, kw:0.32,c:543, p:787, dh:1230,dl:680, dp:420,ap:null,kg:20, fa:'15 m'},
     {id:'roto42',n:'Portatil ROTO 42',t:'M/F 220V',v:220,q:4000, kw:0.15,c:335, p:486, dh:1250,dl:535, dp:427,ap:null,kg:14, fa:'7 m'},
     {id:'roto38',n:'Portatil ROTO 38',t:'M/F 220V',v:220,q:4000, kw:0.15,c:224, p:325, dh:955, dl:535, dp:427,ap:null,kg:10, fa:'7 m'},
+    // Ventiladores portátiles (vent:true): no son evaporativos, no se ofrecen como inyección del proyecto.
+    // Mismo costo/precio que el EXA Touch del mismo tamaño — actualizar juntos. Medidas de ficha Brasil (80 y 130≈140).
+    {id:'vent160',n:'Ventilador Portátil 160',t:'M/F 220V',v:220,q:55000,kw:1.5,c:2317,p:3360,dh:null,dl:null,dp:null,ap:null,kg:null,vent:true},
+    {id:'vent140',n:'Ventilador Portátil 140',t:'M/F 220V',v:220,q:45000,kw:1.1,c:1950,p:2828,dh:1555,dl:1425,dp:640,ap:null,kg:null,vent:true},
+    {id:'vent100',n:'Ventilador Portátil 100',t:'M/F 220V',v:220,q:34000,kw:1.1,c:1792,p:2598,dh:null,dl:null,dp:null,ap:null,kg:null,vent:true},
+    {id:'vent80', n:'Ventilador Portátil 80', t:'M/F 220V',v:220,q:25000,kw:0.7,c:1658,p:2404,dh:1180,dl:1030,dp:640,ap:null,kg:null,vent:true},
   ]
 };
+// Rótulo según lo que haya: evaporativos, ventiladores o mezcla
+function ptTipo(items){
+  const nv=items.filter(e=>e.vent).length;
+  return nv===0?'evap':nv===items.length?'vent':'mix';
+}
 const EXT_BASE = [
   {id:'ext_siroco560',n:'Extractor Centrifugo Siroco 560',  t:'T/F 380V',v:380,q:12000,kw:3.7, c:5696,p:8259, dh:1110,dl:900, dp:930, ap:'O560 mm', kg:null},
   {id:'ext_siroco390',n:'Extractor Centrifugo Siroco 390',  t:'T/F 380V',v:380,q:5000, kw:1.5, c:2468,p:3579, dh:730, dl:655, dp:100, ap:'O366 mm', kg:null},
@@ -2140,7 +2153,7 @@ function aplicarSugE(id,qty){
 
 // ====== RENDER TABS ======
 function renderTab(cat){
-  const eqs=EQI_BASE[cat];
+  const eqs=EQI_BASE[cat].filter(e=>!e.vent);
   let html=eqs.map(eq=>`
     <div class="eql">
       <div>
@@ -3414,7 +3427,7 @@ function genPptoPt(){
     <div class="pp-tit">PRESUPUESTO</div>
     ${ref?`<div class="pp-nro">N° ${ref}</div>`:''}
     <div class="pp-dest">SR A/C ${nom}</div>
-    <div class="pp-sec">Climatizadores Evaporativos Portátiles Rotoplast</div>`;
+    <div class="pp-sec">${{evap:'Climatizadores Evaporativos Portátiles',vent:'Ventiladores Industriales Portátiles',mix:'Equipos Portátiles'}[ptTipo(eqsSel)]} Rotoplast</div>`;
 
     // ARS / IVA
   const ptArs=S.ars&&S.cotizBNA>0;
@@ -3438,7 +3451,7 @@ function genPptoPt(){
       <div class="ficha-h-img">${img?`<img src="${img}" alt="${eq.n}">`:'<div class="ficha-h-ph">Sin imagen</div>'}</div>
       <div class="ficha-h-data">
         <div class="fh-name">${eq.n} ${vBadge(eq.v)}</div>
-        <div class="fh-tipo">Climatizador Evaporativo Portátil</div>
+        <div class="fh-tipo">${eq.vent?'Ventilador Industrial Portátil · No utiliza agua':'Climatizador Evaporativo Portátil'}</div>
         <table class="fh-table">
           <tr><td>Caudal</td><td>${fn(eq.q)} m³/h</td><td>Consumo</td><td>${eq.kw||'—'} kWh</td></tr>
           <tr><td>Tensión</td><td>${eq.t}</td>${kgStr?`<td>Peso</td><td>${kgStr}</td>`:'<td colspan="2"></td>'}</tr>
@@ -3905,7 +3918,7 @@ function renderListaPt(){
       <input type="checkbox" ${on?'checked':''} onclick="event.stopPropagation();lptToggle('${e.id}')">
       <img src="${getImg(e.id)}" alt="${e.n}">
       <div class="ln">${e.n}</div>
-      <div class="lq">${lptFmt(e.q)} m³/h · flecha ${e.fa||'—'}</div>
+      <div class="lq">${lptFmt(e.q)} m³/h · ${e.vent?'ventilador':'flecha '+(e.fa||'—')}</div>
       <div class="lp">USD ${lptFmt(lptUsdFinal(e.id))}</div>
     </div>`;
   }).join('');
@@ -3922,6 +3935,7 @@ function lptCatalogoA4(){
     const specs=[
       `Caudal: <b>${lptFmt(e.q)} m³/h</b>`,
       e.fa?`Alcance flecha de aire: <b>${e.fa}</b>`:null,
+      e.vent?`Ventilador industrial · <b>no utiliza agua</b>`:null,
       e.kw?`Consumo: <b>${e.kw} kW</b>`:null,
       dims?`Dimensiones: <b>${dims}</b>`:null,
       e.kg?`Peso: <b>${e.kg} kg</b>`:null
@@ -3938,7 +3952,7 @@ function lptCatalogoA4(){
     <div style="font-family:Montserrat,Arial,sans-serif;padding:24px 28px;">
       <div style="border-bottom:3px solid var(--n);padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;">
         <div>
-          <div style="font-size:20px;font-weight:800;color:var(--n);letter-spacing:.5px;">LISTA DE PRECIOS — EVAPORATIVOS PORTÁTILES</div>
+          <div style="font-size:20px;font-weight:800;color:var(--n);letter-spacing:.5px;">LISTA DE PRECIOS — ${{evap:'EVAPORATIVOS PORTÁTILES',vent:'VENTILADORES PORTÁTILES',mix:'EQUIPOS PORTÁTILES'}[ptTipo(items)]}</div>
           <div style="font-size:11px;color:#666;margin-top:3px;">Simple Clima — Sistemas de Climatización · Corrientes</div>
         </div>
         <div style="font-size:11px;color:#666;">${lptFechaHoy()}</div>
@@ -3982,7 +3996,7 @@ async function lptImagenWsp(vend){
       <div style="background:#fff;border-radius:8px;width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><img src="${getImg(e.id)}" alt="${e.n}" style="max-width:100px;max-height:100px;object-fit:contain;"></div>
       <div style="flex:1;">
         <div style="font-size:17px;font-weight:800;color:#fff;text-transform:uppercase;">${e.n}</div>
-        <div style="font-size:12px;color:#B9CBDC;margin-top:2px;">${lptFmt(e.q)} m³/h · flecha ${e.fa||'—'}</div>
+        <div style="font-size:12px;color:#B9CBDC;margin-top:2px;">${lptFmt(e.q)} m³/h · ${e.vent?'ventilador · sin agua':'flecha '+(e.fa||'—')}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         ${priceHtml}
@@ -3994,7 +4008,7 @@ async function lptImagenWsp(vend){
     <div style="display:flex;align-items:center;gap:20px;margin-bottom:18px;">
       ${logoSvg}
       <div>
-        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:1px;">PORTÁTILES EVAPORATIVOS${vend?' · LISTA VENDEDORES':''}</div>
+        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:1px;">${{evap:'PORTÁTILES EVAPORATIVOS',vent:'VENTILADORES PORTÁTILES',mix:'EQUIPOS PORTÁTILES'}[ptTipo(items)]}${vend?' · LISTA VENDEDORES':''}</div>
         <div style="font-size:13px;color:#B9CBDC;">${lptFechaHoy()}</div>
       </div>
     </div>

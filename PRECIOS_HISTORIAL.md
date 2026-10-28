@@ -5,6 +5,14 @@ Formato: costo (unitario distribuidor) / precio (sugerido venta).
 
 ---
 
+## 2026-10-28 — Alta Ventilador Portátil 80 / 100 / 140 / 160
+
+Mismo producto que el EXA Touch sin persiana y con ruedas (dato interno, no se
+comunica al cliente). Costo y precio = EXA Touch del mismo tamaño: **si cambia
+el EXA Touch, actualizar también el ventilador.**
+
+---
+
 ## 2026-09-11 — Lista Ecoaires SETIEMBRE 2026
 
 Fuente: `Listas de precios/Simple Clima Lista de precios Setiembre 2026 Distribuidor.pdf`
