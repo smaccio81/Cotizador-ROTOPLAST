@@ -191,6 +191,12 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 #resumen_interno_cap{background:#fff;padding:20px;border-radius:8px;}
 .ri-tit{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--n);margin-bottom:14px;border-bottom:3px solid var(--v);padding-bottom:6px;}
 .ri-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
+/* Comparativa de opciones alternativas (interna) */
+#ri_ops{margin-bottom:14px;overflow-x:auto;}
+.ri-ops-tit{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#35608A;margin-bottom:6px;}
+#ri_ops tr.act td{background:#fffbee;}
+#ri_ops td:nth-child(n+3){white-space:nowrap;}
+.ri-opact{font-size:8px;font-weight:700;text-transform:uppercase;background:#b59b20;color:#fff;border-radius:3px;padding:1px 5px;vertical-align:middle;}
 .ri-card{background:#f9f9f9;border:1px solid var(--br);border-radius:6px;padding:12px;}
 .ri-card.v{border-color:var(--v);background:#EBF2F8;}
 .ri-card.r{border-color:#f5ccc8;background:#fff5f5;}
@@ -842,6 +848,11 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
           <label>M.O. por extractor (USD)</label>
           <input type="number" id="mo_ext_val" value="230" min="0" class="edit-precio" oninput="calcEco()">
         </div>
+        <div class="fld">
+          <label>Costo de la M.O. (% del precio)</label>
+          <input type="number" id="mo_costo_pct" value="100" min="0" max="100" oninput="calcEco()">
+          <div class="hint">Interno. 100% = se traslada sin ganancia. Ej: 70% → el 30% restante es margen.</div>
+        </div>
       </div>
       <div class="trow"><label><input type="checkbox" id="op_mo_iny" checked>Incluir M.O. de inyectores en presupuesto</label></div>
       <div class="trow"><label><input type="checkbox" id="op_mo_ext" checked>Incluir M.O. de extractores en presupuesto</label></div>
@@ -1241,7 +1252,8 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 
       <!-- Resumen capturable -->
       <div id="resumen_interno_cap">
-        <div class="ri-tit">📊 Resumen Interno — <span id="ri_nombre">Proyecto</span></div>
+        <div class="ri-tit">📊 Resumen Interno — <span id="ri_nombre">Proyecto</span> <span id="ri_opact" style="font-size:10px;font-weight:600;color:#b59b20;text-transform:none;letter-spacing:0;"></span></div>
+        <div id="ri_ops"></div>
         <!-- Consumo kWh -->
         <div class="kwh-box" id="kwh_box" style="margin-bottom:14px;">
           <div class="kwh-card"><div class="kl">Consumo Inyección</div><div class="kv" id="kwh_iny">— kWh</div><div class="ks">Total instalado</div></div>
@@ -1740,6 +1752,8 @@ function f(v){return 'USD '+Math.round(v).toLocaleString('es-AR');}
 function fn(v){return Math.round(v).toLocaleString('es-AR');}
 function moInyVal(){return parseFloat(document.getElementById('mo_iny_val').value)||0;}
 function moExtVal(){return parseFloat(document.getElementById('mo_ext_val').value)||0;}
+// Parte del precio de M.O. que es costo (0–1); el resto es margen. Vacío = 100% (sin ganancia)
+function moCostoFr(){const v=parseFloat((document.getElementById('mo_costo_pct')||{}).value);return isNaN(v)?1:Math.min(100,Math.max(0,v))/100;}
 
 // ====== ESTADO ======
 function defaultAmb(){return {id:'a'+Date.now(),nombre:'',d_l:'',d_a:'',d_at:'',d_ac:'',sup:0,vol:0,aT:0,aC:0,dimSource:'lah',ren_val:'',pE:60,qi:{},qe:{},esqUrl:null,sectores:[],opciones:[{nombre:'Opción A',qi:{},qe:{}}],opActivo:0};}
@@ -2431,51 +2445,87 @@ function getDescMonto(ventaTotal){
   document.getElementById('desc_label').textContent=lbl;
   return monto;
 }
-function calcEco(){
-  saveAmbState();
-  S.pCom=parseFloat(document.getElementById('pct_com').value)||0;
+// Números económicos del proyecto. pick(amb) → {qi,qe} de cada ambiente
+// (la opción activa, o una alternativa para comparar).
+function _ecoCalc(pick){
   const moIny=document.getElementById('op_mo_iny').checked;
   const moExt=document.getElementById('op_mo_ext').checked;
   const moIV=moInyVal(), moEV=moExtVal();
 
   let ceq=0,veq=0,qI=0;
   let cext=0,vext=0,qE=0;
+  const mQi={},mQe={};
   S.ambientes.forEach(amb=>{
-    const qi=ambQi(amb),qe=ambQe(amb);
-    allEqs().forEach(e=>{const q=qi[e.id]||0;if(q>0){ceq+=q*getP(e.id,'c');veq+=q*getP(e.id,'p');qI+=q;}});
-    EXT_BASE.forEach(e=>{const q=qe[e.id]||0;if(q>0){cext+=q*getP(e.id,'c');vext+=q*getP(e.id,'p');qE+=q;}});
+    const {qi,qe}=pick(amb);
+    allEqs().forEach(e=>{const q=qi[e.id]||0;mQi[e.id]=(mQi[e.id]||0)+q;if(q>0){ceq+=q*getP(e.id,'c');veq+=q*getP(e.id,'p');qI+=q;}});
+    EXT_BASE.forEach(e=>{const q=qe[e.id]||0;mQe[e.id]=(mQe[e.id]||0)+q;if(q>0){cext+=q*getP(e.id,'c');vext+=q*getP(e.id,'p');qE+=q;}});
   });
   // Portátiles en proyecto
-  let cpt=0,vpt=0,qPT=0;
-  EQI_BASE.po.forEach(e=>{const q=S.qpt_proj[e.id]||0;if(q>0){cpt+=q*(PROJ_PT_PRICES[e.id]?.c||e.c);vpt+=q*(PROJ_PT_PRICES[e.id]?.p||e.p);qPT+=q;}});
-  ceq+=cpt;veq+=vpt;
-  // Accesorios: companions automáticos (rejillas) + opcionales
-  let cacc=0,vacc=0;
-  // Companions: se calculan según la cantidad de equipo de techo seleccionado
+  EQI_BASE.po.forEach(e=>{const q=S.qpt_proj[e.id]||0;if(q>0){ceq+=q*(PROJ_PT_PRICES[e.id]?.c||e.c);veq+=q*(PROJ_PT_PRICES[e.id]?.p||e.p);}});
+  // Accesorios: companions automáticos (rejillas de techo, según cantidad de equipo) + opcionales (S.qa)
   EQI_BASE.tc.forEach(eq=>{
-    if(!eq.companion)return;
-    const qtc=S.ambientes.reduce((s,a)=>s+(ambQi(a)[eq.id]||0),0);
-    if(qtc>0){cacc+=qtc*getP(eq.companion,'c');vacc+=qtc*getP(eq.companion,'p');}
+    const qtc=mQi[eq.id]||0;
+    if(eq.companion&&qtc>0){ceq+=qtc*getP(eq.companion,'c');veq+=qtc*getP(eq.companion,'p');}
   });
-  // Opcionales: cantidad manual en S.qa
   ACC_BASE.filter(a=>a.optional).forEach(a=>{
-    const q=S.qa[a.id]||0;if(q>0){cacc+=q*getP(a.id,'c');vacc+=q*getP(a.id,'p');}
+    const q=S.qa[a.id]||0;if(q>0){ceq+=q*getP(a.id,'c');veq+=q*getP(a.id,'p');}
   });
-  ceq+=cacc;veq+=vacc;
 
-  const cMoI=moIny?qI*moIV:0, cMoE=moExt?qE*moEV:0, cMo=cMoI+cMoE;
+  // M.O.: precio al cliente (vMo) y costo interno (cMo = % del precio)
+  const moFr=moCostoFr();
+  const vMo=(moIny?qI*moIV:0)+(moExt?qE*moEV:0);
+  const cMo=vMo*moFr;
   // VIÁTICOS: siempre suman al costo; si "mostrar", también al precio de venta
   const cViat=getViatMonto();
   const ctot=ceq+cext+cMo+cViat;
-  const vtotBruto=veq+vext+cMo+(viatMostrar()?cViat:0);
+  const vtotBruto=veq+vext+vMo+(viatMostrar()?cViat:0);
   // DESCUENTO: afecta precio de venta (cliente lo ve)
   const descMonto=getDescMonto(vtotBruto);
-  const vtot=vtotBruto-descMonto;
+  const vNeta=vtotBruto-descMonto; // precio de venta ya con descuento
   // COMISIÓN: interna, no afecta precio de venta
   const com=S.com?(veq+vext)*S.pCom/100:0;
-  const vNeta=vtot; // precio de venta ya con descuento
   const margen=vNeta-ctot-com; // margen neto = venta - costo - comision
   const mpct=ctot>0?(margen/ctot*100).toFixed(1):0;
+  return {moIny,moExt,moIV,moEV,moFr,ceq,cext,qI,qE,cMo,cViat,ctot,descMonto,vNeta,com,margen,mpct,mQi,mQe};
+}
+// Comparativa interna cuando algún ambiente tiene opciones alternativas:
+// una fila por opción = total del proyecto si se elige esa (el resto de ambientes con su opción activa).
+function renderEcoOpciones(){
+  const box=document.getElementById('ri_ops');if(!box)return;
+  const multi=S.ambientes.filter(a=>{ensureOpciones(a);return a.opciones.length>1;});
+  const lbl=document.getElementById('ri_opact');
+  if(!multi.length){box.innerHTML='';if(lbl)lbl.textContent='';return;}
+  const corto=n=>n.replace('Extractor ','').replace(' c/ Persiana','').replace(' Touch + Swing','').replace(' Confort','').replace('Centrifugo ','');
+  const opNom=(a,i)=>(a.opciones[i].nombre||('Opción '+(i+1)));
+  const pref=a=>multi.length>1?(a.nombre||'Ambiente')+': ':'';
+  if(lbl)lbl.textContent='· calculado con '+multi.map(a=>pref(a)+opNom(a,a.opActivo||0)).join(' · ');
+  let rows='';
+  multi.forEach(amb=>{
+    amb.opciones.forEach((op,oi)=>{
+      const qi=op.qi||{},qe=op.qe||{};
+      const r=_ecoCalc(a=>a===amb?{qi,qe}:{qi:ambQi(a),qe:ambQe(a)});
+      const eqs=[...allEqs().filter(e=>qi[e.id]>0).map(e=>`${qi[e.id]}× ${corto(e.n)}`),...EXT_BASE.filter(e=>qe[e.id]>0).map(e=>`${qe[e.id]}× ${corto(e.n)}`)].join(' + ')||'—';
+      const act=oi===(amb.opActivo||0);
+      rows+=`<tr${act?' class="act"':''}>
+        <td style="font-weight:700;white-space:nowrap;">${pref(amb)}${opNom(amb,oi)}${act?' <span class="ri-opact">activa</span>':''}</td>
+        <td style="font-size:10px;color:#666;">${eqs}</td>
+        <td style="text-align:right;">USD ${fn(r.ctot)}</td>
+        <td style="text-align:right;font-weight:700;color:#2563EB;">USD ${fn(r.vNeta)}</td>
+        ${S.com?`<td style="text-align:right;color:#e74c3c;">USD ${fn(r.com)}</td>`:''}
+        <td style="text-align:right;font-weight:700;">USD ${fn(r.margen)} <span style="font-weight:400;color:#888;">(${r.mpct}%)</span></td>
+      </tr>`;
+    });
+  });
+  box.innerHTML=`<div class="ri-ops-tit">Comparativa de opciones</div>
+    <table class="dt"><thead><tr><th>Opción</th><th>Equipos</th><th style="text-align:right;">Costo</th><th style="text-align:right;">Venta neta</th>${S.com?'<th style="text-align:right;">Comisión</th>':''}<th style="text-align:right;">Margen</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function calcEco(){
+  saveAmbState();
+  S.pCom=parseFloat(document.getElementById('pct_com').value)||0;
+  const {moIny,moExt,moIV,moEV,moFr,ceq,cext,qI,qE,cMo,cViat,ctot,descMonto,vNeta,com,margen,mpct,mQi,mQe}=
+    _ecoCalc(amb=>({qi:ambQi(amb),qe:ambQe(amb)}));
+  renderEcoOpciones();
 
   const nom=clienteNom('Proyecto');
   document.getElementById('ri_nombre').textContent=nom;
@@ -2487,10 +2537,6 @@ function calcEco(){
   if(S.com)document.getElementById('ri_com').textContent=f(com);
   if(S.desc)document.getElementById('ri_desc').textContent=f(descMonto);
   if(S.viat&&cViat>0){const vd=document.getElementById('ri_viat');if(vd)vd.textContent=f(cViat)+(viatMostrar()?' (al cliente)':' (absorbido)');}
-
-  // Merged quantities across all ambientes for detail table
-  const mQi={},mQe={};
-  S.ambientes.forEach(amb=>{const qi=ambQi(amb),qe=ambQe(amb);allEqs().forEach(e=>{mQi[e.id]=(mQi[e.id]||0)+(qi[e.id]||0);});EXT_BASE.forEach(e=>{mQe[e.id]=(mQe[e.id]||0)+(qe[e.id]||0);});});
 
   let rows='';
   rows+=`<tr class="sec"><td colspan="6">EQUIPOS DE INYECCIÓN</td></tr>`;
@@ -2535,8 +2581,8 @@ function calcEco(){
     });
   }
   rows+=`<tr class="sec"><td colspan="6">MANO DE OBRA</td></tr>`;
-  if(qI>0&&moIny)rows+=`<tr><td style="font-weight:600;">Instalación Equipo Inyector - M.O.</td><td style="text-align:center;">${qI}</td><td style="text-align:right;color:#aaa;">USD ${fn(moIV)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(moIV)}</td><td style="text-align:right;">USD ${fn(qI*moIV)}</td><td style="text-align:right;font-weight:700;">USD ${fn(qI*moIV)}</td></tr>`;
-  if(qE>0&&moExt)rows+=`<tr><td style="font-weight:600;">Instalación Extractor - M.O.</td><td style="text-align:center;">${qE}</td><td style="text-align:right;color:#aaa;">USD ${fn(moEV)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(moEV)}</td><td style="text-align:right;">USD ${fn(qE*moEV)}</td><td style="text-align:right;font-weight:700;">USD ${fn(qE*moEV)}</td></tr>`;
+  if(qI>0&&moIny)rows+=`<tr><td style="font-weight:600;">Instalación Equipo Inyector - M.O.</td><td style="text-align:center;">${qI}</td><td style="text-align:right;color:#aaa;">USD ${fn(moIV*moFr)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(moIV)}</td><td style="text-align:right;">USD ${fn(qI*moIV*moFr)}</td><td style="text-align:right;font-weight:700;">USD ${fn(qI*moIV)}</td></tr>`;
+  if(qE>0&&moExt)rows+=`<tr><td style="font-weight:600;">Instalación Extractor - M.O.</td><td style="text-align:center;">${qE}</td><td style="text-align:right;color:#aaa;">USD ${fn(moEV*moFr)}</td><td style="text-align:right;color:#2563EB;font-weight:700;">USD ${fn(moEV)}</td><td style="text-align:right;">USD ${fn(qE*moEV*moFr)}</td><td style="text-align:right;font-weight:700;">USD ${fn(qE*moEV)}</td></tr>`;
   if(!moIny&&qI>0)rows+=`<tr><td colspan="6" style="color:#bbb;font-style:italic;font-size:10px;">M.O. de inyectores no incluida en este presupuesto</td></tr>`;
   if(!moExt&&qE>0)rows+=`<tr><td colspan="6" style="color:#bbb;font-style:italic;font-size:10px;">M.O. de extractores no incluida en este presupuesto</td></tr>`;
   // ACCESORIOS: companions automáticos (rejillas de techo) + opcionales
@@ -3685,7 +3731,7 @@ function genPptoPt(){
 function _collectForm(){
   const ids=['cl_n','cl_persona','cl_tel','cl_dir','cl_f','cl_l','cl_r','cl_d','cl_o','ren',
     'op_intro','op_breve','op_tec','op_renovmin','op_acl','op_fich','op_conc','op_eco','op_inst',
-    'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','pct_e',
+    'op_mo_iny','op_mo_ext','mo_iny_val','mo_ext_val','mo_costo_pct','pct_e',
     'chk_com','pct_com','chk_desc','desc_tipo','desc_val','acl_texto','eco_texto',
     'chk_iva','chk_ars','cotiz_bna',
     'op_comp','comp_kw_ev','comp_kw_aa','comp_tarifa','comp_horas','comp_carga','comp_frig_unit',
@@ -3697,6 +3743,7 @@ function _collectForm(){
 }
 function _applyForm(fd){
   if(!fd)return;
+  if(!('mo_costo_pct' in fd))fd={...fd,mo_costo_pct:100}; // presupuestos previos: M.O. sin ganancia
   Object.entries(fd).forEach(([id,val])=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=!!val;else el.value=val;});
   const g=id=>document.getElementById(id);
   if(g('op_acl'))g('acl_panel').style.display=g('op_acl').checked?'block':'none';
