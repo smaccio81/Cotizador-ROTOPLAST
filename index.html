@@ -80,12 +80,40 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .si{display:flex;flex-wrap:wrap;gap:6px;}
 .sc{background:var(--v);color:var(--n);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:var(--f);}
 .sc:hover{background:#41729E;}
+/* Sugerencias de inyección: una fila por categoría, chips chicos con exceso y monto */
+#sg_i,#sg_e{display:block;}
+.sg-row.std .sg-lbl{color:#8A97A5;}
+.sg-row.std .sc{border-color:#B8C2CC;}
+.sg-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:4px;}
+.sg-lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:#35608A;width:46px;flex-shrink:0;}
+.sg-row .sc{font-size:10px;padding:2px 8px;line-height:1.35;background:#fff;border:1px solid var(--v);color:var(--n);}
+.sg-row .sc:hover{background:#DCE8F2;}
+.sg-row .sc small{font-weight:500;color:#5F7389;}
+.sg-row .sc.best{border:1.5px solid var(--n);background:#F4F7FA;}
+.sg-row .sc.over{background:transparent;border-style:dashed;opacity:.55;}
+.sg-row .sc.over:hover{opacity:1;background:#DCE8F2;}
 
 .etabs{display:flex;gap:2px;margin-bottom:12px;border-bottom:2px solid var(--br);}
 .etab{font-family:var(--f);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 13px;border:none;background:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
 .etab.active{color:var(--n);border-bottom-color:var(--v);}
 
 .eql{display:grid;grid-template-columns:2fr 1fr 110px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;}
+/* Fila compacta de equipo: nombre + specs | precio/costo | cantidad, en una línea */
+.eql.c1{grid-template-columns:minmax(0,1fr) auto auto;gap:12px;padding:5px 6px;}
+.eql.c1 .eqn{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0;}
+.eql.c1 .es{margin-top:0;}
+.eql.c1 .en{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.eqp{display:flex;gap:5px;align-items:center;}
+.eqp span{font-size:10px;color:#aaa;}
+.eqp input{width:72px;padding:2px 5px;font-size:12px;border-radius:4px;font-family:var(--f);}
+.eqp .ip{border:1.5px solid #e8d870;font-weight:700;}
+.eqp .ic{border:1.5px solid #ddd;background:#f9f9f9;}
+/* Extractores: Touch con acento azul, Estándar gris */
+.eql.x-touch{border-left:3px solid var(--v);}
+.eql.x-std{border-left:3px solid #C9D1DA;}
+.xt{font-size:8px;font-weight:700;letter-spacing:.5px;padding:1px 5px;border-radius:3px;vertical-align:middle;}
+.xt.touch{background:#DCE8F2;color:#35608A;}
+.xt.std{background:#EEF0F2;color:#7A8591;}
 .eql:last-child{border-bottom:none;}
 .en{font-size:12px;font-weight:700;}
 .es{font-size:10px;color:#aaa;margin-top:2px;}
@@ -406,6 +434,9 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   .rg{grid-template-columns:1fr 1fr;}
   .fg-fichas,.pp-conds,.pt-flyers{grid-template-columns:1fr;}
   .eql{grid-template-columns:1fr 100px;}
+  .eql.c1{grid-template-columns:1fr auto;}
+  .eql.c1 .eqp{grid-column:1/-1;order:3;}
+  .eql.c1 .en{white-space:normal;}
   .ri-grid{grid-template-columns:1fr 1fr;}
 }
 
@@ -1086,7 +1117,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel">
     <div class="ph"><div class="ic">❄️</div><h2>Equipos de Inyección</h2></div>
     <div class="pb">
-      <div class="sug-box"><div class="st">⚡ Sugerencia — Prioridad: Pared → Techo → Siroco</div><div class="si" id="sg_i">Completá las dimensiones primero</div></div>
+      <div class="sug-box"><div class="st">⚡ Sugerencias por modelo — caudal · exceso · venta <span style="font-weight:400;text-transform:none;">(punteadas = se pasan)</span></div><div class="si" id="sg_i">Completá las dimensiones primero</div></div>
       <div class="etabs">
         <button class="etab active" onclick="showTab('pw',this)">Pared</button>
         <button class="etab" onclick="showTab('tc',this)">Techo</button>
@@ -1109,7 +1140,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="panel">
     <div class="ph"><div class="ic">💨</div><h2>Equipos de Extracción</h2></div>
     <div class="pb">
-      <div class="sug-box"><div class="st">⚡ Sugerencia — basada en caudal instalado de inyección</div><div class="si" id="sg_e">Seleccioná equipos de inyección primero</div></div>
+      <div class="sug-box"><div class="st">⚡ Sugerencias por modelo — sobre caudal instalado de inyección <span style="font-weight:400;text-transform:none;">(punteadas = se pasan)</span></div><div class="si" id="sg_e">Seleccioná equipos de inyección primero</div></div>
       <div id="tab_ex"></div>
       <div class="cb" style="margin-top:12px;">
         <h3>Extracción Instalada</h3>
@@ -2116,26 +2147,43 @@ function calcCaudal(){
 function updSugs(){
   const req=S.vol*S.ren;
   if(!req){document.getElementById('sg_i').innerHTML='<span style="font-size:11px;color:#888;">Completá dimensiones y tipo de espacio</span>';return;}
-  let sugs=[];
-  for(const cat of['pw','tc','si']){
-    for(const eq of EQI_BASE[cat]){
-      const qty=Math.ceil(req/eq.q);
-      if(qty>=1&&qty<=20)sugs.push({eq,qty,ct:qty*eq.q,cat});
-    }
-    if(sugs.length>=4)break;
-  }
-  document.getElementById('sg_i').innerHTML=sugs.slice(0,4).map(s=>
-    `<span class="sc" onclick="aplicarSug('${s.eq.id}','${s.cat}',${s.qty})">${s.qty}× ${s.eq.n.replace(' Touch + Swing','').replace(' Panel Web','').replace('Confort ','')} (${(s.ct/1000).toFixed(0)}k m³/h)</span>`
-  ).join('')||'<span style="font-size:11px;color:#888;">Sin sugerencias</span>';
+  // Todas las combinaciones de un solo modelo, por categoría, de menor a mayor cantidad.
+  // "Pasada" (atenuada): otra opción con la misma cantidad cubre más ajustado, o excede >30%.
+  const corto=n=>n.replace(' Touch + Swing','').replace(' Touch','').replace(' Panel Web','').replace(' Confort','').replace('Standard','Std').replace('Central Evaporativa','Central');
+  const html=[['pw','Pared'],['tc','Techo'],['si','Siroco']].map(([cat,lbl])=>
+    sugRow(lbl,EQI_BASE[cat],req,corto,s=>`aplicarSug('${s.eq.id}','${cat}',${s.qty})`)
+  ).join('');
+  document.getElementById('sg_i').innerHTML=html||'<span style="font-size:11px;color:#888;">Sin sugerencias</span>';
   updSugExt();
 }
 function updSugExt(){
   const req=extReq();
   if(!req){document.getElementById('sg_e').innerHTML='<span style="font-size:11px;color:#888;">Seleccioná equipos de inyección primero</span>';return;}
-  const sugs=EXT_BASE.filter(e=>e.q>=10000).map(e=>{const qty=Math.ceil(req/e.q);return qty>=1&&qty<=20?{e,qty,ct:qty*e.q}:null;}).filter(Boolean).slice(0,3);
-  document.getElementById('sg_e').innerHTML=sugs.map(s=>
-    `<span class="sc" onclick="aplicarSugE('${s.e.id}',${s.qty})">${s.qty}× ${s.e.n} (${(s.ct/1000).toFixed(0)}k m³/h)</span>`
-  ).join('')||'<span style="font-size:11px;color:#888;">Sin sugerencias</span>';
+  const corto=n=>n.replace('Extractor ','').replace(' Touch c/ Persiana','').replace(' Estandar','').replace('Centrifugo ','');
+  const click=s=>`aplicarSugE('${s.eq.id}',${s.qty})`;
+  // Centrífugos al final: poco usados por caudal y precio (solo donde no hay alternativa)
+  const html=sugRow('Touch',EXT_BASE.filter(e=>e.id.endsWith('_touch')),req,corto,click,'touch')
+    +sugRow('Estándar',EXT_BASE.filter(e=>e.id.endsWith('_std')),req,corto,click,'std')
+    +sugRow('Centríf.',EXT_BASE.filter(e=>e.v===380),req,corto,click);
+  document.getElementById('sg_e').innerHTML=html||'<span style="font-size:11px;color:#888;">Sin sugerencias</span>';
+}
+// Fila de sugerencias: todas las combinaciones de un solo modelo, de menor a mayor cantidad.
+// "Pasada" (punteada): otra opción con la misma cantidad cubre más ajustado, o excede >30%.
+function sugRow(lbl,eqs,req,corto,click,cls=''){
+  const sugs=eqs.map(eq=>{
+    const qty=Math.ceil(req/eq.q);
+    if(qty<1||qty>12)return null;
+    const unit=getP(eq.id,'p')+(eq.companion?getP(eq.companion,'p'):0);
+    return {eq,qty,ct:qty*eq.q,exc:qty*eq.q/req-1,venta:qty*unit};
+  }).filter(Boolean);
+  if(!sugs.length)return '';
+  sugs.forEach(s=>{s.over=s.exc>0.3||sugs.some(o=>o!==s&&o.qty===s.qty&&o.exc<s.exc);});
+  const minExc=Math.min(...sugs.map(s=>s.exc));
+  sugs.sort((a,b)=>a.qty-b.qty||a.exc-b.exc);
+  const dup=n=>eqs.filter(e=>e.n===n).length>1;
+  return `<div class="sg-row${cls?' '+cls:''}"><span class="sg-lbl">${lbl}</span>`+sugs.map(s=>
+    `<span class="sc${s.over?' over':''}${s.exc===minExc&&!s.over?' best':''}" onclick="${click(s)}" title="${s.eq.n} · ${fn(s.ct)} m³/h">${s.qty}× ${corto(s.eq.n)}${dup(s.eq.n)?' '+s.eq.v+'V':''} <small>${(s.ct/1000).toFixed(0)}k +${Math.round(s.exc*100)}% · USD ${fn(s.venta)}</small></span>`
+  ).join('')+`</div>`;
 }
 function aplicarSug(id,cat,qty){
   allEqs().forEach(e=>{S.qi[e.id]=0;const el=document.getElementById('qi_'+e.id);if(el)el.value=0;});
@@ -2152,27 +2200,26 @@ function aplicarSugE(id,qty){
 }
 
 // ====== RENDER TABS ======
+// Fila compacta de equipo (tipo 'i' inyección / 'e' extracción). cls/tag: marca opcional (Touch/Estándar)
+function eqRow(eq,tipo,cls='',tag=''){return`
+    <div class="eql c1${cls?' '+cls:''}">
+      <div class="eqn">
+        <span class="en">${eq.n}${vBadge(eq.v)}${tag}</span>
+        <span class="es">${eq.t} · ${fn(eq.q)} m³/h${eq.kw?' · '+eq.kw+' kWh':''}${eq.fa?` · <span class="fa-badge">↻ ${eq.fa}</span>`:''}</span>
+      </div>
+      <div class="eqp">
+        <span>Precio</span><input type="number" id="pe_${eq.id}" value="${eq.p}" class="edit-precio ip" oninput="setP('${eq.id}','p',this.value);calcEco();" title="Precio de venta editable">
+        <span>Costo</span><input type="number" id="pc_${eq.id}" value="${eq.c}" class="edit-precio ic" oninput="setP('${eq.id}','c',this.value);calcEco();" title="Costo editable">
+      </div>
+      <div class="eq">
+        <button onclick="chgQ('${tipo}','${eq.id}',-1)">−</button>
+        <input type="number" id="q${tipo}_${eq.id}" value="0" min="0" onchange="setQ('${tipo}','${eq.id}',this.value)">
+        <button onclick="chgQ('${tipo}','${eq.id}',1)">+</button>
+      </div>
+    </div>`;}
 function renderTab(cat){
   const eqs=EQI_BASE[cat].filter(e=>!e.vent);
-  let html=eqs.map(eq=>`
-    <div class="eql">
-      <div>
-        <div class="en">${eq.n}${vBadge(eq.v)}</div>
-        <div class="es">${eq.t} · ${fn(eq.q)} m³/h${eq.kw?' · '+eq.kw+' kWh':''}${eq.fa?` · <span class="fa-badge">↻ ${eq.fa}</span>`:''}</div>
-        <div style="display:flex;gap:8px;margin-top:4px;align-items:center;flex-wrap:wrap;">
-          <span style="font-size:10px;color:#aaa;">Precio:</span>
-          <input type="number" id="pe_${eq.id}" value="${eq.p}" class="edit-precio" style="width:90px;padding:3px 6px;font-size:12px;border-radius:4px;border:1.5px solid #e8d870;font-family:var(--f);font-weight:700;" oninput="setP('${eq.id}','p',this.value);calcEco();" title="Precio de venta editable">
-          <span style="font-size:10px;color:#bbb;">Costo:</span>
-          <input type="number" id="pc_${eq.id}" value="${eq.c}" class="edit-precio" style="width:90px;padding:3px 6px;font-size:12px;border-radius:4px;border:1.5px solid #ddd;background:#f9f9f9;font-family:var(--f);" oninput="setP('${eq.id}','c',this.value);calcEco();" title="Costo editable">
-        </div>
-      </div>
-      <div></div>
-      <div class="eq">
-        <button onclick="chgQ('i','${eq.id}',-1)">−</button>
-        <input type="number" id="qi_${eq.id}" value="0" min="0" onchange="setQ('i','${eq.id}',this.value)">
-        <button onclick="chgQ('i','${eq.id}',1)">+</button>
-      </div>
-    </div>`).join('');
+  let html=eqs.map(eq=>eqRow(eq,'i')).join('');
   // Accesorios opcionales sólo en tab de techo
   if(cat==='tc'){
     const opts=ACC_BASE.filter(a=>a.optional);
@@ -2205,31 +2252,14 @@ function renderTab(cat){
 function renderExtTab(){
   const siroco=EXT_BASE.filter(e=>e.v===380);
   const exa=EXT_BASE.filter(e=>e.v===220);
-  function extRow(eq){return`
-    <div class="eql">
-      <div>
-        <div class="en">${eq.n}${vBadge(eq.v)}</div>
-        <div class="es">${eq.t} · ${fn(eq.q)} m³/h${eq.kw?' · '+eq.kw+' kWh':''}</div>
-        <div style="display:flex;gap:8px;margin-top:4px;align-items:center;flex-wrap:wrap;">
-          <span style="font-size:10px;color:#aaa;">Precio:</span>
-          <input type="number" id="pe_${eq.id}" value="${eq.p}" class="edit-precio" style="width:90px;padding:3px 6px;font-size:12px;border-radius:4px;border:1.5px solid #e8d870;font-family:var(--f);font-weight:700;" oninput="setP('${eq.id}','p',this.value);calcEco();">
-          <span style="font-size:10px;color:#bbb;">Costo:</span>
-          <input type="number" id="pc_${eq.id}" value="${eq.c}" class="edit-precio" style="width:90px;padding:3px 6px;font-size:12px;border-radius:4px;border:1.5px solid #ddd;background:#f9f9f9;font-family:var(--f);" oninput="setP('${eq.id}','c',this.value);calcEco();">
-        </div>
-      </div>
-      <div></div>
-      <div class="eq">
-        <button onclick="chgQ('e','${eq.id}',-1)">−</button>
-        <input type="number" id="qe_${eq.id}" value="0" min="0" onchange="setQ('e','${eq.id}',this.value)">
-        <button onclick="chgQ('e','${eq.id}',1)">+</button>
-      </div>
-    </div>`;}
-  let html=`<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:8px;letter-spacing:.5px;">CENTRÍFUGOS SIROCO</div>`;
-  html+=siroco.map(extRow).join('');
-  html+=`<div style="font-size:11px;font-weight:700;color:#666;margin:14px 0 8px;border-top:1px solid #eee;padding-top:10px;letter-spacing:.5px;">EXA — TOUCH C/ PERSIANA <span style="font-weight:400;color:#aaa;">(Premium)</span></div>`;
-  html+=exa.filter(e=>e.id.endsWith('_touch')).map(extRow).join('');
-  html+=`<div style="font-size:11px;font-weight:700;color:#666;margin:14px 0 8px;border-top:1px solid #eee;padding-top:10px;letter-spacing:.5px;">EXA — ESTÁNDAR <span style="font-weight:400;color:#aaa;">(Económico)</span></div>`;
-  html+=exa.filter(e=>e.id.endsWith('_std')).map(extRow).join('');
+  const hd=(t,sub,first)=>`<div style="font-size:11px;font-weight:700;color:#666;margin:${first?'0 0 6px':'12px 0 6px'};${first?'':'border-top:1px solid #eee;padding-top:8px;'}letter-spacing:.5px;">${t} <span style="font-weight:400;color:#aaa;">${sub}</span></div>`;
+  let html=hd('EXA — TOUCH C/ PERSIANA','(Premium)',true);
+  html+=exa.filter(e=>e.id.endsWith('_touch')).map(e=>eqRow(e,'e','x-touch',' <span class="xt touch">TOUCH</span>')).join('');
+  html+=hd('EXA — ESTÁNDAR','(Económico)');
+  html+=exa.filter(e=>e.id.endsWith('_std')).map(e=>eqRow(e,'e','x-std',' <span class="xt std">STD</span>')).join('');
+  // Centrífugos al final: poco usados por caudal y precio
+  html+=hd('CENTRÍFUGOS SIROCO','(uso puntual)');
+  html+=siroco.map(e=>eqRow(e,'e')).join('');
   document.getElementById('tab_ex').innerHTML=html;
 }
 function showTab(cat,btn){
