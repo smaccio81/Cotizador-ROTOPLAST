@@ -161,6 +161,55 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .btn-o:hover{border-color:var(--v);color:var(--v);}
 .btn-am{background:var(--am);color:var(--n);}
 .btn-am:hover{background:#e0b000;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-wa:hover{background:#1EBE5A;}
+/* ===== MODO ALQUILER ===== */
+.al-tabs{flex-wrap:wrap;}
+.al-tabs .ibadge{margin-left:4px;font-size:7px;padding:1px 4px;}
+.al-items td,.al-esc td{padding:5px 6px;}
+.al-items select,.al-items input,.al-esc input,#al_flota_body input{font-family:var(--f);font-size:12px;padding:4px 6px;border:1.5px solid var(--br);border-radius:4px;background:#fff;color:var(--n);}
+.al-items input[type=number],.al-esc input[type=number]{width:56px;text-align:center;}
+#al_flota_body input{width:100px;text-align:right;}
+.al-esc input[type=text]{width:110px;}
+.al-del{background:none;border:none;color:var(--r);cursor:pointer;font-size:13px;padding:0 4px;}
+.al-tag{font-size:9px;font-weight:700;background:#EAF3DE;color:#27500A;border-radius:3px;padding:1px 5px;margin-left:4px;}
+.al-tot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#EBF2F8;border-radius:8px;padding:12px 16px;margin-top:12px;}
+.al-tot .tl{font-size:10px;font-weight:700;text-transform:uppercase;color:#35608A;letter-spacing:.5px;}
+.al-tot .tv{font-size:24px;font-weight:800;color:var(--n);}
+.al-tot .tg{font-size:11px;color:#555;text-align:right;}
+.al-tot .tg .ibadge{display:inline-block;width:auto;}
+.al-mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;}
+.al-mc{background:#F4F7FA;border:1px solid #E1E8EF;border-radius:6px;padding:8px 10px;}
+.al-mc .l{font-size:10px;color:#777;font-weight:600;}
+.al-mc .v{font-size:15px;font-weight:800;color:var(--n);}
+.al-mc .s{font-size:9px;color:#999;}
+.al-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.al-pills button{font-family:var(--f);font-size:11px;padding:4px 10px;border:1.5px solid var(--br);border-radius:14px;background:#fff;color:var(--n);cursor:pointer;}
+.al-pills button.on{background:var(--v);border-color:var(--v);color:#fff;font-weight:700;}
+.al-tgl{display:inline-flex;border:1.5px solid var(--br);border-radius:6px;overflow:hidden;margin-bottom:12px;}
+.al-tgl button{font-family:var(--f);font-size:11px;padding:6px 12px;border:none;background:#fff;color:#777;cursor:pointer;}
+.al-tgl button.on{background:#EBF2F8;color:var(--n);font-weight:700;}
+.al-res{border-radius:8px;padding:10px 14px;margin-top:10px;}
+.al-res .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.al-res .n{font-size:20px;font-weight:800;}
+.al-res.g{background:#EAF3DE;color:#27500A;} .al-res.a{background:#FAEEDA;color:#633806;} .al-res.r{background:#FCEBEB;color:#791F1F;}
+.al-bdg{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;}
+.al-bdg.g{background:#EAF3DE;color:#27500A;} .al-bdg.a{background:#FAEEDA;color:#633806;} .al-bdg.r{background:#FCEBEB;color:#791F1F;}
+.al-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+/* Celular: cada equipo del alquiler como tarjeta (sin scroll horizontal) */
+@media(max-width:600px){
+  .al-items thead{display:none;}
+  .al-items tr{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px 8px;align-items:end;padding:10px 0;border-bottom:1px solid #eee;}
+  .al-items td{border:none!important;padding:0!important;text-align:left!important;}
+  .al-items td:first-child{grid-column:1/-1;}
+  .al-items td:first-child select{width:100%;}
+  .al-items td.pf,.al-items td.sub{grid-column:span 2;}
+  .al-items td.sub{text-align:right!important;}
+  .al-items td:last-child{grid-column:4;grid-row:2;align-self:center;}
+  .al-items td[data-l]::before{content:attr(data-l);display:block;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:2px;}
+  .al-items input[type=number]{width:100%;}
+}
+.al-row span:first-child{color:#777;}
 .acts{display:flex;gap:8px;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--br);margin-top:14px;flex-wrap:wrap;}
 
 .alrt{padding:9px 12px;border-radius:6px;font-size:11px;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
@@ -564,7 +613,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 }
 .sidebar.collapsed .sb-firebase-badge .si-text{display:none;}
 
-.app-main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .25s cubic-bezier(.4,0,.2,1);}
+.app-main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .25s cubic-bezier(.4,0,.2,1);flex:1;min-width:0;}
 .app-main.sb-collapsed{margin-left:56px;}
 
 /* hdr sticky dentro de app-main */
@@ -650,6 +699,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <div class="sb-mode-toggle">
       <button class="sb-modeBtn active" onclick="setMode('p')" id="mP_sb">&#128208; Proyecto</button>
       <button class="sb-modeBtn" onclick="setMode('pt')" id="mPT_sb">&#127939; Port&#225;til</button>
+      <button class="sb-modeBtn" onclick="setMode('al')" id="mAL_sb">&#127914; Alquiler</button>
     </div>
     <div class="sb-firebase-badge" id="sb_fb_badge" style="display:none;">
       <span>&#9729;</span><span class="si-text"> Firebase activo</span>
@@ -675,6 +725,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="mode-wrap">
     <button class="mbtn active" onclick="setMode('p')" id="mP">&#128208; Proyecto</button>
     <button class="mbtn" onclick="setMode('pt')" id="mPT">&#127939; Port&#225;til</button>
+    <button class="mbtn" onclick="setMode('al')" id="mAL">&#127914; Alquiler</button>
   </div>
 </div>
 
@@ -1383,6 +1434,159 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 </div>
 </div>
 
+<!-- MODO ALQUILER (eventos) -->
+<div id="dAL" style="display:none;">
+<div class="main">
+  <div class="etabs al-tabs">
+    <button class="etab active" data-t="pres" onclick="alqTab('pres')">Presupuesto</button>
+    <button class="etab" data-t="flota" onclick="alqTab('flota')">Flota <span class="ibadge">Interno</span></button>
+    <button class="etab" data-t="costos" onclick="alqTab('costos')">Costos <span class="ibadge">Interno</span></button>
+    <button class="etab" data-t="precio" onclick="alqTab('precio')">Precio <span class="ibadge">Interno</span></button>
+    <button class="etab" data-t="escala" onclick="alqTab('escala')">Escala y ajuste <span class="ibadge">Interno</span></button>
+  </div>
+
+  <!-- PRESUPUESTO -->
+  <div class="al-sec" id="al_pres">
+    <div class="panel">
+      <div class="ph"><div class="ic">👤</div><h2>Cliente y Evento</h2></div>
+      <div class="pb">
+        <div class="fg2">
+          <div class="fld"><label>Cliente / Empresa</label><input type="text" id="al_cliente" placeholder="Nombre o razón social" oninput="alqRenderPres()"></div>
+          <div class="fld"><label>Tipo de evento</label><input type="text" id="al_evento" placeholder="Casamiento, exposición, feria..." oninput="alqRenderPres()"></div>
+          <div class="fld"><label>Lugar / Salón</label><input type="text" id="al_lugar" placeholder="Dirección o nombre del salón" oninput="alqRenderPres()"></div>
+          <div class="fld"><label>Fecha del evento</label><input type="date" id="al_fecha" oninput="alqRenderPres()"></div>
+          <div class="fld"><label>Horario de uso</label><input type="text" id="al_horario" placeholder="Ej: 20:00 a 03:00 hs" oninput="alqRenderPres()"></div>
+          <div class="fld"><label>N° Presupuesto</label><input type="text" id="al_nro" placeholder="Vacío = se numera solo al guardar (PA-AAAA-NNN)"></div>
+        </div>
+        <div class="fld full" style="margin-top:10px;"><label>Observaciones (aparecen en el presupuesto)</label><input type="text" id="al_obs" placeholder="Notas adicionales (opcional)"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ic">🎪</div><h2>Equipos del Alquiler</h2></div>
+      <div class="pb">
+        <div style="overflow-x:auto;"><table class="dt al-items">
+          <thead><tr><th>Equipo</th><th style="text-align:center;">Días</th><th style="text-align:center;">Cant.</th><th style="text-align:center;">Ajuste %</th><th style="text-align:right;">Precio/día</th><th style="text-align:right;">Subtotal</th><th></th></tr></thead>
+          <tbody id="al_items"></tbody>
+        </table></div>
+        <button class="btn btn-o" style="margin-top:8px;font-size:10px;padding:6px 12px;" onclick="alqAddItem()">+ Agregar equipo</button>
+        <div id="al_total"></div>
+      </div>
+    </div>
+    <div class="acts"><button class="btn btn-v" onclick="genPptoAl()">Ver Presupuesto →</button></div>
+    <div id="al_wrap" style="display:none;margin-top:16px;">
+      <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-v" onclick="printAl()">🖨️ Imprimir / PDF</button>
+        <button class="btn btn-am" onclick="compartirPpto('al',this)">📤 Compartir PDF</button>
+        <button class="btn btn-wa" onclick="alqWhatsApp()">💬 Texto WhatsApp</button>
+        <button class="btn btn-o" onclick="alqCopiarWapp(this)">📋 Copiar texto</button>
+      </div>
+      <div class="ppto-wrap"><div class="pp" id="al_page"></div></div>
+    </div>
+  </div>
+
+  <!-- FLOTA -->
+  <div class="al-sec" id="al_flota" style="display:none;">
+    <div class="panel">
+      <div class="ph"><div class="ic">🚚</div><h2>Flota para Alquiler</h2></div>
+      <div class="pb">
+        <div class="alrt alrt-i" style="margin-bottom:10px;">El valor de cada equipo (para amortizar) sale del <b>costo de lista</b> del catálogo y se actualiza solo. Si lo compraste a otro precio, cargalo a mano; vacío = lista.</div>
+        <div style="overflow-x:auto;"><table class="dt">
+          <thead><tr><th>Equipo</th><th style="text-align:right;">Valor USD</th><th style="text-align:right;">Logística extra $</th><th></th></tr></thead>
+          <tbody id="al_flota_body"></tbody>
+        </table></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+          <select id="al_flota_add" style="font-family:var(--f);font-size:12px;padding:6px 8px;border:1.5px solid var(--br);border-radius:5px;max-width:100%;"></select>
+          <button class="btn btn-o" style="font-size:10px;padding:6px 12px;" onclick="alqFlotaAdd()">+ Agregar a la flota</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">"Logística extra": costo adicional por evento para equipos de difícil traslado (ej. ROTO 140).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COSTOS -->
+  <div class="al-sec" id="al_costos" style="display:none;">
+    <div class="panel">
+      <div class="ph"><div class="ic">💵</div><h2>Tipo de Cambio y Parámetros</h2></div>
+      <div class="pb">
+        <div class="bna-row" style="margin-bottom:12px;">
+          <span style="font-size:11px;font-weight:600;color:#555;">Dólar ($/USD):</span>
+          <input type="number" id="al_tc" class="bna-val" style="width:100px;" oninput="alqSet('tc',this.value)">
+          <button class="btn btn-v" style="font-size:11px;padding:5px 11px;" onclick="alqFetchBNA(this)">🔄 Traer BNA</button>
+          <span id="al_bna_est" style="font-size:10px;color:#aaa;">Billete venta BNA</span>
+        </div>
+        <div class="fg3">
+          <div class="fld"><label>Vida útil (años)</label><input type="number" id="al_vida" min="1" oninput="alqSet('vida',this.value)"></div>
+          <div class="fld"><label>Eventos por temporada</label><input type="number" id="al_ev" min="1" oninput="alqSet('ev',this.value)"></div>
+          <div class="fld"><label>Mantenimiento anual (%)</label><input type="number" id="al_mnt" min="0" oninput="alqSet('mnt',this.value)"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ic">🧾</div><h2>Costos Operativos por Evento (1 equipo)</h2></div>
+      <div class="pb">
+        <div class="fg3">
+          <div class="fld"><label>Flete / traslado ($)</label><input type="number" id="al_flete" min="0" oninput="alqSet('flete',this.value)"></div>
+          <div class="fld"><label>Mano de obra ($)</label><input type="number" id="al_mano" min="0" oninput="alqSet('mano',this.value)"></div>
+          <div class="fld"><label>Insumos / consumibles ($)</label><input type="number" id="al_insumos" min="0" oninput="alqSet('insumos',this.value)"></div>
+        </div>
+        <div class="ri-ops-tit" style="margin-top:14px;">Costo por evento de cada equipo</div>
+        <div class="al-mg" id="al_costos_mod"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRECIO -->
+  <div class="al-sec" id="al_precio" style="display:none;">
+    <div class="panel">
+      <div class="ph"><div class="ic">🏷️</div><h2>Precio por Equipo / Día</h2></div>
+      <div class="pb">
+        <div class="al-pills" id="al_sel_precio"></div>
+        <div class="al-tgl">
+          <button id="al_bmg" onclick="alqSet('modo','margen')">Pongo margen → precio</button>
+          <button id="al_bpr" onclick="alqSet('modo','precio')">Pongo precio → margen</button>
+        </div>
+        <div class="fg2" style="max-width:420px;">
+          <div class="fld" id="al_fmg"><label>Margen deseado (%)</label><input type="number" id="al_margen" min="0" oninput="alqSet('margen',this.value)"></div>
+          <div class="fld" id="al_fpr"><label>Precio manual por equipo / día ($)</label><input type="number" id="al_prm" min="0" oninput="alqSet('prm',this.value)"></div>
+        </div>
+        <div id="al_precio_card"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESCALA -->
+  <div class="al-sec" id="al_escala" style="display:none;">
+    <div class="panel">
+      <div class="ph" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:10px;"><div class="ic">📉</div><h2>Escala de Descuentos por Días</h2></div>
+        <button class="btn btn-am" style="font-size:10px;padding:5px 10px;" onclick="alqResetEscala()">↺ Recomendados</button></div>
+      <div class="pb">
+        <table class="dt al-esc"><thead><tr><th>Tramo</th><th>Desde</th><th>Hasta</th><th>Desc. %</th><th></th></tr></thead><tbody id="al_esc_body"></tbody></table>
+        <button class="btn btn-o" style="margin-top:8px;font-size:10px;padding:6px 12px;" onclick="alqAddTramo()">+ Agregar tramo</button>
+        <div class="ri-ops-tit" style="margin-top:16px;">Tabla resultante</div>
+        <div class="al-pills" id="al_sel_escala"></div>
+        <div style="overflow-x:auto;"><table class="dt" id="al_esc_tabla"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ic">🎯</div><h2>Ajuste por Caso Especial</h2></div>
+      <div class="pb">
+        <div class="alrt alrt-i" style="margin-bottom:10px;">Feria, exposición o evento estratégico: aplicá un descuento adicional que refleje el beneficio comercial para Simple Clima.</div>
+        <div class="fg4">
+          <div class="fld"><label>Días del evento</label><input type="number" id="al_aj_dias" value="1" min="1" oninput="alqRenderEscala()"></div>
+          <div class="fld"><label>Cantidad de equipos</label><input type="number" id="al_aj_qty" value="1" min="1" oninput="alqRenderEscala()"></div>
+          <div class="fld"><label>Descuento adicional (%)</label><input type="number" id="al_aj_extra" value="0" min="0" max="40" oninput="alqRenderEscala()"></div>
+          <div class="fld"><label>Motivo</label><select id="al_aj_motivo" onchange="alqRenderEscala()">
+            <option value="">— Sin motivo especial</option><option value="feria">Feria / exposición con visibilidad</option>
+            <option value="cliente">Cliente frecuente o estratégico</option><option value="volumen">Volumen de equipos</option>
+            <option value="prueba">Primera vez / prueba de servicio</option><option value="otro">Otro</option></select></div>
+        </div>
+        <div id="al_aj_res"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 </div><!-- /app-main -->
 </div><!-- /app-shell -->
 
@@ -1835,17 +2039,23 @@ function setMode(m){
   S.modo=m;
   document.getElementById('dP').style.display=m==='p'?'block':'none';
   document.getElementById('dPT').style.display=m==='pt'?'block':'none';
+  document.getElementById('dAL').style.display=m==='al'?'block':'none';
   document.getElementById('mP').classList.toggle('active',m==='p');
   document.getElementById('mPT').classList.toggle('active',m==='pt');
+  document.getElementById('mAL').classList.toggle('active',m==='al');
   if(m==='pt')renderPtGrid();
+  if(m==='al')alqRender();
+  if(m!=='p')_setSidebarActive(''); // los pasos del menú son del modo Proyecto
   // Sync sidebar mode buttons
   document.querySelectorAll('.sb-modeBtn').forEach(b=>b.classList.remove('active'));
-  const sbm=document.getElementById((m==='p'?'mP':'mPT')+'_sb');
+  const sbm=document.getElementById(({p:'mP',pt:'mPT',al:'mAL'}[m])+'_sb');
   if(sbm) sbm.classList.add('active');
 }
 
 // ====== STEPS ======
 function goStep(n){
+  // Los pasos son del modo Proyecto
+  if(S.modo!=='p')setMode('p');
   // Ocultar sec_clientes
   const sc=document.getElementById('sec_clientes');
   if(sc) sc.classList.remove('active');
@@ -3496,10 +3706,10 @@ function _loadJsPDF(){
     document.head.appendChild(s);
   }));
 }
-function _pdfNombre(pt){
+function _pdfNombre(kind){
   const g=id=>((document.getElementById(id)||{}).value||'').trim();
-  const nom=(pt?g('pt_n'):clienteNom('')||'').replace(/[\\/:*?"<>|]/g,'').trim();
-  const ref=(pt?g('pt_r'):g('cl_r')).replace(/[\\/:*?"<>|]/g,'-');
+  const nom=({pt:g('pt_n'),al:g('al_cliente')}[kind]??(clienteNom('')||'')).replace(/[\\/:*?"<>|]/g,'').trim();
+  const ref=({pt:g('pt_r'),al:g('al_nro')}[kind]??g('cl_r')).replace(/[\\/:*?"<>|]/g,'-');
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
   return [ref,nom,fecha].filter(Boolean).join(' - ')||'Presupuesto';
 }
@@ -3603,13 +3813,16 @@ function _compartirListo(file){
   });
   document.body.appendChild(o);
 }
-async function compartirPpto(pt,btn){
-  const c=_pptoBody(pt?'pt_page':'pp_page');
-  if(!c){alert(pt?'Primero generá el presupuesto portátil':'Primero generá el presupuesto (Paso 5)');return;}
+// kind: 'p' proyecto · 'pt' portátil · 'al' alquiler (true/false = pt/p, compatibilidad)
+async function compartirPpto(kind,btn){
+  if(kind===true)kind='pt';else if(kind===false)kind='p';
+  const page={p:'pp_page',pt:'pt_page',al:'al_page'}[kind];
+  const c=_pptoBody(page);
+  if(!c){alert({p:'Primero generá el presupuesto (Paso 5)',pt:'Primero generá el presupuesto portátil',al:'Primero generá el presupuesto de alquiler'}[kind]);return;}
   const txt=btn.innerHTML;btn.disabled=true;btn.innerHTML='⏳ Generando PDF…';
   try{
     const blob=await _pptoPdfBlob(c);
-    await _compartirArchivo(new File([blob],_pdfNombre(pt)+'.pdf',{type:'application/pdf'}));
+    await _compartirArchivo(new File([blob],_pdfNombre(kind)+'.pdf',{type:'application/pdf'}));
   }catch(e){console.error(e);alert('No se pudo generar el PDF: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML=txt;}
 }
@@ -3738,7 +3951,8 @@ function _collectForm(){
     'op_agua','agua_lh','agua_horas',
     'op_gar','gar_equipos','gar_inst','gar_validez','pago_modo','pago_ant_pct','pago_cheques','pago_dias',
     'op_mant','mant_texto',
-    'pt_n','pt_f','pt_l','pt_r','pt_chk','pt_pct','pt_chk_desc','pt_desc_tipo','pt_desc_val'];
+    'pt_n','pt_f','pt_l','pt_r','pt_chk','pt_pct','pt_chk_desc','pt_desc_tipo','pt_desc_val',
+    'al_cliente','al_evento','al_lugar','al_fecha','al_horario','al_nro','al_obs'];
   const fd={};ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;fd[id]=(el.type==='checkbox')?el.checked:el.value;});return fd;
 }
 function _applyForm(fd){
@@ -3757,33 +3971,46 @@ function _applyForm(fd){
   togDesc&&togDesc();togComPt&&togComPt();togDescPt&&togDescPt();
 }
 async function saveCurrentBudget(){
-  const def=(clienteNom('Sin nombre'))+' — '+new Date().toLocaleDateString('es-AR');
+  const esAl=S.modo==='al';
+  const _cli=esAl?(_alqVal('al_cliente')||'Sin nombre'):clienteNom('Sin nombre');
+  const def=(esAl?'Alquiler — ':'')+_cli+' — '+new Date().toLocaleDateString('es-AR');
   const name=prompt('Nombre del presupuesto:',def);if(name===null)return;
   const nm=name.trim()||def;
   saveAmbState();
   // Numeración automática P-AAAA-NNN / PP-AAAA-NNN si el campo referencia está vacío
   const refEl=document.getElementById('cl_r');
   const ptRefEl=document.getElementById('pt_r');
+  const alRefEl=document.getElementById('al_nro');
   try{
     const all=await _cloudGetAll();
     const yr=new Date().getFullYear();
-    if(refEl&&!refEl.value.trim()){
+    // Alquiler: numera solo su propia serie PA-AAAA-NNN
+    if(esAl){
+      if(alRefEl&&!alRefEl.value.trim()){
+        let max=0;
+        all.forEach(b=>{const m=String(b.form?.al_nro||'').match(/^PA-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
+        alRefEl.value='PA-'+yr+'-'+String(max+1).padStart(3,'0');
+      }
+    } else if(refEl&&!refEl.value.trim()){
       let max=0;
       all.forEach(b=>{const m=String(b.ref||'').match(/^P-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
       refEl.value='P-'+yr+'-'+String(max+1).padStart(3,'0');
     }
-    if(ptRefEl&&!ptRefEl.value.trim()){
+    if(!esAl&&ptRefEl&&!ptRefEl.value.trim()){
       let max=0;
       all.forEach(b=>{const m=String(b.ptRef||b.form?.pt_r||'').match(/^PP-(\d{4})-(\d+)$/);if(m&&+m[1]===yr)max=Math.max(max,+m[2]);});
       ptRefEl.value='PP-'+yr+'-'+String(max+1).padStart(3,'0');
     }
   }catch(e){}
   const id='b'+Date.now();
-  const snap={id,name:nm,clientName:clienteNom('—'),ref:document.getElementById('cl_r').value||'',
+  const snap={id,name:nm,clientName:esAl?_cli:clienteNom('—'),ref:esAl?(alRefEl.value||''):(document.getElementById('cl_r').value||''),
+    tipo:esAl?'alquiler':(S.modo==='pt'?'portatil':'proyecto'),
+    alqCfg:_clone(ALQ),
     savedAt:new Date().toISOString(),form:_collectForm(),_clienteId:S._clienteId||null,
     state:{ambientes:JSON.parse(JSON.stringify(S.ambientes)),ambActivo:S.ambActivo,
       vol:S.vol,aT:S.aT,aC:S.aC,pE:S.pE,ren:S.ren,qi:{...S.qi},qe:{...S.qe},com:S.com,pCom:S.pCom,desc:S.desc,modo:S.modo,qpt_proj:{...S.qpt_proj},
       itemsLibres:JSON.parse(JSON.stringify(S.itemsLibres||[])),ars:S.ars,cotizBNA:S.cotizBNA,iva:S.iva,
+      alq:_clone(S.alq),
       esqUrls:JSON.parse(JSON.stringify(S.esqUrls||[]))},
     prices:JSON.parse(JSON.stringify(PRICES)),
     ptPrices:typeof PROJ_PT_PRICES!=='undefined'?JSON.parse(JSON.stringify(PROJ_PT_PRICES)):{}};
@@ -3800,6 +4027,9 @@ async function loadBudget(id){
   const {ambientes,ambActivo,qi,qe,esqUrls,...restState}=st;
   Object.assign(S,restState);
   S.esqUrls=esqUrls||[];
+  // Alquiler: se recalcula con la config vigente (b.alqCfg queda solo como referencia)
+  S.alq=st.alq?_clone(st.alq):{items:[]};
+  const alw=document.getElementById('al_wrap');if(alw)alw.style.display='none';
   renderEsqGallery&&renderEsqGallery();
   if(b.prices)Object.assign(PRICES,b.prices);
   if(b.ptPrices&&typeof PROJ_PT_PRICES!=='undefined')Object.assign(PROJ_PT_PRICES,b.ptPrices);
@@ -3854,7 +4084,7 @@ async function renderBudgetList(){
       const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       return '<div class="budget-item">'+
         '<div class="budget-info">'+
-          '<div class="budget-name" title="'+b.name+'">'+b.name+'</div>'+
+          '<div class="budget-name" title="'+b.name+'">'+(b.tipo==='alquiler'?'<span class="al-tag" style="margin:0 5px 0 0;background:#FAEEDA;color:#633806;">ALQUILER</span>':'')+b.name+'</div>'+
           '<div class="budget-meta">Cliente: '+b.clientName+(b.ref?' · Ref: '+b.ref:'')+' · '+ds+'</div>'+
         '</div>'+
         '<div class="budget-actions">'+
@@ -4073,6 +4303,8 @@ function _setSidebarActive(id){
 }
 function goSection(s){
   if(s==='clientes'){
+    // Clientes vive en la vista Proyecto: recordar el modo para volver al cargar un cliente
+    if(S.modo!=='p'){S._modoPrev=S.modo;setMode('p');}
     [1,2,3,4,5].forEach(n=>{const e=document.getElementById('step'+n);if(e)e.classList.remove('active');});
     const spt=document.getElementById('sec_portatiles');
     if(spt) spt.classList.remove('active');
@@ -4392,7 +4624,13 @@ function loadClientToQuote(id){
   // Si no hay razón social, limpiar cl_n para que el presupuesto use la persona
   if(!razon){const e=document.getElementById('cl_n');if(e)e.value='';}
   S._clienteId=id;
-  goStep(1);
+  const prev=S._modoPrev;S._modoPrev=null;
+  if(prev==='al'||prev==='pt'){
+    // Volver al modo desde el que se fue a Clientes, con el cliente cargado
+    _set(prev==='al'?'al_cliente':'pt_n',razon||persona);
+    if(prev==='pt')_set('pt_l',(c.ciudad||'').trim());
+    setMode(prev);
+  } else goStep(1);
   showToast('Cliente "'+(razon||persona)+'" cargado al presupuesto');
 }
 async function viewClientHistory(id){
@@ -4486,6 +4724,297 @@ async function importFromCRMText(txt){
     showToast(existing?'Cliente actualizado desde CRM':'Cliente importado desde CRM');
   }catch(e){alert('Error al guardar: '+e.message);}
 }
+
+// ================================================================
+// ALQUILER (eventos) — ex "presupuestador-simpleclima"
+// Config de la flota/costos/precio/escala: global (localStorage + Firestore config/alquiler).
+// Presupuesto (S.alq.items + campos al_*): se guarda con cada presupuesto.
+// Valor de cada equipo para amortizar = costo de lista del catálogo, salvo valor cargado a mano.
+// ================================================================
+const ALQ_LS='sc_alq_cfg';
+const ALQ_ESCALA_DEF=[
+  {label:'1–2 días',desde:1,hasta:2,desc:0},
+  {label:'3–4 días',desde:3,hasta:4,desc:10},
+  {label:'5–9 días',desde:5,hasta:9,desc:20},
+  {label:'10–14 días',desde:10,hasta:14,desc:30},
+  {label:'15+ días',desde:15,hasta:99,desc:38},
+];
+const ALQ_DEF={
+  flota:[{id:'roto55',lx:0},{id:'roto58',lx:0},{id:'roto52',lx:0},{id:'roto46',lx:0},{id:'roto140t',lx:15000}],
+  tc:1400,vida:5,ev:10,mnt:5,flete:19000,mano:40000,insumos:10000,
+  modo:'margen',margen:60,prm:80000,escala:ALQ_ESCALA_DEF
+};
+const _clone=o=>JSON.parse(JSON.stringify(o));
+let ALQ=_clone(ALQ_DEF);
+let _alqTab='pres',_alqSelP=0,_alqSelE=0;
+S.alq={items:[]};
+const _esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const _ars=n=>'$ '+Math.round(n||0).toLocaleString('es-AR');
+const _alqVal=id=>((document.getElementById(id)||{}).value||'').trim();
+
+// --- persistencia de la config ---
+function alqLoadCfg(){
+  try{const s=localStorage.getItem(ALQ_LS);if(s)ALQ={..._clone(ALQ_DEF),...JSON.parse(s)};}catch(e){}
+  if(_db)_db.collection('config').doc('alquiler').get().then(d=>{
+    if(!d.exists)return;
+    const c=d.data()||{};
+    const loc=ALQ._savedAt||'';
+    if((c._savedAt||'')>loc){ALQ={..._clone(ALQ_DEF),...c};try{localStorage.setItem(ALQ_LS,JSON.stringify(ALQ));}catch(e){}
+      if(S.modo==='al')alqRender();}
+  }).catch(e=>console.warn('[Alquiler] config nube:',e.message));
+}
+let _alqSaveT=null;
+function alqSaveCfg(){
+  ALQ._savedAt=new Date().toISOString();
+  try{localStorage.setItem(ALQ_LS,JSON.stringify(ALQ));}catch(e){}
+  clearTimeout(_alqSaveT);
+  _alqSaveT=setTimeout(()=>{if(_db)_db.collection('config').doc('alquiler').set(ALQ).catch(e=>console.warn('[Alquiler] no se pudo guardar config en la nube:',e.message));},1200);
+}
+function alqSet(k,v){
+  ALQ[k]=(k==='modo')?v:(parseFloat(v)||0);
+  alqSaveCfg();
+  if(k==='modo')alqRenderPrecio();
+  alqRenderCostos();alqRenderPrecio(true);alqRenderEscala();alqRenderPres();
+}
+
+// --- cálculo (misma lógica que el presupuestador original) ---
+function alqEq(id){return allEqs().find(e=>e.id===id);}
+function alqUsd(f){return (f.usd!=null&&f.usd!=='')?+f.usd:getP(f.id,'c');}
+function alqCosto(f){
+  const ars=alqUsd(f)*(ALQ.tc||0),vida=ALQ.vida||5,ev=ALQ.ev||10;
+  return (ars/vida)/ev+(ars*(ALQ.mnt||0)/100)/ev+(ALQ.flete||0)+(ALQ.mano||0)+(ALQ.insumos||0)+(+f.lx||0);
+}
+function alqPrecioBase(f){return ALQ.modo==='margen'?alqCosto(f)*(1+(ALQ.margen||0)/100):(ALQ.prm||0);}
+function alqDesc(d){for(const e of ALQ.escala){if(d>=e.desde&&d<=e.hasta)return +e.desc||0;}return 0;}
+function alqDescTot(dias,adj){return Math.min(alqDesc(dias)+(+adj||0),60);}
+function alqPrecioFinal(f,dias,adj){return alqPrecioBase(f)*(1-alqDescTot(dias,adj)/100);}
+function alqFlota(id){return ALQ.flota.find(f=>f.id===id);}
+const _alqCls=m=>m>=40?'g':m>=20?'a':'r';
+
+// --- navegación ---
+function alqTab(t){
+  _alqTab=t;
+  document.querySelectorAll('.al-tabs .etab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  document.querySelectorAll('#dAL .al-sec').forEach(s=>s.style.display=s.id==='al_'+t?'block':'none');
+  alqRender();
+}
+function alqRender(){
+  if(!S.alq.items.length&&ALQ.flota.length)S.alq.items.push({id:ALQ.flota[0].id,dias:1,qty:1,adj:0});
+  alqRenderFlota();alqRenderCostos();alqRenderPrecio();alqRenderEscala();alqRenderPres();
+}
+
+// --- flota ---
+function alqRenderFlota(){
+  const tb=document.getElementById('al_flota_body');if(!tb)return;
+  tb.innerHTML=ALQ.flota.map((f,i)=>{const e=alqEq(f.id);if(!e)return '';
+    return `<tr><td><b>${e.n}</b> <span style="color:#aaa;font-size:10px;">${fn(e.q)} m³/h</span></td>
+      <td style="text-align:right;"><input type="number" min="0" value="${f.usd!=null&&f.usd!==''?f.usd:''}" placeholder="${fn(getP(f.id,'c'))} (lista)" oninput="alqFlotaSet(${i},'usd',this.value)"></td>
+      <td style="text-align:right;"><input type="number" min="0" value="${f.lx||0}" oninput="alqFlotaSet(${i},'lx',this.value)"></td>
+      <td>${ALQ.flota.length>1?`<button class="al-del" title="Quitar de la flota" onclick="alqFlotaDel(${i})">✕</button>`:''}</td></tr>`;}).join('');
+  const sel=document.getElementById('al_flota_add');
+  if(sel){
+    const cats=[['po','Portátiles y ventiladores'],['pw','Pared'],['tc','Techo'],['si','Siroco']];
+    sel.innerHTML=cats.map(([c,l])=>`<optgroup label="${l}">`+EQI_BASE[c].filter(e=>!alqFlota(e.id)).map(e=>`<option value="${e.id}">${e.n}</option>`).join('')+`</optgroup>`).join('');
+  }
+}
+function alqFlotaSet(i,k,v){
+  if(k==='usd')ALQ.flota[i].usd=(v===''?null:parseFloat(v)||0);else ALQ.flota[i].lx=parseFloat(v)||0;
+  alqSaveCfg();alqRenderCostos();alqRenderPrecio(true);alqRenderEscala();alqRenderPres();
+}
+function alqFlotaAdd(){const id=_alqVal('al_flota_add');if(!id||alqFlota(id))return;ALQ.flota.push({id,lx:0});alqSaveCfg();alqRender();}
+function alqFlotaDel(i){
+  const id=ALQ.flota[i].id;
+  if(S.alq.items.some(it=>it.id===id)&&!confirm('Ese equipo está en el presupuesto actual. ¿Quitarlo igual?'))return;
+  ALQ.flota.splice(i,1);S.alq.items=S.alq.items.filter(it=>it.id!==id);
+  _alqSelP=Math.min(_alqSelP,ALQ.flota.length-1);_alqSelE=Math.min(_alqSelE,ALQ.flota.length-1);
+  alqSaveCfg();alqRender();
+}
+
+// --- costos ---
+function alqRenderCostos(){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&document.activeElement!==el)el.value=v;};
+  ['tc','vida','ev','mnt','flete','mano','insumos','margen','prm'].forEach(k=>set('al_'+k,ALQ[k]));
+  const box=document.getElementById('al_costos_mod');if(!box)return;
+  box.innerHTML=ALQ.flota.map(f=>{const e=alqEq(f.id);if(!e)return '';
+    return `<div class="al-mc"><div class="l">${e.n}</div><div class="v">${_ars(alqCosto(f))}</div><div class="s">USD ${fn(alqUsd(f))}${f.usd!=null&&f.usd!==''?' (manual)':' (lista)'}${f.lx>0?' · log. +'+_ars(f.lx):''}</div></div>`;}).join('');
+}
+async function alqFetchBNA(btn){
+  const est=document.getElementById('al_bna_est');est.textContent='Consultando...';est.style.color='#888';
+  try{
+    const r=await fetch('https://api.bluelytics.com.ar/v2/latest');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const val=(await r.json())?.oficial?.value_sell;if(!val)throw new Error('Sin datos');
+    S.cotizBNA=val;const cb=document.getElementById('cotiz_bna');if(cb)cb.value=val.toFixed(2);
+    document.getElementById('al_tc').value=Math.round(val);alqSet('tc',Math.round(val));
+    est.textContent='✓ $'+val+' — '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});est.style.color='#16a34a';
+  }catch(e){est.textContent='No se pudo obtener ('+e.message+'). Ingresalo a mano.';est.style.color='#e74c3c';}
+}
+
+// --- precio ---
+function _alqPills(boxId,sel,fnName){
+  const el=document.getElementById(boxId);if(!el)return;
+  el.innerHTML=ALQ.flota.map((f,i)=>{const e=alqEq(f.id);return e?`<button class="${i===sel?'on':''}" onclick="${fnName}(${i})">${e.n}</button>`:'';}).join('');
+}
+function alqSelP(i){_alqSelP=i;alqRenderPrecio();}
+function alqSelE(i){_alqSelE=i;alqRenderEscala();}
+function alqRenderPrecio(soloCard){
+  if(!soloCard){
+    _alqPills('al_sel_precio',_alqSelP,'alqSelP');
+    document.getElementById('al_bmg').className=ALQ.modo==='margen'?'on':'';
+    document.getElementById('al_bpr').className=ALQ.modo==='precio'?'on':'';
+    document.getElementById('al_fmg').style.display=ALQ.modo==='margen'?'':'none';
+    document.getElementById('al_fpr').style.display=ALQ.modo==='precio'?'':'none';
+  }
+  const pc=document.getElementById('al_precio_card');const f=ALQ.flota[_alqSelP];if(!pc||!f){if(pc)pc.innerHTML='';return;}
+  const c=alqCosto(f),p=alqPrecioBase(f),mr=c>0?(p-c)/c*100:0,gan=p-c;
+  const inv=alqUsd(f)*(ALQ.tc||0),evR=gan>0?Math.ceil(inv/gan):null,aR=evR?(evR/(ALQ.ev||10)).toFixed(1):null;
+  pc.innerHTML=`<div class="al-row"><span>Costo por evento</span><b>${_ars(c)}</b></div>
+    <div class="al-row"><span>${ALQ.modo==='margen'?'Margen':'Precio ingresado'}</span><b>${ALQ.modo==='margen'?(ALQ.margen||0)+'%':_ars(p)}</b></div>
+    <div class="al-res ${_alqCls(mr)}"><div class="k">${ALQ.modo==='margen'?'Precio sugerido / equipo / día':'Margen sobre costo'}</div><div class="n">${ALQ.modo==='margen'?_ars(p):Math.round(mr)+'%'}</div></div>
+    <div class="al-row" style="margin-top:6px;"><span>Ganancia por evento</span><b>${_ars(gan)}</b></div>
+    <div class="al-row"><span>Recupero de la inversión</span><b>${aR?aR+' años ('+evR+' eventos)':'—'}</b></div>`;
+}
+
+// --- escala y ajuste ---
+function alqResetEscala(){ALQ.escala=_clone(ALQ_ESCALA_DEF);alqSaveCfg();alqRenderEscala(true);alqRenderPres();}
+function alqAddTramo(){ALQ.escala.push({label:'Nuevo tramo',desde:0,hasta:0,desc:0});alqSaveCfg();alqRenderEscala(true);}
+function alqTramoSet(i,k,v){ALQ.escala[i][k]=k==='label'?v:(parseFloat(v)||0);alqSaveCfg();alqRenderEscala();alqRenderPres();}
+function alqTramoDel(i){ALQ.escala.splice(i,1);alqSaveCfg();alqRenderEscala(true);alqRenderPres();}
+function alqRenderEscala(editor){
+  const tb=document.getElementById('al_esc_body');if(!tb)return;
+  if(editor||!tb.children.length||tb.children.length!==ALQ.escala.length){
+    tb.innerHTML=ALQ.escala.map((e,i)=>`<tr>
+      <td><input type="text" value="${_esc(e.label)}" oninput="alqTramoSet(${i},'label',this.value)"></td>
+      <td><input type="number" min="0" value="${e.desde}" oninput="alqTramoSet(${i},'desde',this.value)"></td>
+      <td><input type="number" min="0" value="${e.hasta}" oninput="alqTramoSet(${i},'hasta',this.value)"></td>
+      <td><input type="number" min="0" max="80" value="${e.desc}" oninput="alqTramoSet(${i},'desc',this.value)"></td>
+      <td>${ALQ.escala.length>1?`<button class="al-del" onclick="alqTramoDel(${i})">✕</button>`:''}</td></tr>`).join('');
+  }
+  _alqPills('al_sel_escala',_alqSelE,'alqSelE');
+  const f=ALQ.flota[_alqSelE];const tab=document.getElementById('al_esc_tabla');
+  if(!f){tab.innerHTML='';document.getElementById('al_aj_res').innerHTML='';return;}
+  const c=alqCosto(f),p=alqPrecioBase(f);
+  tab.innerHTML=`<thead><tr><th>Días</th><th>Desc.</th><th style="text-align:right;">Precio/día</th><th style="text-align:right;">Total equipo</th><th style="text-align:right;">Margen</th></tr></thead><tbody>`+
+    [1,2,3,4,5,6,7,8,10,12,15,20].map(d=>{const ds=alqDesc(d),pd=p*(1-ds/100),mr=c>0?(pd-c)/c*100:0;
+      return `<tr><td>${d}d</td><td>${ds?'-'+ds+'%':'—'}</td><td style="text-align:right;">${_ars(pd)}</td><td style="text-align:right;">${_ars(pd*d)}</td><td style="text-align:right;"><span class="al-bdg ${_alqCls(mr)}">${Math.round(mr)}%</span></td></tr>`;}).join('')+`</tbody>`;
+  // Ajuste por caso especial
+  const dias=+_alqVal('al_aj_dias')||1,qty=+_alqVal('al_aj_qty')||1,extra=+_alqVal('al_aj_extra')||0;
+  const dstd=alqDesc(dias),dtot=Math.min(dstd+extra,60),pd=p*(1-dtot/100),tot=pd*dias*qty,totStd=p*(1-dstd/100)*dias*qty;
+  const mr=c>0?(pd-c)/c*100:0,piso=c*1.25;
+  const mot={feria:'Feria / exposición',cliente:'Cliente estratégico',volumen:'Volumen',prueba:'Primera vez',otro:'Ajuste especial'}[_alqVal('al_aj_motivo')];
+  document.getElementById('al_aj_res').innerHTML=`<div class="al-row"><span>Desc. por escala</span><b>-${dstd}%</b></div>
+    ${extra>0?`<div class="al-row"><span>Ajuste${mot?' ('+mot+')':''}</span><b>-${extra}%</b></div>`:''}
+    <div class="al-res ${_alqCls(mr)}"><div class="k">${extra>0?'Precio con ajuste':'Precio estándar'} — ${qty} equipo${qty>1?'s':''} · ${dias}d</div><div class="n">${_ars(tot)}</div>
+    <div style="font-size:11px;">Precio/día: ${_ars(pd)} · Margen: ${Math.round(mr)}%${extra>0?' · Ahorro cliente: '+_ars(totStd-tot):''}</div></div>
+    <div class="hint" style="margin-top:6px;color:${pd<piso?'#b45309':'#999'};">${pd<piso?'⚠️ Precio por debajo del piso recomendado':'Piso de rentabilidad (margen 25%)'}: ${_ars(piso)}/día para ${alqEq(f.id)?.n||''}.</div>`;
+}
+
+// --- presupuesto ---
+function alqAddItem(){const f=ALQ.flota[0];if(!f){alert('Agregá equipos a la flota primero');return;}S.alq.items.push({id:f.id,dias:1,qty:1,adj:0});alqRenderPres();}
+function alqItemSet(i,k,v){S.alq.items[i][k]=k==='id'?v:Math.max(k==='adj'?0:1,parseFloat(v)||0);alqRenderPres(i,k);}
+function alqItemDel(i){S.alq.items.splice(i,1);alqRenderPres();}
+function _alqItemsCalc(){
+  return S.alq.items.map(it=>{const f=alqFlota(it.id),e=alqEq(it.id);if(!f||!e)return null;
+    const pf=alqPrecioFinal(f,it.dias,it.adj),sub=pf*it.dias*it.qty;
+    return {it,f,e,pf,sub,desc:alqDescTot(it.dias,it.adj),gan:(pf-alqCosto(f))*it.dias*it.qty};}).filter(Boolean);
+}
+function alqRenderPres(editIdx,editK){
+  const tb=document.getElementById('al_items');if(!tb)return;
+  const rows=_alqItemsCalc();
+  // Al tipear en un input no se re-dibuja la fila (perdería el foco): solo se actualizan los montos
+  if(editIdx!=null&&editK!=='id'&&tb.children.length===S.alq.items.length){
+    S.alq.items.forEach((it,i)=>{const r=rows.find(x=>x.it===it),tr=tb.children[i];if(!r||!tr)return;
+      tr.querySelector('.pf').innerHTML=_ars(r.pf)+(r.desc>0?`<span class="al-tag">-${r.desc}%</span>`:'');tr.querySelector('.sub').textContent=_ars(r.sub);});
+  }else{
+    const opts=sel=>ALQ.flota.map(f=>{const e=alqEq(f.id);return e?`<option value="${f.id}"${f.id===sel?' selected':''}>${e.n}</option>`:'';}).join('');
+    tb.innerHTML=S.alq.items.map((it,i)=>{const r=rows.find(x=>x.it===it);
+      return `<tr><td><select onchange="alqItemSet(${i},'id',this.value)">${opts(it.id)}</select></td>
+        <td data-l="Días" style="text-align:center;"><input type="number" min="1" value="${it.dias}" oninput="alqItemSet(${i},'dias',this.value)"></td>
+        <td data-l="Cant." style="text-align:center;"><input type="number" min="1" value="${it.qty}" oninput="alqItemSet(${i},'qty',this.value)"></td>
+        <td data-l="Ajuste %" style="text-align:center;"><input type="number" min="0" max="40" value="${it.adj}" oninput="alqItemSet(${i},'adj',this.value)"></td>
+        <td class="pf" data-l="Precio/día" style="text-align:right;white-space:nowrap;">${r?_ars(r.pf)+(r.desc>0?`<span class="al-tag">-${r.desc}%</span>`:''):'—'}</td>
+        <td class="sub" data-l="Subtotal" style="text-align:right;font-weight:700;white-space:nowrap;">${r?_ars(r.sub):'—'}</td>
+        <td><button class="al-del" onclick="alqItemDel(${i})">✕</button></td></tr>`;}).join('');
+  }
+  const tot=rows.reduce((s,r)=>s+r.sub,0),gan=rows.reduce((s,r)=>s+r.gan,0);
+  document.getElementById('al_total').innerHTML=rows.length?`<div class="al-tot"><div><div class="tl">Total del alquiler</div><div class="tv">${_ars(tot)}</div></div>
+    <div class="tg"><span class="ibadge" style="margin:0;">Interno</span><br>Ganancia estimada: <b>${_ars(gan)}</b><br>${tot>0?Math.round(gan/tot*100):0}% sobre venta</div></div>`:'';
+}
+function _alqFechaTxt(){const v=_alqVal('al_fecha');return v?new Date(v+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';}
+function genPptoAl(){
+  const rows=_alqItemsCalc();
+  if(!rows.length){alert('Agregá al menos un equipo');return;}
+  const tot=rows.reduce((s,r)=>s+r.sub,0);
+  const cli=_alqVal('al_cliente')||'Cliente',nro=_alqVal('al_nro'),obs=_alqVal('al_obs');
+  const hoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+  const tit={evap:'Alquiler de Climatizadores Evaporativos',vent:'Alquiler de Ventiladores Industriales',mix:'Alquiler de Equipos de Climatización'}[ptTipo(rows.map(r=>r.e))];
+  let h=`<div class="pp-enc"><img src="${TIMG.enc_header}" alt="Simple Clima" class="pp-enc-img"></div>`;
+  h+=`<div class="pp-body">
+    <div class="pp-fecha">*Corrientes, ${hoy}</div>
+    <div class="pp-tit">PRESUPUESTO</div>
+    ${nro?`<div class="pp-nro">N° ${_esc(nro)}</div>`:''}
+    <div class="pp-dest">SR A/C ${_esc(cli)}</div>
+    <div class="pp-sec">${tit} Rotoplast</div>`;
+  const ev=[['Evento',_alqVal('al_evento')],['Lugar',_alqVal('al_lugar')],['Fecha',_alqFechaTxt()],['Horario',_alqVal('al_horario')]].filter(x=>x[1]);
+  if(ev.length)h+=`<table class="pp-esp"><tbody>${ev.map(([k,v])=>`<tr><td class="hc" style="width:120px;text-align:left;">${k}</td><td style="text-align:left;">${_esc(v)}</td></tr>`).join('')}</tbody></table>`;
+  h+=`<div class="pp-sec">Equipos Propuestos</div>`;
+  const vistos=new Set();
+  rows.forEach(r=>{
+    const eq=r.e;if(vistos.has(eq.id))return;vistos.add(eq.id);
+    const qty=rows.filter(x=>x.e.id===eq.id).reduce((s,x)=>s+x.it.qty,0);
+    const img=getImg(eq.id),dim=(eq.dh&&eq.dl&&eq.dp)?`${eq.dh} × ${eq.dl} × ${eq.dp} mm`:'';
+    h+=`<div class="ficha-h">
+      <div class="ficha-h-img">${img?`<img src="${img}" alt="${eq.n}">`:'<div class="ficha-h-ph">Sin imagen</div>'}</div>
+      <div class="ficha-h-data">
+        <div class="fh-name">${eq.n}</div>
+        <div class="fh-tipo">${eq.vent?'Ventilador Industrial · No utiliza agua':'Climatizador Evaporativo'}</div>
+        <table class="fh-table">
+          <tr><td>Caudal</td><td>${fn(eq.q)} m³/h</td><td>Tensión</td><td>${eq.t}</td></tr>
+          ${dim?`<tr><td>Dimensiones</td><td colspan="3">${dim}</td></tr>`:''}
+        </table>
+        <div class="fq">Cantidad: ${qty}</div>
+      </div></div>`;
+  });
+  h+=`<div class="pp-sec">Detalle del Presupuesto</div>
+    <table class="pp-tabla"><thead><tr><th>Equipo</th><th style="text-align:center;">Cant.</th><th style="text-align:center;">Días</th><th style="text-align:right;">Precio/día</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>`;
+  rows.forEach(r=>{h+=`<tr><td>${r.e.n}${r.desc>0?` <span style="color:#16a34a;font-size:10px;font-weight:700;">(-${r.desc}%)</span>`:''}</td><td style="text-align:center;">${r.it.qty}</td><td style="text-align:center;">${r.it.dias}</td><td style="text-align:right;">${_ars(r.pf)}</td><td style="text-align:right;">${_ars(r.sub)}</td></tr>`;});
+  h+=`<tr class="tot"><td colspan="4">TOTAL</td><td style="text-align:right;">${_ars(tot)}</td></tr></tbody></table>`;
+  h+=`<p class="pp-nota">Valores en pesos argentinos. Precio por equipo y por día de evento.</p>`;
+  if(obs)h+=`<div class="pp-conc">${_esc(obs)}</div>`;
+  h+=`<div class="pp-conds">
+    <div class="pp-cond"><h4>El servicio incluye</h4><ul><li>Traslado de los equipos</li><li>Instalación y puesta en marcha</li><li>Retiro al finalizar el evento</li></ul></div>
+    <div class="pp-cond"><h4>Condiciones</h4><p>100% al confirmar la reserva.<br><strong>Validez:</strong> 10 días hábiles.</p></div>
+  </div>`;
+  h+=`</div><div class="pp-footer"><img src="${TIMG.enc_footer}" alt="footer" class="pp-footer-img"></div>`;
+  document.getElementById('al_page').innerHTML=`
+    <table class="pp-print-table">
+      <thead><tr><td><img src="${TIMG.enc_header}" alt="header" class="pp-thead-img"></td></tr></thead>
+      <tfoot><tr><td><img src="${TIMG.enc_footer}" alt="footer" class="pp-tfoot-img"></td></tr></tfoot>
+      <tbody><tr><td class="pp-print-body-cell">${h}</td></tr></tbody>
+    </table>`;
+  document.getElementById('al_wrap').style.display='block';
+  document.getElementById('al_wrap').scrollIntoView({behavior:'smooth'});
+}
+function printAl(){
+  const c=_pptoBody('al_page');
+  if(!c){alert('Primero generá el presupuesto de alquiler');return;}
+  openPrintWindow(c);
+}
+function alqTextoWapp(){
+  const rows=_alqItemsCalc(),tot=rows.reduce((s,r)=>s+r.sub,0);
+  const f=[['👤 *Cliente:*',_alqVal('al_cliente')],['🎉 *Evento:*',_alqVal('al_evento')],['📍 *Lugar:*',_alqVal('al_lugar')],['📅 *Fecha:*',_alqFechaTxt()],['🕐 *Horario:*',_alqVal('al_horario')],['📝 *Nota:*',_alqVal('al_obs')]].filter(x=>x[1]);
+  let t=`🌬️ *PRESUPUESTO SIMPLE CLIMA*${_alqVal('al_nro')?' N° '+_alqVal('al_nro'):''}\n_Alquiler de climatización para eventos — Rotoplast_\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  t+=f.map(x=>x.join(' ')).join('\n')+`\n\n━━━━━━━━━━━━━━━━━━━━\n*🔧 EQUIPOS*\n\n`;
+  rows.forEach((r,i)=>{t+=`*${i+1}. ${r.e.n}*\n   💨 ${fn(r.e.q)} m³/h\n   📦 ${r.it.qty} equipo${r.it.qty>1?'s':''}  📆 ${r.it.dias} día${r.it.dias>1?'s':''}\n   💲 Precio/día: ${_ars(r.pf)}${r.desc>0?` _(desc. -${r.desc}%)_`:''}\n   💰 Subtotal: *${_ars(r.sub)}*\n\n`;});
+  t+=`━━━━━━━━━━━━━━━━━━━━\n💵 *TOTAL: ${_ars(tot)}*\n━━━━━━━━━━━━━━━━━━━━\n\n✅ *Incluye:* traslado, instalación y retiro\n💳 *Pago:* 100% al confirmar · _Validez: 10 días hábiles_\n\n_Ante cualquier consulta, estamos a disposición_ 🙌`;
+  return t;
+}
+function alqWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(alqTextoWapp()),'_blank');}
+function alqCopiarWapp(btn){
+  const t=alqTextoWapp(),ok=()=>{const o=btn.innerHTML;btn.innerHTML='✓ Copiado';setTimeout(()=>btn.innerHTML=o,1800);};
+  navigator.clipboard.writeText(t).then(ok).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();ok();});
+}
+alqLoadCfg();
 
 </script>
 
