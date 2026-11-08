@@ -1514,22 +1514,29 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
           <button class="btn btn-v" style="font-size:11px;padding:5px 11px;" onclick="alqFetchBNA(this)">🔄 Traer BNA</button>
           <span id="al_bna_est" style="font-size:10px;color:#aaa;">Billete venta BNA</span>
         </div>
-        <div class="fg3">
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ic">📅</div><h2>Costos por Día de Uso (por equipo)</h2></div>
+      <div class="pb">
+        <div class="fg4">
           <div class="fld"><label>Vida útil (años)</label><input type="number" id="al_vida" min="1" oninput="alqSet('vida',this.value)"></div>
-          <div class="fld"><label>Eventos por temporada</label><input type="number" id="al_ev" min="1" oninput="alqSet('ev',this.value)"></div>
+          <div class="fld"><label>Días de alquiler por temporada</label><input type="number" id="al_ev" min="1" oninput="alqSet('ev',this.value)"><div class="hint">Reparte amortización y mantenimiento. Más días alquilados → menos costo por día.</div></div>
           <div class="fld"><label>Mantenimiento anual (%)</label><input type="number" id="al_mnt" min="0" oninput="alqSet('mnt',this.value)"></div>
+          <div class="fld"><label>Insumos por día ($)</label><input type="number" id="al_insumos" min="0" oninput="alqSet('insumos',this.value)"></div>
         </div>
       </div>
     </div>
     <div class="panel">
-      <div class="ph"><div class="ic">🧾</div><h2>Costos Operativos por Evento (1 equipo)</h2></div>
+      <div class="ph"><div class="ic">🚚</div><h2>Costos por Evento (una sola vez)</h2></div>
       <div class="pb">
         <div class="fg3">
-          <div class="fld"><label>Flete / traslado ($)</label><input type="number" id="al_flete" min="0" oninput="alqSet('flete',this.value)"></div>
-          <div class="fld"><label>Mano de obra ($)</label><input type="number" id="al_mano" min="0" oninput="alqSet('mano',this.value)"></div>
-          <div class="fld"><label>Insumos / consumibles ($)</label><input type="number" id="al_insumos" min="0" oninput="alqSet('insumos',this.value)"></div>
+          <div class="fld"><label>Flete por viaje ($)</label><input type="number" id="al_flete" min="0" oninput="alqSet('flete',this.value)"><div class="hint">Ida y vuelta: llevar y retirar.</div></div>
+          <div class="fld"><label>Equipos por viaje</label><input type="number" id="al_cap" min="1" oninput="alqSet('cap',this.value)"><div class="hint">Con más equipos se suman viajes.</div></div>
+          <div class="fld"><label>Mano de obra por evento ($)</label><input type="number" id="al_mano" min="0" oninput="alqSet('mano',this.value)"><div class="hint">Instalación, puesta en marcha y retiro.</div></div>
         </div>
-        <div class="ri-ops-tit" style="margin-top:14px;">Costo por evento de cada equipo</div>
+        <div class="hint" style="margin-top:6px;">La logística extra de cada equipo (pestaña Flota) también se cobra una vez por evento.</div>
+        <div class="ri-ops-tit" style="margin-top:14px;">Costo de cada equipo · por día y evento de referencia (1 equipo, 1 día)</div>
         <div class="al-mg" id="al_costos_mod"></div>
       </div>
     </div>
@@ -4741,7 +4748,7 @@ const ALQ_ESCALA_DEF=[
 ];
 const ALQ_DEF={
   flota:[{id:'roto55',lx:0},{id:'roto58',lx:0},{id:'roto52',lx:0},{id:'roto46',lx:0},{id:'roto140t',lx:15000}],
-  tc:1400,vida:5,ev:10,mnt:5,flete:19000,mano:40000,insumos:10000,
+  tc:1400,vida:5,ev:10,mnt:5,flete:19000,cap:4,mano:40000,insumos:10000,
   modo:'margen',margen:60,prm:80000,escala:ALQ_ESCALA_DEF
 };
 const _clone=o=>JSON.parse(JSON.stringify(o));
@@ -4777,14 +4784,32 @@ function alqSet(k,v){
   alqRenderCostos();alqRenderPrecio(true);alqRenderEscala();alqRenderPres();
 }
 
-// --- cálculo (misma lógica que el presupuestador original) ---
+// --- cálculo ---
+// Costos separados según cómo ocurren:
+//  · por día de uso y por equipo: amortización + mantenimiento (repartidos en los días de alquiler
+//    de la temporada, ALQ.ev) + insumos
+//  · por evento (una sola vez): flete por viaje (ALQ.cap equipos por viaje) + mano de obra de
+//    instalación/retiro + logística extra de cada equipo que la tenga
+// El precio base por día sale del caso de referencia "1 equipo, 1 día" (igual que el presupuestador
+// original); la escala de descuentos por días baja ese precio en eventos largos.
 function alqEq(id){return allEqs().find(e=>e.id===id);}
 function alqUsd(f){return (f.usd!=null&&f.usd!=='')?+f.usd:getP(f.id,'c');}
-function alqCosto(f){
+function alqDiario(f){
   const ars=alqUsd(f)*(ALQ.tc||0),vida=ALQ.vida||5,ev=ALQ.ev||10;
-  return (ars/vida)/ev+(ars*(ALQ.mnt||0)/100)/ev+(ALQ.flete||0)+(ALQ.mano||0)+(ALQ.insumos||0)+(+f.lx||0);
+  return (ars/vida)/ev+(ars*(ALQ.mnt||0)/100)/ev+(ALQ.insumos||0);
 }
-function alqPrecioBase(f){return ALQ.modo==='margen'?alqCosto(f)*(1+(ALQ.margen||0)/100):(ALQ.prm||0);}
+function alqViajes(q){return Math.max(1,Math.ceil(q/(ALQ.cap||1)));}
+// Costo real de un evento: items [{f,dias,qty}]
+function alqCostoEvento(items){
+  const q=items.reduce((s,x)=>s+x.qty,0);
+  if(!q)return {total:0,dias:0,evento:0,viajes:0};
+  const dias=items.reduce((s,x)=>s+alqDiario(x.f)*x.dias*x.qty,0);
+  const viajes=alqViajes(q);
+  const evento=viajes*(ALQ.flete||0)+(ALQ.mano||0)+items.reduce((s,x)=>s+(+x.f.lx||0)*x.qty,0);
+  return {total:dias+evento,dias,evento,viajes};
+}
+function alqCostoRef(f){return alqCostoEvento([{f,dias:1,qty:1}]).total;} // 1 equipo, 1 día
+function alqPrecioBase(f){return ALQ.modo==='margen'?alqCostoRef(f)*(1+(ALQ.margen||0)/100):(ALQ.prm||0);}
 function alqDesc(d){for(const e of ALQ.escala){if(d>=e.desde&&d<=e.hasta)return +e.desc||0;}return 0;}
 function alqDescTot(dias,adj){return Math.min(alqDesc(dias)+(+adj||0),60);}
 function alqPrecioFinal(f,dias,adj){return alqPrecioBase(f)*(1-alqDescTot(dias,adj)/100);}
@@ -4833,10 +4858,12 @@ function alqFlotaDel(i){
 // --- costos ---
 function alqRenderCostos(){
   const set=(id,v)=>{const el=document.getElementById(id);if(el&&document.activeElement!==el)el.value=v;};
-  ['tc','vida','ev','mnt','flete','mano','insumos','margen','prm'].forEach(k=>set('al_'+k,ALQ[k]));
+  ['tc','vida','ev','mnt','flete','cap','mano','insumos','margen','prm'].forEach(k=>set('al_'+k,ALQ[k]));
   const box=document.getElementById('al_costos_mod');if(!box)return;
   box.innerHTML=ALQ.flota.map(f=>{const e=alqEq(f.id);if(!e)return '';
-    return `<div class="al-mc"><div class="l">${e.n}</div><div class="v">${_ars(alqCosto(f))}</div><div class="s">USD ${fn(alqUsd(f))}${f.usd!=null&&f.usd!==''?' (manual)':' (lista)'}${f.lx>0?' · log. +'+_ars(f.lx):''}</div></div>`;}).join('');
+    return `<div class="al-mc"><div class="l">${e.n}</div><div class="v">${_ars(alqDiario(f))}<span style="font-size:10px;font-weight:600;color:#888;"> /día</span></div>
+      <div class="s">Ref. 1 día: ${_ars(alqCostoRef(f))}</div>
+      <div class="s">USD ${fn(alqUsd(f))}${f.usd!=null&&f.usd!==''?' (manual)':' (lista)'}${f.lx>0?' · log. +'+_ars(f.lx):''}</div></div>`;}).join('');
 }
 async function alqFetchBNA(btn){
   const est=document.getElementById('al_bna_est');est.textContent='Consultando...';est.style.color='#888';
@@ -4866,13 +4893,15 @@ function alqRenderPrecio(soloCard){
     document.getElementById('al_fpr').style.display=ALQ.modo==='precio'?'':'none';
   }
   const pc=document.getElementById('al_precio_card');const f=ALQ.flota[_alqSelP];if(!pc||!f){if(pc)pc.innerHTML='';return;}
-  const c=alqCosto(f),p=alqPrecioBase(f),mr=c>0?(p-c)/c*100:0,gan=p-c;
+  const c=alqCostoRef(f),p=alqPrecioBase(f),mr=c>0?(p-c)/c*100:0,gan=p-c;
   const inv=alqUsd(f)*(ALQ.tc||0),evR=gan>0?Math.ceil(inv/gan):null,aR=evR?(evR/(ALQ.ev||10)).toFixed(1):null;
-  pc.innerHTML=`<div class="al-row"><span>Costo por evento</span><b>${_ars(c)}</b></div>
+  pc.innerHTML=`<div class="al-row"><span>Costo de referencia (1 equipo, 1 día)</span><b>${_ars(c)}</b></div>
+    <div class="al-row"><span style="padding-left:10px;">· por día de uso</span><span>${_ars(alqDiario(f))}</span></div>
+    <div class="al-row"><span style="padding-left:10px;">· del evento (flete, M.O.${f.lx>0?', logística':''})</span><span>${_ars(c-alqDiario(f))}</span></div>
     <div class="al-row"><span>${ALQ.modo==='margen'?'Margen':'Precio ingresado'}</span><b>${ALQ.modo==='margen'?(ALQ.margen||0)+'%':_ars(p)}</b></div>
     <div class="al-res ${_alqCls(mr)}"><div class="k">${ALQ.modo==='margen'?'Precio sugerido / equipo / día':'Margen sobre costo'}</div><div class="n">${ALQ.modo==='margen'?_ars(p):Math.round(mr)+'%'}</div></div>
-    <div class="al-row" style="margin-top:6px;"><span>Ganancia por evento</span><b>${_ars(gan)}</b></div>
-    <div class="al-row"><span>Recupero de la inversión</span><b>${aR?aR+' años ('+evR+' eventos)':'—'}</b></div>`;
+    <div class="al-row" style="margin-top:6px;"><span>Ganancia (evento de 1 día)</span><b>${_ars(gan)}</b></div>
+    <div class="al-row"><span>Recupero de la inversión</span><b>${aR?aR+' temporadas ('+evR+' eventos de 1 día)':'—'}</b></div>`;
 }
 
 // --- escala y ajuste ---
@@ -4893,20 +4922,21 @@ function alqRenderEscala(editor){
   _alqPills('al_sel_escala',_alqSelE,'alqSelE');
   const f=ALQ.flota[_alqSelE];const tab=document.getElementById('al_esc_tabla');
   if(!f){tab.innerHTML='';document.getElementById('al_aj_res').innerHTML='';return;}
-  const c=alqCosto(f),p=alqPrecioBase(f);
-  tab.innerHTML=`<thead><tr><th>Días</th><th>Desc.</th><th style="text-align:right;">Precio/día</th><th style="text-align:right;">Total equipo</th><th style="text-align:right;">Margen</th></tr></thead><tbody>`+
-    [1,2,3,4,5,6,7,8,10,12,15,20].map(d=>{const ds=alqDesc(d),pd=p*(1-ds/100),mr=c>0?(pd-c)/c*100:0;
-      return `<tr><td>${d}d</td><td>${ds?'-'+ds+'%':'—'}</td><td style="text-align:right;">${_ars(pd)}</td><td style="text-align:right;">${_ars(pd*d)}</td><td style="text-align:right;"><span class="al-bdg ${_alqCls(mr)}">${Math.round(mr)}%</span></td></tr>`;}).join('')+`</tbody>`;
-  // Ajuste por caso especial
+  const p=alqPrecioBase(f);
+  // Margen sobre el costo real del evento (1 equipo, d días): los costos del evento se reparten en los días
+  tab.innerHTML=`<thead><tr><th>Días</th><th>Desc.</th><th style="text-align:right;">Precio/día</th><th style="text-align:right;">Total equipo</th><th style="text-align:right;">Costo real</th><th style="text-align:right;">Margen</th></tr></thead><tbody>`+
+    [1,2,3,4,5,6,7,8,10,12,15,20].map(d=>{const ds=alqDesc(d),pd=p*(1-ds/100),ce=alqCostoEvento([{f,dias:d,qty:1}]).total,mr=ce>0?(pd*d-ce)/ce*100:0;
+      return `<tr><td>${d}d</td><td>${ds?'-'+ds+'%':'—'}</td><td style="text-align:right;">${_ars(pd)}</td><td style="text-align:right;">${_ars(pd*d)}</td><td style="text-align:right;color:#888;">${_ars(ce)}</td><td style="text-align:right;"><span class="al-bdg ${_alqCls(mr)}">${Math.round(mr)}%</span></td></tr>`;}).join('')+`</tbody>`;
+  // Ajuste por caso especial (costo real con viajes según cantidad)
   const dias=+_alqVal('al_aj_dias')||1,qty=+_alqVal('al_aj_qty')||1,extra=+_alqVal('al_aj_extra')||0;
   const dstd=alqDesc(dias),dtot=Math.min(dstd+extra,60),pd=p*(1-dtot/100),tot=pd*dias*qty,totStd=p*(1-dstd/100)*dias*qty;
-  const mr=c>0?(pd-c)/c*100:0,piso=c*1.25;
+  const ce=alqCostoEvento([{f,dias,qty}]).total,mr=ce>0?(tot-ce)/ce*100:0,piso=ce*1.25/(dias*qty);
   const mot={feria:'Feria / exposición',cliente:'Cliente estratégico',volumen:'Volumen',prueba:'Primera vez',otro:'Ajuste especial'}[_alqVal('al_aj_motivo')];
   document.getElementById('al_aj_res').innerHTML=`<div class="al-row"><span>Desc. por escala</span><b>-${dstd}%</b></div>
     ${extra>0?`<div class="al-row"><span>Ajuste${mot?' ('+mot+')':''}</span><b>-${extra}%</b></div>`:''}
     <div class="al-res ${_alqCls(mr)}"><div class="k">${extra>0?'Precio con ajuste':'Precio estándar'} — ${qty} equipo${qty>1?'s':''} · ${dias}d</div><div class="n">${_ars(tot)}</div>
-    <div style="font-size:11px;">Precio/día: ${_ars(pd)} · Margen: ${Math.round(mr)}%${extra>0?' · Ahorro cliente: '+_ars(totStd-tot):''}</div></div>
-    <div class="hint" style="margin-top:6px;color:${pd<piso?'#b45309':'#999'};">${pd<piso?'⚠️ Precio por debajo del piso recomendado':'Piso de rentabilidad (margen 25%)'}: ${_ars(piso)}/día para ${alqEq(f.id)?.n||''}.</div>`;
+    <div style="font-size:11px;">Precio/día: ${_ars(pd)} · Costo real: ${_ars(ce)} · Margen: ${Math.round(mr)}%${extra>0?' · Ahorro cliente: '+_ars(totStd-tot):''}</div></div>
+    <div class="hint" style="margin-top:6px;color:${pd<piso?'#b45309':'#999'};">${pd<piso?'⚠️ Precio por debajo del piso recomendado':'Piso de rentabilidad (margen 25%)'}: ${_ars(piso)}/día por equipo para ${qty} × ${alqEq(f.id)?.n||''} · ${dias}d.</div>`;
 }
 
 // --- presupuesto ---
@@ -4916,7 +4946,7 @@ function alqItemDel(i){S.alq.items.splice(i,1);alqRenderPres();}
 function _alqItemsCalc(){
   return S.alq.items.map(it=>{const f=alqFlota(it.id),e=alqEq(it.id);if(!f||!e)return null;
     const pf=alqPrecioFinal(f,it.dias,it.adj),sub=pf*it.dias*it.qty;
-    return {it,f,e,pf,sub,desc:alqDescTot(it.dias,it.adj),gan:(pf-alqCosto(f))*it.dias*it.qty};}).filter(Boolean);
+    return {it,f,e,pf,sub,desc:alqDescTot(it.dias,it.adj)};}).filter(Boolean);
 }
 function alqRenderPres(editIdx,editK){
   const tb=document.getElementById('al_items');if(!tb)return;
@@ -4936,9 +4966,10 @@ function alqRenderPres(editIdx,editK){
         <td class="sub" data-l="Subtotal" style="text-align:right;font-weight:700;white-space:nowrap;">${r?_ars(r.sub):'—'}</td>
         <td><button class="al-del" onclick="alqItemDel(${i})">✕</button></td></tr>`;}).join('');
   }
-  const tot=rows.reduce((s,r)=>s+r.sub,0),gan=rows.reduce((s,r)=>s+r.gan,0);
+  const tot=rows.reduce((s,r)=>s+r.sub,0);
+  const ce=alqCostoEvento(rows.map(r=>({f:r.f,dias:r.it.dias,qty:r.it.qty}))),gan=tot-ce.total;
   document.getElementById('al_total').innerHTML=rows.length?`<div class="al-tot"><div><div class="tl">Total del alquiler</div><div class="tv">${_ars(tot)}</div></div>
-    <div class="tg"><span class="ibadge" style="margin:0;">Interno</span><br>Ganancia estimada: <b>${_ars(gan)}</b><br>${tot>0?Math.round(gan/tot*100):0}% sobre venta</div></div>`:'';
+    <div class="tg"><span class="ibadge" style="margin:0;">Interno</span><br>Costo real: ${_ars(ce.total)} <span style="color:#999;">(días ${_ars(ce.dias)} + evento ${_ars(ce.evento)}, ${ce.viajes} viaje${ce.viajes>1?'s':''})</span><br>Ganancia estimada: <b>${_ars(gan)}</b> · ${tot>0?Math.round(gan/tot*100):0}% sobre venta</div></div>`:'';
 }
 function _alqFechaTxt(){const v=_alqVal('al_fecha');return v?new Date(v+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';}
 function genPptoAl(){
