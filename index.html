@@ -1284,6 +1284,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;">
     <button class="btn btn-o" onclick="goStep(4)">← Volver</button>
     <button class="btn btn-v" onclick="printProject()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-am" onclick="compartirPpto(false,this)">📤 Compartir PDF</button>
   </div>
   <div class="ppto-wrap"><div class="pp" id="pp_page"></div></div>
 </div>
@@ -1363,6 +1364,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
   <div id="pt_wrap" style="display:none;margin-top:16px;">
     <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-v" id="pt_print_btn" onclick="printPt()">🖨️ Imprimir / PDF</button>
+      <button class="btn btn-am" onclick="compartirPpto(true,this)">📤 Compartir PDF</button>
     </div>
     <div class="ppto-wrap" id="pt_ppto_wrap"><div class="pp" id="pt_page"></div></div>
   </div>
@@ -3278,18 +3280,8 @@ function calcEcoPt(){
   QP._desc=desc;QP._com=com;QP._chkDesc=chkDesc;
 }
 
-function openPrintWindow(content){
-  const w = window.open('','_blank','width=900,height=700');
-  // Get base64 images from TIMG
-  const headerSrc = TIMG.enc_header || '';
-  const footerSrc = TIMG.enc_footer || '';
-  // Nombre sugerido para "Guardar como PDF"
-  const _nom=(clienteNom('')||'').replace(/[\\/:*?"<>|]/g,'').trim();
-  const _ref=(document.getElementById('cl_r')||{}).value||'';
-  const _fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
-  const _docTitle=[_ref,_nom,_fecha].filter(Boolean).join(' — ');
-  
-  const printCSS = `
+// CSS del presupuesto impreso (ventana de impresión y PDF para compartir)
+const PRINT_CSS = `
     @page { margin:0; size:A4; }
     * { box-sizing:border-box; margin:0; padding:0; }
     body { font-family:'Montserrat',sans-serif; background:#fff; }
@@ -3392,6 +3384,18 @@ function openPrintWindow(content){
     .fa-badge{display:inline-block;font-size:9px;font-weight:600;color:#fff;background:#0ea5e9;border-radius:3px;padding:1px 5px;margin-left:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .pp-amb-sep{background:#0D1B2E;color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;padding:5px 12px;border-radius:4px;margin:14px 0 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   `;
+function openPrintWindow(content){
+  const w = window.open('','_blank','width=900,height=700');
+  // Get base64 images from TIMG
+  const headerSrc = TIMG.enc_header || '';
+  const footerSrc = TIMG.enc_footer || '';
+  // Nombre sugerido para "Guardar como PDF"
+  const _nom=(clienteNom('')||'').replace(/[\\/:*?"<>|]/g,'').trim();
+  const _ref=(document.getElementById('cl_r')||{}).value||'';
+  const _fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  const _docTitle=[_ref,_nom,_fecha].filter(Boolean).join(' — ');
+  
+  const printCSS = PRINT_CSS;
   
   const printDoc = [
     '<!DOCTYPE html><html><head>',
@@ -3412,27 +3416,156 @@ function openPrintWindow(content){
   w.document.close();
 }
 
-function printProject(){
-  const pp = document.getElementById('pp_page');
-  if(!pp || !pp.innerHTML) { alert('Primero generá el presupuesto (Paso 5)'); return; }
-  // Extract ONLY the body content (inside pp-print-body-cell)
+// Cuerpo del presupuesto sin encabezado/pie (los pone la impresión o el PDF)
+function _pptoBody(pageId){
+  const pp = document.getElementById(pageId);
+  if(!pp || !pp.innerHTML) return null;
   const bodyCell = pp.querySelector('.pp-print-body-cell');
-  const content = bodyCell ? bodyCell.innerHTML : pp.innerHTML;
-  // Strip any remaining inline enc/footer
   const tmp = document.createElement('div');
-  tmp.innerHTML = content;
+  tmp.innerHTML = bodyCell ? bodyCell.innerHTML : pp.innerHTML;
   tmp.querySelectorAll('.pp-enc,.pp-footer,.pp-print-header,.pp-print-footer').forEach(el=>el.remove());
-  openPrintWindow(tmp.innerHTML);
+  return tmp.innerHTML;
+}
+function printProject(){
+  const c=_pptoBody('pp_page');
+  if(!c) { alert('Primero generá el presupuesto (Paso 5)'); return; }
+  openPrintWindow(c);
 }
 function printPt(){
-  const pp = document.getElementById('pt_page');
-  if(!pp || !pp.innerHTML) { alert('Primero generá el presupuesto portátil'); return; }
-  const bodyCell = pp.querySelector('.pp-print-body-cell');
-  const content = bodyCell ? bodyCell.innerHTML : pp.innerHTML;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = content;
-  tmp.querySelectorAll('.pp-enc,.pp-footer,.pp-print-header,.pp-print-footer').forEach(el=>el.remove());
-  openPrintWindow(tmp.innerHTML);
+  const c=_pptoBody('pt_page');
+  if(!c) { alert('Primero generá el presupuesto portátil'); return; }
+  openPrintWindow(c);
+}
+
+// ====== COMPARTIR PDF ======
+// Arma el PDF en el navegador (html2canvas + jsPDF) y en el celular abre el menú de compartir
+// (WhatsApp, mail, Drive). En la compu lo descarga. Cada hoja es imagen: el texto no se copia.
+let _jspdfP=null;
+function _loadJsPDF(){
+  if(window.jspdf) return Promise.resolve();
+  return _jspdfP||(_jspdfP=new Promise((ok,ko)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=ok;s.onerror=()=>{_jspdfP=null;ko(new Error('No se pudo cargar jsPDF (¿sin conexión?)'));};
+    document.head.appendChild(s);
+  }));
+}
+function _pdfNombre(pt){
+  const g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const nom=(pt?g('pt_n'):clienteNom('')||'').replace(/[\\/:*?"<>|]/g,'').trim();
+  const ref=(pt?g('pt_r'):g('cl_r')).replace(/[\\/:*?"<>|]/g,'-');
+  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  return [ref,nom,fecha].filter(Boolean).join(' - ')||'Presupuesto';
+}
+function _imgSize(src){
+  return new Promise(r=>{if(!src)return r(null);const i=new Image();i.onload=()=>r({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>r(null);i.src=src;});
+}
+async function _pptoPdfBlob(content){
+  await _loadJsPDF();
+  const PW=794,PH=1123,PADX=28,PADT=12,PADB=16; // A4 en px CSS (96 dpi)
+  const hdr=await _imgSize(TIMG.enc_header), ftr=await _imgSize(TIMG.enc_footer);
+  const hH=hdr?PW*hdr.h/hdr.w:0, fH=ftr?PW*ftr.h/ftr.w:0;
+  const AH=PH-hH-fH-PADT-PADB; // alto útil por hoja
+  // Render en iframe oculto con el mismo CSS de impresión, ancho fijo A4
+  const ifr=document.createElement('iframe');
+  ifr.style.cssText=`position:fixed;left:-10000px;top:0;width:${PW}px;height:${PH}px;border:0;`;
+  document.body.appendChild(ifr);
+  try{
+    const d=ifr.contentDocument;
+    d.open();
+    d.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><base href="${location.href}">
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+      <style>${PRINT_CSS} body{width:${PW}px;} #pdf_root{width:${PW}px;padding:0 ${PADX}px;background:#fff;}</style>
+      </head><body><div id="pdf_root">${content}</div></body></html>`);
+    d.close();
+    await new Promise(r=>{if(d.readyState==='complete')r();else ifr.onload=r;});
+    try{await d.fonts.ready;}catch(e){}
+    await Promise.all([...d.images].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r;})));
+    const root=d.getElementById('pdf_root');
+    // Cortes de hoja posibles: entre bloques, filas de tabla y fichas (nunca justo después de un título de sección)
+    const top0=root.getBoundingClientRect().top;
+    const cuts=new Set();
+    root.querySelectorAll('.pp-body > *, .pp-body > * > *, tr, .ficha, .ficha-h').forEach(el=>{
+      const prev=el.previousElementSibling;
+      if(prev&&prev.classList.contains('pp-sec'))return;
+      if(el.classList.contains('pp-nota'))return; // la nota va pegada a su tabla
+      cuts.add(Math.round(el.getBoundingClientRect().top-top0));
+    });
+    // Bloques que no se parten (fichas, condiciones, etc.): ningún corte dentro de ellos
+    const blocks=[...root.querySelectorAll('*')].filter(el=>{
+      const cs=d.defaultView.getComputedStyle(el);
+      return cs.breakInside==='avoid'||cs.pageBreakInside==='avoid'||el.matches('.ficha,.ficha-h,img');
+    }).map(el=>{const r=el.getBoundingClientRect();return [r.top-top0,r.bottom-top0];});
+    const totalH=root.scrollHeight;
+    const cutList=[...cuts].filter(y=>y>0&&y<totalH&&!blocks.some(([t,b])=>y>t+1&&y<b-1)).sort((a,b)=>a-b);
+    const pages=[];let y=0;
+    while(y<totalH-2){
+      if(totalH-y<=AH){pages.push([y,totalH]);break;}
+      const lim=y+AH;
+      let c=0;for(const k of cutList){if(k>y+AH*0.4&&k<=lim)c=k;}
+      if(!c)c=lim; // bloque más alto que la hoja: corte forzado
+      pages.push([y,c]);y=c;
+    }
+    const SC=2;
+    const canvas=await html2canvas(root,{scale:SC,backgroundColor:'#ffffff',useCORS:true,windowWidth:PW});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({unit:'px',format:[PW,PH],orientation:'portrait',hotfixes:['px_scaling']});
+    pages.forEach(([a,b],i)=>{
+      if(i)pdf.addPage([PW,PH],'portrait');
+      if(hdr)pdf.addImage(TIMG.enc_header,'PNG',0,0,PW,hH,'hdr','FAST');
+      const sl=document.createElement('canvas');
+      sl.width=canvas.width;sl.height=Math.round((b-a)*SC);
+      sl.getContext('2d').drawImage(canvas,0,Math.round(a*SC),canvas.width,sl.height,0,0,canvas.width,sl.height);
+      pdf.addImage(sl.toDataURL('image/jpeg',0.85),'JPEG',0,hH+PADT,PW,b-a,undefined,'FAST');
+      if(ftr)pdf.addImage(TIMG.enc_footer,'PNG',0,PH-fH,PW,fH,'ftr','FAST');
+    });
+    return pdf.output('blob');
+  } finally { ifr.remove(); }
+}
+function _esCelular(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));}
+function _descargar(file){
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+async function _compartirArchivo(file){
+  if(_esCelular()&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:file.name.replace(/\.pdf$/,'')}); }
+    catch(e){
+      if(e.name==='AbortError')return; // el usuario cerró el menú
+      // Generar tarda y el celular pierde el "toque" del usuario: pedimos un toque más
+      _compartirListo(file);
+    }
+  } else _descargar(file);
+}
+function _compartirListo(file){
+  const o=document.createElement('div');
+  o.className='no-print';
+  o.style.cssText='position:fixed;inset:0;background:rgba(13,27,46,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  o.innerHTML=`<div style="background:#fff;border-radius:10px;padding:18px 20px;max-width:340px;width:100%;text-align:center;font-family:var(--f);">
+    <div style="font-size:13px;font-weight:700;color:var(--n);margin-bottom:4px;">PDF listo</div>
+    <div style="font-size:11px;color:#777;margin-bottom:14px;word-break:break-word;">${file.name}</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-v" data-a="s">📤 Compartir</button>
+      <button class="btn btn-o" data-a="d">⬇ Descargar</button>
+      <button class="btn btn-o" data-a="x">Cerrar</button>
+    </div></div>`;
+  o.addEventListener('click',async ev=>{
+    const a=ev.target.closest('[data-a]')?.dataset.a;
+    if(ev.target===o||a==='x'){o.remove();return;}
+    if(a==='d'){_descargar(file);o.remove();}
+    if(a==='s'){o.remove();try{await navigator.share({files:[file]});}catch(e){if(e.name!=='AbortError')_descargar(file);}}
+  });
+  document.body.appendChild(o);
+}
+async function compartirPpto(pt,btn){
+  const c=_pptoBody(pt?'pt_page':'pp_page');
+  if(!c){alert(pt?'Primero generá el presupuesto portátil':'Primero generá el presupuesto (Paso 5)');return;}
+  const txt=btn.innerHTML;btn.disabled=true;btn.innerHTML='⏳ Generando PDF…';
+  try{
+    const blob=await _pptoPdfBlob(c);
+    await _compartirArchivo(new File([blob],_pdfNombre(pt)+'.pdf',{type:'application/pdf'}));
+  }catch(e){console.error(e);alert('No se pudo generar el PDF: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML=txt;}
 }
 
 function genPptoPt(){
