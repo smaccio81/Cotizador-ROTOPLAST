@@ -1640,12 +1640,12 @@ function getImg(id){
   return p ? p.split('/').map(encodeURIComponent).join('/') : '';
 }
 // Flyer por equipo (carpeta Flyers/). Es un extra opcional: la ficha técnica del presupuesto va siempre.
-// Los equipos sin flyer propio (Central 100cv, Siroco 12,5cv, ventiladores 100/140/160) no adjuntan nada.
+// Los equipos sin flyer propio (Central 100cv, ventiladores 100/140/160) no adjuntan nada.
 const FLYER_SRC = {
   'roto190':'ROTO 190','roto180':'ROTO 180','roto170t':'ROTO 170','roto140t':'ROTO 140',
   'roto95':'ROTO 95','roto80':'ROTO 80','roto70':'ROTO 70','roto60':'ROTO 60',
   'roto150techo':'ROTO 150 Techo','roto110techo220':'ROTO 110 Techo','roto90techo':'ROTO 90 Techo',
-  'central200_40':'Central 200','roto155_75_380':'ROTO 155 Siroco','roto155_75_220':'ROTO 155 Siroco',
+  'central200_40':'Central 200','roto155_125':'ROTO 155 Siroco 12,5cv','roto155_75_380':'ROTO 155 Siroco','roto155_75_220':'ROTO 155 Siroco',
   'roto115':'ROTO 115 Siroco','roto85_220':'ROTO 85 Siroco',
   'roto59':'Portatil 59','roto58':'Portatil 58','roto55':'Portatil 55','roto52':'Portatil 52',
   'roto47':'Portatil 47','roto46':'Portatil 46','roto42':'Portatil 42','roto38':'Portatil 38',
