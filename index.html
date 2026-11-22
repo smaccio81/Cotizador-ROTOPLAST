@@ -293,6 +293,8 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
 .fs td:first-child{color:#aaa;font-weight:600;width:50%;}
 .fs td:last-child{font-weight:700;color:var(--n);}
 .fq{background:var(--v);color:var(--n);font-size:11px;font-weight:800;padding:3px 8px;border-radius:3px;margin-top:7px;display:inline-block;}
+.adj-fichas{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#35608A;cursor:pointer;white-space:nowrap;}
+.adj-fichas input{width:15px;height:15px;cursor:pointer;}
 .ficha-h{display:flex;gap:0;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:12px;page-break-inside:avoid;break-inside:avoid;background:#fff;}
 .ficha-h-img{width:170px;min-height:150px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;padding:10px;border-right:1px solid #e8e8e8;}
 .ficha-h-img img{max-width:100%;max-height:150px;object-fit:contain;}
@@ -1348,6 +1350,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <button class="btn btn-o" onclick="goStep(4)">← Volver</button>
     <button class="btn btn-v" onclick="printProject()">🖨️ Imprimir / PDF</button>
     <button class="btn btn-am" onclick="compartirPpto(false,this)">📤 Compartir PDF</button>
+    <label class="adj-fichas" title="Agrega al final del PDF compartido una hoja con el flyer de cada equipo cotizado"><input type="checkbox" id="adj_fichas_p"> Adjuntar flyers</label>
   </div>
   <div class="ppto-wrap"><div class="pp" id="pp_page"></div></div>
 </div>
@@ -1428,6 +1431,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
     <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-v" id="pt_print_btn" onclick="printPt()">🖨️ Imprimir / PDF</button>
       <button class="btn btn-am" onclick="compartirPpto(true,this)">📤 Compartir PDF</button>
+      <label class="adj-fichas" title="Agrega al final del PDF compartido una hoja con el flyer de cada equipo cotizado"><input type="checkbox" id="adj_fichas_pt"> Adjuntar flyers</label>
     </div>
     <div class="ppto-wrap" id="pt_ppto_wrap"><div class="pp" id="pt_page"></div></div>
   </div>
@@ -1477,6 +1481,7 @@ body{font-family:var(--f);background:var(--gc);color:var(--n);min-height:100vh;f
       <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <button class="btn btn-v" onclick="printAl()">🖨️ Imprimir / PDF</button>
         <button class="btn btn-am" onclick="compartirPpto('al',this)">📤 Compartir PDF</button>
+        <label class="adj-fichas" title="Agrega al final del PDF compartido una hoja con el flyer de cada equipo cotizado"><input type="checkbox" id="adj_fichas_al"> Adjuntar flyers</label>
         <button class="btn btn-wa" onclick="alqWhatsApp()">💬 Texto WhatsApp</button>
         <button class="btn btn-o" onclick="alqCopiarWapp(this)">📋 Copiar texto</button>
       </div>
@@ -1633,6 +1638,27 @@ function getImg(id){
   const p=IMG_SRC[id]||'';
   // Encode cada segmento para que los espacios funcionen en GitHub Pages (Linux)
   return p ? p.split('/').map(encodeURIComponent).join('/') : '';
+}
+// Flyer por equipo (carpeta Flyers/). Es un extra opcional: la ficha técnica del presupuesto va siempre.
+// Los equipos sin flyer propio (Central 100cv, Siroco 12,5cv, ventiladores 100/140/160) no adjuntan nada.
+const FLYER_SRC = {
+  'roto190':'ROTO 190','roto180':'ROTO 180','roto170t':'ROTO 170','roto140t':'ROTO 140',
+  'roto95':'ROTO 95','roto80':'ROTO 80','roto70':'ROTO 70','roto60':'ROTO 60',
+  'roto150techo':'ROTO 150 Techo','roto110techo220':'ROTO 110 Techo','roto90techo':'ROTO 90 Techo',
+  'central200_40':'Central 200','roto155_75_380':'ROTO 155 Siroco','roto155_75_220':'ROTO 155 Siroco',
+  'roto115':'ROTO 115 Siroco','roto85_220':'ROTO 85 Siroco',
+  'roto59':'Portatil 59','roto58':'Portatil 58','roto55':'Portatil 55','roto52':'Portatil 52',
+  'roto47':'Portatil 47','roto46':'Portatil 46','roto42':'Portatil 42','roto38':'Portatil 38',
+  'vent80':'Ventilador Portatil 80',
+  'ext_siroco560':'Extractor Centrifugo Siroco 560','ext_siroco390':'Extractor Centrifugo Siroco 390',
+  'exa160_touch':'Extractor 160','exa160_std':'Extractor 160','exa160_380_std':'Extractor 160',
+  'exa140_touch':'Extractor 140','exa140_std':'Extractor 140',
+  'exa100_touch':'Extractor 100','exa100_std':'Extractor 100',
+  'exa80_touch':'Extractor 80','exa80_std':'Extractor 80','exa60_std':'Extractor 60',
+};
+function getFlyer(id){
+  const n=FLYER_SRC[id];
+  return n ? 'Flyers/'+encodeURIComponent(n)+'.jpg' : '';
 }
 
 
@@ -3101,7 +3127,7 @@ function renderPpto(){
         const apVal=apRaw?(apRaw.startsWith('O')?'Ø'+apRaw.slice(1)+' mm':apRaw+' mm'):'';
         const apLbl=apRaw?(apRaw.startsWith('O')?'Apertura techo':'Apertura pared'):'';
         const kgStr=eq.kg?`${eq.kg} kg`:'';
-        h+=`<div class="ficha-h">
+        h+=`<div class="ficha-h" data-eq="${eq.id}">
           <div class="ficha-h-img">${img?`<img src="${img}" alt="${eq.n}">`:'<div class="ficha-h-ph">Sin imagen</div>'}</div>
           <div class="ficha-h-data">
             <div class="fh-name">${eq.n} ${vBadge(eq.v)}</div>
@@ -3730,7 +3756,21 @@ function _pdfNombre(kind){
 function _imgSize(src){
   return new Promise(r=>{if(!src)return r(null);const i=new Image();i.onload=()=>r({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>r(null);i.src=src;});
 }
-async function _pptoPdfBlob(content){
+// Carga un flyer como dataURL JPEG (null si no existe o no carga)
+function _flyerData(src){
+  return new Promise(r=>{
+    const i=new Image();
+    i.onload=()=>{try{const c=document.createElement('canvas');c.width=i.naturalWidth;c.height=i.naturalHeight;
+      c.getContext('2d').drawImage(i,0,0);r({data:c.toDataURL('image/jpeg',0.88),w:c.width,h:c.height});}catch(e){r(null);}};
+    i.onerror=()=>r(null);i.src=src;
+  });
+}
+// Flyers (sin repetir) de los equipos que aparecen en el presupuesto generado
+function _flyersDePagina(pageId){
+  const pp=document.getElementById(pageId);if(!pp)return [];
+  return [...new Set([...pp.querySelectorAll('.ficha-h[data-eq]')].map(el=>getFlyer(el.dataset.eq)).filter(Boolean))];
+}
+async function _pptoPdfBlob(content,flyers){
   await _loadJsPDF();
   const PW=794,PH=1123,PADX=28,PADT=12,PADB=16; // A4 en px CSS (96 dpi)
   const hdr=await _imgSize(TIMG.enc_header), ftr=await _imgSize(TIMG.enc_footer);
@@ -3789,6 +3829,13 @@ async function _pptoPdfBlob(content){
       pdf.addImage(sl.toDataURL('image/jpeg',0.85),'JPEG',0,hH+PADT,PW,b-a,undefined,'FAST');
       if(ftr)pdf.addImage(TIMG.enc_footer,'PNG',0,PH-fH,PW,fH,'ftr','FAST');
     });
+    // Flyers adjuntos (opcional): una hoja por flyer, a todo el ancho y centrado (ya trae su propio pie)
+    for(const src of (flyers||[])){
+      const f=await _flyerData(src);if(!f)continue;
+      const fh=PW*f.h/f.w;
+      pdf.addPage([PW,PH],'portrait');
+      pdf.addImage(f.data,'JPEG',0,Math.max(0,(PH-fh)/2),PW,fh,undefined,'FAST');
+    }
     return pdf.output('blob');
   } finally { ifr.remove(); }
 }
@@ -3835,7 +3882,8 @@ async function compartirPpto(kind,btn){
   if(!c){alert({p:'Primero generá el presupuesto (Paso 5)',pt:'Primero generá el presupuesto portátil',al:'Primero generá el presupuesto de alquiler'}[kind]);return;}
   const txt=btn.innerHTML;btn.disabled=true;btn.innerHTML='⏳ Generando PDF…';
   try{
-    const blob=await _pptoPdfBlob(c);
+    const adj=document.getElementById('adj_fichas_'+kind);
+    const blob=await _pptoPdfBlob(c,adj&&adj.checked?_flyersDePagina(page):[]);
     await _compartirArchivo(new File([blob],_pdfNombre(kind)+'.pdf',{type:'application/pdf'}));
   }catch(e){console.error(e);alert('No se pudo generar el PDF: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML=txt;}
@@ -3883,7 +3931,7 @@ function genPptoPt(){
     const pp=QP['pe_'+eq.id]||eq.p;
     const dimStr=(eq.dh&&eq.dl&&eq.dp)?`${eq.dh} × ${eq.dl} × ${eq.dp} mm`:'';
     const kgStr=eq.kg?`${eq.kg} kg`:'';
-    h+=`<div class="ficha-h">
+    h+=`<div class="ficha-h" data-eq="${eq.id}">
       <div class="ficha-h-img">${img?`<img src="${img}" alt="${eq.n}">`:'<div class="ficha-h-ph">Sin imagen</div>'}</div>
       <div class="ficha-h-data">
         <div class="fh-name">${eq.n} ${vBadge(eq.v)}</div>
@@ -5001,7 +5049,7 @@ function genPptoAl(){
     const eq=r.e;if(vistos.has(eq.id))return;vistos.add(eq.id);
     const qty=rows.filter(x=>x.e.id===eq.id).reduce((s,x)=>s+x.it.qty,0);
     const img=getImg(eq.id),dim=(eq.dh&&eq.dl&&eq.dp)?`${eq.dh} × ${eq.dl} × ${eq.dp} mm`:'';
-    h+=`<div class="ficha-h">
+    h+=`<div class="ficha-h" data-eq="${eq.id}">
       <div class="ficha-h-img">${img?`<img src="${img}" alt="${eq.n}">`:'<div class="ficha-h-ph">Sin imagen</div>'}</div>
       <div class="ficha-h-data">
         <div class="fh-name">${eq.n}</div>
