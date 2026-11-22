@@ -1620,6 +1620,8 @@ const IMG_SRC = {
   'exa100_touch':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_touch':'Equipos/Extractores/EXTRACTOR 80 f.png',
   'exa160_std':'Equipos/Extractores/EXTRACTOR 160 f.png','exa140_std':'Equipos/Extractores/EXTRACTOR 140 f.png',
   'exa100_std':'Equipos/Extractores/EXTRACTOR 100 f.png','exa80_std':'Equipos/Extractores/EXTRACTOR 80 f.png',
+  'exa160_380_std':'Equipos/Extractores/EXTRACTOR 160 f.png',
+  'roto70':'Equipos/Pared/ROTO 70.png','exa60_std':'Equipos/Extractores/EXTRACTOR 60.png',
   'roto59':'Equipos/Portatil/Portatil 59.png','roto58':'Equipos/Portatil/Portatil 58.png',
   'roto55':'Equipos/Portatil/Portatil 55.png','roto52':'Equipos/Portatil/Portatil 52.png',
   'roto47':'Equipos/Portatil/Portatil 47.png','roto46':'Equipos/Portatil/Portatil 46.png',
@@ -1761,13 +1763,14 @@ const CONDICIONANTES = [
 // Equipos con precios editables en tiempo real
 const EQI_BASE = {
   pw:[
-    {id:'roto190',  n:'ROTO 190 Standard',             t:'M/F 220V',v:220,q:93000,kw:2.57,c:5820, p:9021, dh:2400,dl:2400,dp:1230,ap:'1600x1600',kg:300,fa:'50 m'},
+    {id:'roto190',  n:'ROTO 190 Standard',             t:'M/F 220V',v:220,q:93000,kw:2.57,c:5820, p:9021, dh:2930,dl:2090,dp:1160,ap:'1570x1570',kg:243,fa:'50 m'},
     {id:'roto180',  n:'ROTO 180 Confort',              t:'T/F 380V',v:380,q:91000,kw:3.37,c:8840, p:12818,dh:2000,dl:2400,dp:1230,ap:'2010x2010',kg:300,fa:'50 m'},
     {id:'roto170t', n:'ROTO 170 Confort Touch + Swing',t:'M/F 220V',v:220,q:70000,kw:2.57,c:5521, p:8558, dh:1560,dl:1980,dp:1230,ap:'1570x1570',kg:255,fa:'45 m'},
-    {id:'roto140t', n:'ROTO 140 Confort Touch + Swing',t:'M/F 220V',v:220,q:45000,kw:1.47,c:4214, p:6532, dh:1380,dl:1780,dp:1230,ap:'1390x1390',kg:200,fa:'30 m'},
+    {id:'roto140t', n:'ROTO 140 Confort Touch + Swing',t:'M/F 220V',v:220,q:45000,kw:2.0 ,c:4214, p:6532, dh:1380,dl:1780,dp:1230,ap:'1390x1390',kg:200,fa:'30 m'},
     {id:'roto95',   n:'ROTO 95 Confort Touch + Swing', t:'M/F 220V',v:220,q:50000,kw:2.46,c:5277, p:8179, dh:1200,dl:2400,dp:1230,ap:'1010x2010',kg:241,fa:'30 m'},
     {id:'roto80',   n:'ROTO 80 Confort Touch',         t:'M/F 220V',v:220,q:23000,kw:1.25,c:2959, p:4586, dh:1260,dl:1300,dp:900, ap:'1020x1020',kg:120,fa:'25 m'},
-    {id:'roto60',   n:'ROTO 60 Confort Touch',         t:'M/F 220V',v:220,q:13000,kw:0.50,c:2262, p:3506, dh:800, dl:800, dp:1110,ap:'650x650',  kg:57, fa:'20 m'},
+    {id:'roto70',   n:'ROTO 70 Confort Touch',         t:'M/F 220V',v:220,q:24000,kw:1.25,c:3007, p:4661, dh:980, dl:1100,dp:1340,ap:'810x810',  kg:79, fa:'30 m'},
+    {id:'roto60',   n:'ROTO 60 Confort Touch',         t:'M/F 220V',v:220,q:13000,kw:0.45,c:2262, p:3506, dh:880, dl:880, dp:1110,ap:'650x650',  kg:57, fa:'20 m'},
   ],
   tc:[
     {id:'roto150techo',   n:'ROTO 150 Techo Touch',t:'M/F 220V',v:220,q:73000,kw:1.87,c:4928,p:7638,dh:1420,dl:1800,dp:1800,ap:'O1300 mm',kg:231,companion:'acc_rej150'},
@@ -1775,29 +1778,29 @@ const EQI_BASE = {
     {id:'roto90techo',    n:'ROTO 90 Techo Touch', t:'M/F 220V',v:220,q:26000,kw:1.25,c:2600,p:4030,dh:980, dl:1100,dp:1100,ap:'O680 mm', kg:77, companion:'acc_rej90'},
   ],
   si:[
-    {id:'central200_100', n:'Central Evaporativa 300 (100cv)',t:'T/F 380V',v:380,q:300000,kw:76.5, c:88343,p:114846,dh:2380,dl:3300,dp:3300,ap:'1140x1140',kg:1400},
+    {id:'central200_100', n:'Central Evaporativa 300 (100cv)',t:'T/F 380V',v:380,q:300000,kw:76.5, c:88343,p:114846,dh:2380,dl:3900,dp:3900,ap:'1400x1400',kg:1700},
     {id:'central200_40',  n:'Central Evaporativa 200 (40cv)', t:'T/F 380V',v:380,q:180000,kw:32,   c:57490,p:74737, dh:2380,dl:3300,dp:3300,ap:'1140x1140',kg:1400},
-    {id:'roto155_125',    n:'ROTO 155 Siroco (12,5cv)',       t:'T/F 380V',v:380,q:60000, kw:9.57, c:16347,p:22068, dh:1420,dl:1880,dp:1810,ap:'760x760',  kg:395},
+    {id:'roto155_125',    n:'ROTO 155 Siroco (12,5cv)',       t:'T/F 380V',v:380,q:64000, kw:9.57, c:16347,p:22068, dh:1420,dl:1850,dp:1810,ap:'760x760',  kg:425},
     {id:'roto155_75_380', n:'ROTO 155 Siroco (7,5cv)',        t:'T/F 380V',v:380,q:60000, kw:5.87, c:12851,p:17349, dh:1420,dl:1880,dp:1810,ap:'760x760',  kg:395},
     {id:'roto155_75_220', n:'ROTO 155 Siroco (7,5cv)',        t:'M/F 220V',v:220,q:60000, kw:5.87, c:12708,p:17156, dh:1420,dl:1880,dp:1810,ap:'760x760',  kg:395},
     {id:'roto115',        n:'ROTO 115 Siroco',                t:'T/F 380V',v:380,q:36000, kw:4.10, c:10142,p:14706, dh:1230,dl:1600,dp:1640,ap:'570x570',  kg:300},
     {id:'roto85_220',     n:'ROTO 85 Siroco',                 t:'M/F 220V',v:220,q:22000, kw:1.58, c:4343, p:6297,  dh:980, dl:1100,dp:1150,ap:'440x470',  kg:105},
   ],
   po:[
-    {id:'roto55',n:'Portatil ROTO 55',t:'M/F 220V',v:220,q:30000,kw:1.53,c:2343,p:3397,dh:1720,dl:1120,dp:680,ap:null,kg:80, fa:'23 m'},
-    {id:'roto59',n:'Portatil ROTO 59',t:'M/F 220V',v:220,q:26000,kw:0,   c:1870,p:2712,dh:null,dl:null,dp:null,ap:null,kg:null,fa:'23 m'},
-    {id:'roto58',n:'Portatil ROTO 58',t:'M/F 220V',v:220,q:26000,kw:0.47,c:2066,p:2996,dh:2200,dl:860, dp:530,ap:null,kg:63, fa:'23 m'},
+    {id:'roto55',n:'Portatil ROTO 55',t:'M/F 220V',v:220,q:30000,kw:1.53,c:2343,p:3397,dh:1720,dl:1120,dp:680,ap:null,kg:80, fa:'25 m'},
+    {id:'roto59',n:'Portatil ROTO 59',t:'M/F 220V',v:220,q:26000,kw:0.58,c:1870,p:2712,dh:2230,dl:870, dp:530,ap:null,kg:55.5,fa:'24 m'},
+    {id:'roto58',n:'Portatil ROTO 58',t:'M/F 220V',v:220,q:26000,kw:0.47,c:2066,p:2996,dh:2200,dl:860, dp:530,ap:null,kg:63, fa:'18 m'},
     {id:'roto52',n:'Portatil ROTO 52',t:'M/F 220V',v:220,q:16000,kw:0.51,c:1162,p:1685,dh:1960,dl:680, dp:426,ap:null,kg:35, fa:'18 m'},
-    {id:'roto47',n:'Portatil ROTO 47',t:'M/F 220V',v:220,q:12000,kw:0.32,c:714, p:1035,dh:1390,dl:870, dp:530,ap:null,kg:34, fa:'15 m'},
-    {id:'roto46',n:'Portatil ROTO 46',t:'M/F 220V',v:220,q:7000, kw:0.32,c:543, p:787, dh:1230,dl:680, dp:420,ap:null,kg:20, fa:'15 m'},
-    {id:'roto42',n:'Portatil ROTO 42',t:'M/F 220V',v:220,q:4000, kw:0.15,c:335, p:486, dh:1250,dl:535, dp:427,ap:null,kg:14, fa:'7 m'},
-    {id:'roto38',n:'Portatil ROTO 38',t:'M/F 220V',v:220,q:4000, kw:0.15,c:224, p:325, dh:955, dl:535, dp:427,ap:null,kg:10, fa:'7 m'},
+    {id:'roto47',n:'Portatil ROTO 47',t:'M/F 220V',v:220,q:12000,kw:0.32,c:714, p:1035,dh:1390,dl:870, dp:530,ap:null,kg:34, fa:'20 m'},
+    {id:'roto46',n:'Portatil ROTO 46',t:'M/F 220V',v:220,q:7000, kw:0.23,c:543, p:787, dh:1230,dl:680, dp:420,ap:null,kg:20, fa:'15 m'},
+    {id:'roto42',n:'Portatil ROTO 42',t:'M/F 220V',v:220,q:4000, kw:0.15,c:335, p:486, dh:1250,dl:535, dp:427,ap:null,kg:14, fa:'10 m'},
+    {id:'roto38',n:'Portatil ROTO 38',t:'M/F 220V',v:220,q:4000, kw:0.15,c:224, p:325, dh:955, dl:535, dp:427,ap:null,kg:10, fa:'10 m'},
     // Ventiladores portátiles (vent:true): no son evaporativos, no se ofrecen como inyección del proyecto.
     // Mismo costo/precio que el EXA Touch del mismo tamaño — actualizar juntos. Medidas de ficha Brasil (80 y 130≈140).
     {id:'vent160',n:'Ventilador Portátil 160',t:'M/F 220V',v:220,q:55000,kw:1.5,c:2317,p:3360,dh:null,dl:null,dp:null,ap:null,kg:null,vent:true},
     {id:'vent140',n:'Ventilador Portátil 140',t:'M/F 220V',v:220,q:45000,kw:1.1,c:1950,p:2828,dh:1555,dl:1425,dp:640,ap:null,kg:null,vent:true},
     {id:'vent100',n:'Ventilador Portátil 100',t:'M/F 220V',v:220,q:34000,kw:1.1,c:1792,p:2598,dh:null,dl:null,dp:null,ap:null,kg:null,vent:true},
-    {id:'vent80', n:'Ventilador Portátil 80', t:'M/F 220V',v:220,q:25000,kw:0.7,c:1658,p:2404,dh:1180,dl:1030,dp:640,ap:null,kg:null,vent:true},
+    {id:'vent80', n:'Ventilador Portátil 80', t:'M/F 220V',v:220,q:25000,kw:0.75,c:1658,p:2404,dh:1180,dl:1030,dp:640,ap:null,kg:null,vent:true},
   ]
 };
 // Rótulo según lo que haya: evaporativos, ventiladores o mezcla
@@ -1807,15 +1810,18 @@ function ptTipo(items){
 }
 const EXT_BASE = [
   {id:'ext_siroco560',n:'Extractor Centrifugo Siroco 560',  t:'T/F 380V',v:380,q:12000,kw:3.7, c:5696,p:8259, dh:1110,dl:900, dp:930, ap:'O560 mm', kg:null},
-  {id:'ext_siroco390',n:'Extractor Centrifugo Siroco 390',  t:'T/F 380V',v:380,q:5000, kw:1.5, c:2468,p:3579, dh:730, dl:655, dp:100, ap:'O366 mm', kg:null},
+  {id:'ext_siroco390',n:'Extractor Centrifugo Siroco 390',  t:'T/F 380V',v:380,q:5000, kw:1.5, c:2468,p:3579, dh:730, dl:655, dp:700, ap:'O366 mm', kg:69},
   {id:'exa160_touch', n:'Extractor EXA 160 Touch c/ Persiana',t:'M/F 220V',v:220,q:55000,kw:1.5, c:2317,p:3360, dh:1560,dl:1560,dp:420, ap:'1570x1570',kg:73},
   {id:'exa140_touch', n:'Extractor EXA 140 Touch c/ Persiana',t:'M/F 220V',v:220,q:45000,kw:1.1, c:1950,p:2828, dh:1380,dl:1380,dp:420, ap:'1390x1390',kg:65},
   {id:'exa100_touch', n:'Extractor EXA 100 Touch c/ Persiana',t:'M/F 220V',v:220,q:34000,kw:1.1, c:1792,p:2598, dh:1200,dl:1200,dp:420, ap:'1210x1210',kg:55},
-  {id:'exa80_touch',  n:'Extractor EXA 80 Touch c/ Persiana', t:'M/F 220V',v:220,q:25000,kw:0.7, c:1658,p:2404, dh:1000,dl:1000,dp:420, ap:'1010x1010',kg:47},
+  {id:'exa80_touch',  n:'Extractor EXA 80 Touch c/ Persiana', t:'M/F 220V',v:220,q:25000,kw:0.75, c:1658,p:2404, dh:1000,dl:1000,dp:420, ap:'1010x1010',kg:47},
   {id:'exa160_std',   n:'Extractor EXA 160 Estandar',         t:'M/F 220V',v:220,q:55000,kw:1.5, c:1852,p:2685, dh:1560,dl:1560,dp:420, ap:'1570x1570',kg:73},
+  {id:'exa160_380_std',n:'Extractor EXA 160 Estandar',        t:'T/F 380V',v:380,q:55000,kw:1.5, c:1852,p:2685, dh:1560,dl:1560,dp:420, ap:'1570x1570',kg:73},
   {id:'exa140_std',   n:'Extractor EXA 140 Estandar',         t:'M/F 220V',v:220,q:45000,kw:1.1, c:1507,p:2185, dh:1380,dl:1380,dp:420, ap:'1390x1390',kg:65},
   {id:'exa100_std',   n:'Extractor EXA 100 Estandar',         t:'M/F 220V',v:220,q:34000,kw:1.1, c:1368,p:1984, dh:1200,dl:1200,dp:420, ap:'1210x1210',kg:55},
-  {id:'exa80_std',    n:'Extractor EXA 80 Estandar',          t:'M/F 220V',v:220,q:25000,kw:0.7, c:1235,p:1791, dh:1000,dl:1000,dp:420, ap:'1010x1010',kg:47},
+  {id:'exa80_std',    n:'Extractor EXA 80 Estandar',          t:'M/F 220V',v:220,q:25000,kw:0.75, c:1235,p:1791, dh:1000,dl:1000,dp:420, ap:'1010x1010',kg:47},
+  // Es el "EX 60" de la ficha de fábrica 2024 (13.000 m³/h, 0,55 kW), no el EX 60 Sense de la ficha 2026 (14.000)
+  {id:'exa60_std',    n:'Extractor EXA 60 Estandar',          t:'M/F 220V',v:220,q:13000,kw:0.55,c:847, p:1228, dh:750, dl:750, dp:400, ap:'760x760',  kg:37},
 ];
 // Accesorios: rejillas (companion automático con techo) + conductos/estructuras (opcionales)
 const ACC_BASE = [
@@ -2397,7 +2403,7 @@ function updSugExt(){
   // Centrífugos al final: poco usados por caudal y precio (solo donde no hay alternativa)
   const html=sugRow('Touch',EXT_BASE.filter(e=>e.id.endsWith('_touch')),req,corto,click,'touch')
     +sugRow('Estándar',EXT_BASE.filter(e=>e.id.endsWith('_std')),req,corto,click,'std')
-    +sugRow('Centríf.',EXT_BASE.filter(e=>e.v===380),req,corto,click);
+    +sugRow('Centríf.',EXT_BASE.filter(e=>e.id.startsWith('ext_siroco')),req,corto,click);
   document.getElementById('sg_e').innerHTML=html||'<span style="font-size:11px;color:#888;">Sin sugerencias</span>';
 }
 // Fila de sugerencias: todas las combinaciones de un solo modelo, de menor a mayor cantidad.
@@ -2483,8 +2489,9 @@ function renderTab(cat){
   document.getElementById('tab_'+cat).innerHTML=html;
 }
 function renderExtTab(){
-  const siroco=EXT_BASE.filter(e=>e.v===380);
-  const exa=EXT_BASE.filter(e=>e.v===220);
+  // Por id y no por tensión: hay EXA estándar en 380V
+  const siroco=EXT_BASE.filter(e=>e.id.startsWith('ext_siroco'));
+  const exa=EXT_BASE.filter(e=>e.id.startsWith('exa'));
   const hd=(t,sub,first)=>`<div style="font-size:11px;font-weight:700;color:#666;margin:${first?'0 0 6px':'12px 0 6px'};${first?'':'border-top:1px solid #eee;padding-top:8px;'}letter-spacing:.5px;">${t} <span style="font-weight:400;color:#aaa;">${sub}</span></div>`;
   let html=hd('EXA — TOUCH C/ PERSIANA','(Premium)',true);
   html+=exa.filter(e=>e.id.endsWith('_touch')).map(e=>eqRow(e,'e','x-touch',' <span class="xt touch">TOUCH</span>')).join('');
